@@ -118,3 +118,35 @@ export type ComparisonBay = {
   relay: { make: string; model: string };
   parameters: ParameterRow[];
 };
+
+// TAP Setting Production & Approval Workflow
+export type ApprovalLevel = "Engineer" | "Asisten Manajer" | "Manajer";
+
+export type TapSettingRecord = {
+  id: string;
+  lineId: string;
+  relayId: string;
+  version: string;
+  status: "draft" | "pending_approval" | "approved" | "rejected" | "superseded";
+  createdAt: string;
+  createdBy: string;
+  approvedAt?: string;
+  approvedBy?: ApprovalLevel;
+  rejectionReason?: string;
+  effectiveDate?: string;
+  zones: [Zone, Zone, Zone];
+  loadEncroachment: LoadEncroachment;
+  ctRatio: number;
+  vtRatio: number;
+  notes?: string;
+  sourceRef?: string; // Reference to calculation snapshot or PDF promotion
+};
+
+export type ApprovalAction = {
+  id: string;
+  tapSettingId: string;
+  action: "submit" | "approve" | "reject" | "recall";
+  actor: ApprovalLevel;
+  at: string;
+  comment?: string;
+};
