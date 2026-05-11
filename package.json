@@ -1,0 +1,41 @@
+{
+  "name": "plms-poc",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "PLMS POC - Protection Lifecycle Management System for relay settings, validation, coordination, compliance, and auditability",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "lint": "eslint src --ext ts,tsx",
+    "import:lcd-dist": "node scripts/extract-lcd-dist.mjs",
+    "import:ocr": "node scripts/extract-ocr.mjs",
+    "index:sld": "node scripts/index-sld-folder.mjs",
+    "index:pdf": "node scripts/index-pdf-sources.mjs",
+    "index:mathcad": "node scripts/index-mathcad-templates.mjs",
+    "index:crosscheck": "node scripts/index-crosscheck-workbook.mjs"
+  },
+  "dependencies": {
+    "d3": "^7.9.0",
+    "lucide-react": "^0.460.0",
+    "pdfjs-dist": "^4.7.76",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tesseract.js": "^5.1.1",
+    "zustand": "^4.5.5"
+  },
+  "devDependencies": {
+    "@types/d3": "^7.4.3",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.3",
+    "autoprefixer": "^10.4.20",
+    "pdf-parse": "^2.4.5",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^3.4.14",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.10",
+    "xlsx": "^0.18.5"
+  }
+}

@@ -1,0 +1,3375 @@
+{
+  "summary": {
+    "generatedAt": "2026-05-09T04:24:29.776Z",
+    "inputFile": "Data Setting Penghantar UPT DKSBI.xlsx",
+    "sheetName": "LCD+DIST",
+    "recordCount": 57,
+    "withDistance": 32,
+    "withTapDocument": 50
+  },
+  "records": [
+    {
+      "id": "gi_150kv_angke_pht_150kv_karet_lama_2_2_10",
+      "sourceRow": 10,
+      "ultg": "ULTG ANGKE",
+      "substation": "GI 150kV ANGKE",
+      "bay": "PHT 150kV KARET LAMA#2",
+      "circuit": "#2",
+      "ctRatio": "4000/5",
+      "vtRatio": "150 kV/100 V",
+      "relay": {
+        "make": "Alstom",
+        "model": "MiCom P443",
+        "serial": "34424434/04/18",
+        "functionGroup": "DIST",
+        "arStatus": "",
+        "relayType": "Numerik",
+        "operationYear": 2019
+      },
+      "currentDiff": {
+        "in": null,
+        "is1": null,
+        "is2": null,
+        "k1": null,
+        "k2": null
+      },
+      "distance": {
+        "lineImpedanceOhm": null,
+        "timeMode": "",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "tap": {
+        "document": "",
+        "date": "",
+        "z1PhPh": 1.036,
+        "z1PhGnd": 1.036,
+        "z2PhPh": 1.554,
+        "z2PhGnd": 1.554,
+        "z3PhPh": 2.83,
+        "z3PhGnd": 2.83,
+        "t1S": 0,
+        "t2S": 0.8,
+        "t3S": 1.6
+      },
+      "dataQuality": {
+        "hasCt": true,
+        "hasVt": true,
+        "hasRelay": true,
+        "hasDistance": false,
+        "hasTapDocument": false
+      }
+    },
+    {
+      "id": "gi_150kv_angke_pht_150kv_ketapang_1_1_11",
+      "sourceRow": 11,
+      "ultg": "ULTG ANGKE",
+      "substation": "GI 150kV ANGKE",
+      "bay": "PHT 150kV KETAPANG#1",
+      "circuit": "#1",
+      "ctRatio": "2000/5",
+      "vtRatio": "150 kV/100 V",
+      "relay": {
+        "make": "Alstom",
+        "model": "MiCom P545",
+        "serial": "344216065/04/18",
+        "functionGroup": "LCD+DIST",
+        "arStatus": "NOT ACTIVE",
+        "relayType": "Numerik",
+        "operationYear": 2021
+      },
+      "currentDiff": {
+        "in": 5,
+        "is1": 1,
+        "is2": 10,
+        "k1": 30,
+        "k2": 150
+      },
+      "distance": {
+        "lineImpedanceOhm": 0.064,
+        "timeMode": "instant",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "tap": {
+        "document": "Tap Setting Official Angke-Ketapang dan arah sebaliknya.pdf",
+        "date": "6-Mar-19",
+        "z1PhPh": 0.194,
+        "z1PhGnd": 0.194,
+        "z2PhPh": 0.292,
+        "z2PhGnd": 0.292,
+        "z3PhPh": 0.442,
+        "z3PhGnd": 0.442,
+        "t1S": 0,
+        "t2S": 0.4,
+        "t3S": 1.6
+      },
+      "dataQuality": {
+        "hasCt": true,
+        "hasVt": true,
+        "hasRelay": true,
+        "hasDistance": false,
+        "hasTapDocument": true
+      }
+    },
+    {
+      "id": "gi_150kv_angke_pht_150kv_ketapang_2_2_12",
+      "sourceRow": 12,
+      "ultg": "ULTG ANGKE",
+      "substation": "GI 150kV ANGKE",
+      "bay": "PHT 150kV KETAPANG#2",
+      "circuit": "#2",
+      "ctRatio": "2000/5",
+      "vtRatio": "150 kV/100 V",
+      "relay": {
+        "make": "Alstom",
+        "model": "MiCom P545",
+        "serial": "344216066/04/18",
+        "functionGroup": "LCD+DIST",
+        "arStatus": "NOT ACTIVE",
+        "relayType": "Numerik",
+        "operationYear": 2021
+      },
+      "currentDiff": {
+        "in": 5,
+        "is1": 1,
+        "is2": 10,
+        "k1": 30,
+        "k2": 150
+      },
+      "distance": {
+        "lineImpedanceOhm": 0.064,
+        "timeMode": "instant",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "tap": {
+        "document": "Tap Setting Official Angke-Ketapang dan arah sebaliknya.pdf",
+        "date": "6-Mar-19",
+        "z1PhPh": 0.186,
+        "z1PhGnd": 0.186,
+        "z2PhPh": 0.334,
+        "z2PhGnd": 0.334,
+        "z3PhPh": 0.556,
+        "z3PhGnd": 0.556,
+        "t1S": 0,
+        "t2S": 0.4,
+        "t3S": 1.6
+      },
+      "dataQuality": {
+        "hasCt": true,
+        "hasVt": true,
+        "hasRelay": true,
+        "hasDistance": false,
+        "hasTapDocument": true
+      }
+    },
+    {
+      "id": "gi_150kv_angke_pht_150kv_muarakarang_lama_1_1_13",
+      "sourceRow": 13,
+      "ultg": "ULTG ANGKE",
+      "substation": "GI 150kV ANGKE",
+      "bay": "PHT 150kV MUARAKARANG LAMA#1",
+      "circuit": "#1",
+      "ctRatio": "4000/5",
+      "vtRatio": "150 kV/100 V",
+      "relay": {
+        "make": "Siemens",
+        "model": "7SD61",
+        "serial": "BF0807106719",
+        "functionGroup": "LCD+DIST",
+        "arStatus": "NOT ACTIVE",
+        "relayType": "Numerik",
+        "operationYear": 2018
+      },
+      "currentDiff": {
+        "in": 5,
+        "is1": 0.5,
+        "is2": 5,
+        "k1": null,
+        "k2": null
+      },
+      "distance": {
+        "lineImpedanceOhm": null,
+        "timeMode": "instant",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "tap": {
+        "document": "Tap Setting Official GI Angke bay OHL Muarakarang Lama 1,2-1.pdf",
+        "date": "4-Sep-19",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "dataQuality": {
+        "hasCt": true,
+        "hasVt": true,
+        "hasRelay": true,
+        "hasDistance": false,
+        "hasTapDocument": true
+      }
+    },
+    {
+      "id": "gi_150kv_angke_pht_150kv_muarakarang_lama_2_2_14",
+      "sourceRow": 14,
+      "ultg": "ULTG ANGKE",
+      "substation": "GI 150kV ANGKE",
+      "bay": "PHT 150kV MUARAKARANG LAMA#2",
+      "circuit": "#2",
+      "ctRatio": "4000/5",
+      "vtRatio": "150 kV/100 V",
+      "relay": {
+        "make": "Siemens",
+        "model": "7SD61",
+        "serial": "BF0807106718",
+        "functionGroup": "LCD+DIST",
+        "arStatus": "NOT ACTIVE",
+        "relayType": "Numerik",
+        "operationYear": 2018
+      },
+      "currentDiff": {
+        "in": 5,
+        "is1": 0.5,
+        "is2": 5,
+        "k1": null,
+        "k2": null
+      },
+      "distance": {
+        "lineImpedanceOhm": null,
+        "timeMode": "instant",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "tap": {
+        "document": "Tap Setting Official GI Angke bay OHL Muarakarang Lama 1,2-1.pdf",
+        "date": "4-Sep-19",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "dataQuality": {
+        "hasCt": true,
+        "hasVt": true,
+        "hasRelay": true,
+        "hasDistance": false,
+        "hasTapDocument": true
+      }
+    },
+    {
+      "id": "gi_150kv_angke_pht_150kv_ugc_muarakarang_lama_1_1_15",
+      "sourceRow": 15,
+      "ultg": "ULTG ANGKE",
+      "substation": "GI 150kV ANGKE",
+      "bay": "PHT 150kV UGC MUARAKARANG LAMA#1",
+      "circuit": "#1",
+      "ctRatio": "2000/5",
+      "vtRatio": "150 kV/100 V",
+      "relay": {
+        "make": "Siemens",
+        "model": "7SL87",
+        "serial": "BM1712005923",
+        "functionGroup": "LCD+DIST",
+        "arStatus": "NOT ACTIVE",
+        "relayType": "Numerik",
+        "operationYear": 2018
+      },
+      "currentDiff": {
+        "in": 5,
+        "is1": 1,
+        "is2": 10,
+        "k1": null,
+        "k2": null
+      },
+      "distance": {
+        "lineImpedanceOhm": null,
+        "timeMode": "instant",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "tap": {
+        "document": "Rev.01 MKLMA-ANGKE dan Sebaliknya.pdf",
+        "date": "14-Dec-18",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "dataQuality": {
+        "hasCt": true,
+        "hasVt": true,
+        "hasRelay": true,
+        "hasDistance": false,
+        "hasTapDocument": true
+      }
+    },
+    {
+      "id": "gi_150kv_angke_pht_150kv_ugc_muarakarang_lama_2_2_16",
+      "sourceRow": 16,
+      "ultg": "ULTG ANGKE",
+      "substation": "GI 150kV ANGKE",
+      "bay": "PHT 150kV UGC MUARAKARANG LAMA#2",
+      "circuit": "#2",
+      "ctRatio": "2000/5",
+      "vtRatio": "150 kV/100 V",
+      "relay": {
+        "make": "Siemens",
+        "model": "7SL87",
+        "serial": "BM1712005927",
+        "functionGroup": "LCD+DIST",
+        "arStatus": "NOT ACTIVE",
+        "relayType": "Numerik",
+        "operationYear": 2018
+      },
+      "currentDiff": {
+        "in": 5,
+        "is1": 1,
+        "is2": 10,
+        "k1": null,
+        "k2": null
+      },
+      "distance": {
+        "lineImpedanceOhm": null,
+        "timeMode": "instant",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "tap": {
+        "document": "Rev.01 MKLMA-ANGKE dan Sebaliknya.pdf",
+        "date": "14-Dec-18",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "dataQuality": {
+        "hasCt": true,
+        "hasVt": true,
+        "hasRelay": true,
+        "hasDistance": false,
+        "hasTapDocument": true
+      }
+    },
+    {
+      "id": "gi_150kv_dadap_pht_150kv_lontar_1_1_17",
+      "sourceRow": 17,
+      "ultg": "ULTG ANGKE",
+      "substation": "GI 150kV DADAP",
+      "bay": "PHT 150kV LONTAR#1",
+      "circuit": "#1",
+      "ctRatio": "4000/1",
+      "vtRatio": "150 kV/100 V",
+      "relay": {
+        "make": "GE",
+        "model": "MICOM P446",
+        "serial": "34465139/05/18",
+        "functionGroup": "DIST",
+        "arStatus": "INTERNAL",
+        "relayType": "Numerik",
+        "operationYear": 2021
+      },
+      "currentDiff": {
+        "in": null,
+        "is1": null,
+        "is2": null,
+        "k1": null,
+        "k2": null
+      },
+      "distance": {
+        "lineImpedanceOhm": null,
+        "timeMode": "",
+        "z1PhPh": 15.519,
+        "z1PhGnd": 15.519,
+        "z2PhPh": 25.819,
+        "z2PhGnd": 25.819,
+        "z3PhPh": 42.591,
+        "z3PhGnd": 42.591,
+        "t1S": 0,
+        "t2S": 0.4,
+        "t3S": 1.6
+      },
+      "tap": {
+        "document": "20200220_Dadap - Lontar 1_2.pdf",
+        "date": "20-Feb-20",
+        "z1PhPh": 15.52,
+        "z1PhGnd": 15.52,
+        "z2PhPh": 25.82,
+        "z2PhGnd": 25.82,
+        "z3PhPh": 42.59,
+        "z3PhGnd": 42.59,
+        "t1S": 0,
+        "t2S": 0.4,
+        "t3S": 1.6
+      },
+      "dataQuality": {
+        "hasCt": true,
+        "hasVt": true,
+        "hasRelay": true,
+        "hasDistance": true,
+        "hasTapDocument": true
+      }
+    },
+    {
+      "id": "gi_150kv_dadap_pht_150kv_lontar_2_2_18",
+      "sourceRow": 18,
+      "ultg": "ULTG ANGKE",
+      "substation": "GI 150kV DADAP",
+      "bay": "PHT 150kV LONTAR#2",
+      "circuit": "#2",
+      "ctRatio": "4000/1",
+      "vtRatio": "150 kV/100 V",
+      "relay": {
+        "make": "GE",
+        "model": "MICOM P446",
+        "serial": "34465154/05/18",
+        "functionGroup": "DIST",
+        "arStatus": "INTERNAL",
+        "relayType": "Numerik",
+        "operationYear": 2021
+      },
+      "currentDiff": {
+        "in": null,
+        "is1": null,
+        "is2": null,
+        "k1": null,
+        "k2": null
+      },
+      "distance": {
+        "lineImpedanceOhm": null,
+        "timeMode": "",
+        "z1PhPh": 15.519,
+        "z1PhGnd": 15.519,
+        "z2PhPh": 25.819,
+        "z2PhGnd": 25.819,
+        "z3PhPh": 42.591,
+        "z3PhGnd": 42.591,
+        "t1S": 0,
+        "t2S": 0.4,
+        "t3S": 1.6
+      },
+      "tap": {
+        "document": "20200220_Dadap - Lontar 1_2.pdf",
+        "date": "20-Feb-20",
+        "z1PhPh": 15.93,
+        "z1PhGnd": 15.93,
+        "z2PhPh": 23.9,
+        "z2PhGnd": 23.9,
+        "z3PhPh": 43.2,
+        "z3PhGnd": 43.2,
+        "t1S": 0,
+        "t2S": 0.4,
+        "t3S": 1.6
+      },
+      "dataQuality": {
+        "hasCt": true,
+        "hasVt": true,
+        "hasRelay": true,
+        "hasDistance": true,
+        "hasTapDocument": true
+      }
+    },
+    {
+      "id": "gi_150kv_dadap_pht_150kv_teluk_naga_1_1_19",
+      "sourceRow": 19,
+      "ultg": "ULTG ANGKE",
+      "substation": "GI 150kV DADAP",
+      "bay": "PHT 150kV TELUK NAGA#1",
+      "circuit": "#1",
+      "ctRatio": "4000/1",
+      "vtRatio": "150 kV/100 V",
+      "relay": {
+        "make": "GE",
+        "model": "MICOM P446",
+        "serial": "34465138/05/18",
+        "functionGroup": "DIST",
+        "arStatus": "INTERNAL",
+        "relayType": "Numerik",
+        "operationYear": 2021
+      },
+      "currentDiff": {
+        "in": null,
+        "is1": null,
+        "is2": null,
+        "k1": null,
+        "k2": null
+      },
+      "distance": {
+        "lineImpedanceOhm": null,
+        "timeMode": "",
+        "z1PhPh": 3.719,
+        "z1PhGnd": 3.719,
+        "z2PhPh": 8.15,
+        "z2PhGnd": 8.15,
+        "z3PhPh": 13.887,
+        "z3PhGnd": 13.887,
+        "t1S": 0,
+        "t2S": 0.4,
+        "t3S": 1.6
+      },
+      "tap": {
+        "document": "20200220_Dadap - Teluk Naga 1_2.pdf",
+        "date": "20-Feb-20",
+        "z1PhPh": 3.72,
+        "z1PhGnd": 3.72,
+        "z2PhPh": 8.15,
+        "z2PhGnd": 8.15,
+        "z3PhPh": 13.89,
+        "z3PhGnd": 13.89,
+        "t1S": 0,
+        "t2S": 0.4,
+        "t3S": 1.6
+      },
+      "dataQuality": {
+        "hasCt": true,
+        "hasVt": true,
+        "hasRelay": true,
+        "hasDistance": true,
+        "hasTapDocument": true
+      }
+    },
+    {
+      "id": "gi_150kv_dadap_pht_150kv_teluk_naga_2_2_20",
+      "sourceRow": 20,
+      "ultg": "ULTG ANGKE",
+      "substation": "GI 150kV DADAP",
+      "bay": "PHT 150kV TELUK NAGA#2",
+      "circuit": "#2",
+      "ctRatio": "4000/1",
+      "vtRatio": "150 kV/100 V",
+      "relay": {
+        "make": "GE",
+        "model": "MICOM P446",
+        "serial": "34465149/05/18",
+        "functionGroup": "DIST",
+        "arStatus": "INTERNAL",
+        "relayType": "Numerik",
+        "operationYear": 2021
+      },
+      "currentDiff": {
+        "in": null,
+        "is1": null,
+        "is2": null,
+        "k1": null,
+        "k2": null
+      },
+      "distance": {
+        "lineImpedanceOhm": null,
+        "timeMode": "",
+        "z1PhPh": 3.719,
+        "z1PhGnd": 3.719,
+        "z2PhPh": 8.15,
+        "z2PhGnd": 8.15,
+        "z3PhPh": 13.887,
+        "z3PhGnd": 13.887,
+        "t1S": 0,
+        "t2S": 0.4,
+        "t3S": 1.6
+      },
+      "tap": {
+        "document": "20200220_Dadap - Teluk Naga 1_2.pdf",
+        "date": "20-Feb-20",
+        "z1PhPh": 3.72,
+        "z1PhGnd": 3.72,
+        "z2PhPh": 8.15,
+        "z2PhGnd": 8.15,
+        "z3PhPh": 13.89,
+        "z3PhGnd": 13.89,
+        "t1S": 0,
+        "t2S": 0.4,
+        "t3S": 1.6
+      },
+      "dataQuality": {
+        "hasCt": true,
+        "hasVt": true,
+        "hasRelay": true,
+        "hasDistance": true,
+        "hasTapDocument": true
+      }
+    },
+    {
+      "id": "gi_150kv_muarakarang_baru_pht_150kv_gis_muarakarang_baru_1_1_21",
+      "sourceRow": 21,
+      "ultg": "ULTG ANGKE",
+      "substation": "GI 150kV MUARAKARANG BARU",
+      "bay": "PHT 150kV GIS MUARAKARANG BARU#1",
+      "circuit": "#1",
+      "ctRatio": "2500/5",
+      "vtRatio": "150 kV/100 V",
+      "relay": {
+        "make": "Alstom",
+        "model": "MiCom P545",
+        "serial": "34923699/11/19",
+        "functionGroup": "LCD+DIST",
+        "arStatus": "NOT ACTIVE",
+        "relayType": "Numerik",
+        "operationYear": null
+      },
+      "currentDiff": {
+        "in": 5,
+        "is1": null,
+        "is2": null,
+        "k1": null,
+        "k2": null
+      },
+      "distance": {
+        "lineImpedanceOhm": null,
+        "timeMode": "",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "tap": {
+        "document": "",
+        "date": "",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "dataQuality": {
+        "hasCt": true,
+        "hasVt": true,
+        "hasRelay": true,
+        "hasDistance": false,
+        "hasTapDocument": false
+      }
+    },
+    {
+      "id": "gi_150kv_muarakarang_baru_pht_150kv_gis_muarakarang_baru_2_2_22",
+      "sourceRow": 22,
+      "ultg": "ULTG ANGKE",
+      "substation": "GI 150kV MUARAKARANG BARU",
+      "bay": "PHT 150kV GIS MUARAKARANG BARU#2",
+      "circuit": "#2",
+      "ctRatio": "2500/5",
+      "vtRatio": "150 kV/100 V",
+      "relay": {
+        "make": "Alstom",
+        "model": "MiCom P545",
+        "serial": "32197930/06/12",
+        "functionGroup": "LCD+DIST",
+        "arStatus": "NOT ACTIVE",
+        "relayType": "Numerik",
+        "operationYear": null
+      },
+      "currentDiff": {
+        "in": 5,
+        "is1": null,
+        "is2": null,
+        "k1": null,
+        "k2": null
+      },
+      "distance": {
+        "lineImpedanceOhm": null,
+        "timeMode": "",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "tap": {
+        "document": "",
+        "date": "",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "dataQuality": {
+        "hasCt": true,
+        "hasVt": true,
+        "hasRelay": true,
+        "hasDistance": false,
+        "hasTapDocument": false
+      }
+    },
+    {
+      "id": "gi_150kv_muarakarang_baru_pht_150kv_muarakarang_lama_1_1_23",
+      "sourceRow": 23,
+      "ultg": "ULTG ANGKE",
+      "substation": "GI 150kV MUARAKARANG BARU",
+      "bay": "PHT 150kV MUARAKARANG LAMA#1",
+      "circuit": "#1",
+      "ctRatio": "4000/5",
+      "vtRatio": "150 kV/100 V",
+      "relay": {
+        "make": "Areva",
+        "model": "MiCom P521",
+        "serial": "1307744",
+        "functionGroup": "LCD",
+        "arStatus": "NOT ACTIVE",
+        "relayType": "Numerik",
+        "operationYear": null
+      },
+      "currentDiff": {
+        "in": 5,
+        "is1": 1.5,
+        "is2": 10,
+        "k1": 30,
+        "k2": 80
+      },
+      "distance": {
+        "lineImpedanceOhm": null,
+        "timeMode": "instant",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "tap": {
+        "document": "2026 01 12 Resetting MKRBR-MKRLM rev 1.pdf",
+        "date": "12-Jan-26",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "dataQuality": {
+        "hasCt": true,
+        "hasVt": true,
+        "hasRelay": true,
+        "hasDistance": false,
+        "hasTapDocument": true
+      }
+    },
+    {
+      "id": "gi_150kv_muarakarang_baru_pht_150kv_muarakarang_lama_2_2_24",
+      "sourceRow": 24,
+      "ultg": "ULTG ANGKE",
+      "substation": "GI 150kV MUARAKARANG BARU",
+      "bay": "PHT 150kV MUARAKARANG LAMA#2",
+      "circuit": "#2",
+      "ctRatio": "4000/5",
+      "vtRatio": "150 kV/100 V",
+      "relay": {
+        "make": "Alstom",
+        "model": "MiCom P543",
+        "serial": "31995324/12/11",
+        "functionGroup": "LCD",
+        "arStatus": "NOT ACTIVE",
+        "relayType": "Numerik",
+        "operationYear": null
+      },
+      "currentDiff": {
+        "in": 5,
+        "is1": null,
+        "is2": null,
+        "k1": null,
+        "k2": null
+      },
+      "distance": {
+        "lineImpedanceOhm": null,
+        "timeMode": "",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "tap": {
+        "document": "",
+        "date": "",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "dataQuality": {
+        "hasCt": true,
+        "hasVt": true,
+        "hasRelay": true,
+        "hasDistance": false,
+        "hasTapDocument": false
+      }
+    },
+    {
+      "id": "gi_150kv_muarakarang_lama_pht_150kv_angke_1_1_25",
+      "sourceRow": 25,
+      "ultg": "ULTG ANGKE",
+      "substation": "GI 150kV MUARAKARANG LAMA",
+      "bay": "PHT 150kV ANGKE#1",
+      "circuit": "#1",
+      "ctRatio": "2000/5",
+      "vtRatio": "150 kV/100 V",
+      "relay": {
+        "make": "Siemens",
+        "model": "7SD61",
+        "serial": "BF0807106717",
+        "functionGroup": "LCD+DIST",
+        "arStatus": "NOT ACTIVE",
+        "relayType": "Numerik",
+        "operationYear": 2019
+      },
+      "currentDiff": {
+        "in": 5,
+        "is1": 1,
+        "is2": 10,
+        "k1": null,
+        "k2": null
+      },
+      "distance": {
+        "lineImpedanceOhm": null,
+        "timeMode": "instant",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "tap": {
+        "document": "Tap Setting Official GI Muarakarang Lama bay OHL Angke 1,2.pdf",
+        "date": "30-Aug-19",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "dataQuality": {
+        "hasCt": true,
+        "hasVt": true,
+        "hasRelay": true,
+        "hasDistance": false,
+        "hasTapDocument": true
+      }
+    },
+    {
+      "id": "gi_150kv_muarakarang_lama_pht_150kv_angke_2_2_26",
+      "sourceRow": 26,
+      "ultg": "ULTG ANGKE",
+      "substation": "GI 150kV MUARAKARANG LAMA",
+      "bay": "PHT 150kV ANGKE#2",
+      "circuit": "#2",
+      "ctRatio": "2000/5",
+      "vtRatio": "150 kV/100 V",
+      "relay": {
+        "make": "Siemens",
+        "model": "7SD61",
+        "serial": "BF0807106723",
+        "functionGroup": "LCD+DIST",
+        "arStatus": "NOT ACTIVE",
+        "relayType": "Numerik",
+        "operationYear": 2019
+      },
+      "currentDiff": {
+        "in": 5,
+        "is1": 1,
+        "is2": 10,
+        "k1": null,
+        "k2": null
+      },
+      "distance": {
+        "lineImpedanceOhm": null,
+        "timeMode": "instant",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "tap": {
+        "document": "Tap Setting Official GI Muarakarang Lama bay OHL Angke 1,2.pdf",
+        "date": "30-Aug-19",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "dataQuality": {
+        "hasCt": true,
+        "hasVt": true,
+        "hasRelay": true,
+        "hasDistance": false,
+        "hasTapDocument": true
+      }
+    },
+    {
+      "id": "gi_150kv_muarakarang_lama_pht_150kv_budikemulyan_1_1_27",
+      "sourceRow": 27,
+      "ultg": "ULTG ANGKE",
+      "substation": "GI 150kV MUARAKARANG LAMA",
+      "bay": "PHT 150kV BUDIKEMULYAN#1",
+      "circuit": "#1",
+      "ctRatio": "1200/5",
+      "vtRatio": "150 kV/100 V",
+      "relay": {
+        "make": "Siemens",
+        "model": "7SD61",
+        "serial": "BF0807106720",
+        "functionGroup": "LCD+DIST",
+        "arStatus": "",
+        "relayType": "Numerik",
+        "operationYear": null
+      },
+      "currentDiff": {
+        "in": 5,
+        "is1": 1.55,
+        "is2": 6.3,
+        "k1": null,
+        "k2": null
+      },
+      "distance": {
+        "lineImpedanceOhm": null,
+        "timeMode": "instant",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "tap": {
+        "document": "",
+        "date": "",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "dataQuality": {
+        "hasCt": true,
+        "hasVt": true,
+        "hasRelay": true,
+        "hasDistance": false,
+        "hasTapDocument": false
+      }
+    },
+    {
+      "id": "gi_150kv_muarakarang_lama_pht_150kv_budikemulyan_2_2_28",
+      "sourceRow": 28,
+      "ultg": "ULTG ANGKE",
+      "substation": "GI 150kV MUARAKARANG LAMA",
+      "bay": "PHT 150kV BUDIKEMULYAN#2",
+      "circuit": "#2",
+      "ctRatio": "1200/5",
+      "vtRatio": "150 kV/100 V",
+      "relay": {
+        "make": "Siemens",
+        "model": "7SD61",
+        "serial": "BF0807106721",
+        "functionGroup": "LCD+DIST",
+        "arStatus": "",
+        "relayType": "Numerik",
+        "operationYear": null
+      },
+      "currentDiff": {
+        "in": 5,
+        "is1": 1.55,
+        "is2": 6.3,
+        "k1": null,
+        "k2": null
+      },
+      "distance": {
+        "lineImpedanceOhm": null,
+        "timeMode": "instant",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "tap": {
+        "document": "",
+        "date": "",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "dataQuality": {
+        "hasCt": true,
+        "hasVt": true,
+        "hasRelay": true,
+        "hasDistance": false,
+        "hasTapDocument": false
+      }
+    },
+    {
+      "id": "gi_150kv_muarakarang_lama_pht_150kv_muarakarang_baru_1_1_29",
+      "sourceRow": 29,
+      "ultg": "ULTG ANGKE",
+      "substation": "GI 150kV MUARAKARANG LAMA",
+      "bay": "PHT 150kV MUARAKARANG BARU#1",
+      "circuit": "#1",
+      "ctRatio": "2000/5",
+      "vtRatio": "150 kV/100 V",
+      "relay": {
+        "make": "Areva",
+        "model": "MiCom P521",
+        "serial": "1307747",
+        "functionGroup": "LCD",
+        "arStatus": "NOT ACTIVE",
+        "relayType": "Numerik",
+        "operationYear": null
+      },
+      "currentDiff": {
+        "in": 5,
+        "is1": 3,
+        "is2": 20,
+        "k1": 30,
+        "k2": 80
+      },
+      "distance": {
+        "lineImpedanceOhm": null,
+        "timeMode": "instant",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "tap": {
+        "document": "2026 01 12 Resetting MKRLM-MKRBR rev 1.pdf",
+        "date": "12-Jan-26",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "dataQuality": {
+        "hasCt": true,
+        "hasVt": true,
+        "hasRelay": true,
+        "hasDistance": false,
+        "hasTapDocument": true
+      }
+    },
+    {
+      "id": "gi_150kv_muarakarang_lama_pht_150kv_muarakarang_baru_2_2_30",
+      "sourceRow": 30,
+      "ultg": "ULTG ANGKE",
+      "substation": "GI 150kV MUARAKARANG LAMA",
+      "bay": "PHT 150kV MUARAKARANG BARU#2",
+      "circuit": "#2",
+      "ctRatio": "2000/5",
+      "vtRatio": "150 kV/100 V",
+      "relay": {
+        "make": "Areva",
+        "model": "MiCom P543",
+        "serial": "31507153/09/10",
+        "functionGroup": "LCD",
+        "arStatus": "NOT ACTIVE",
+        "relayType": "Numerik",
+        "operationYear": null
+      },
+      "currentDiff": {
+        "in": 5,
+        "is1": null,
+        "is2": null,
+        "k1": null,
+        "k2": null
+      },
+      "distance": {
+        "lineImpedanceOhm": null,
+        "timeMode": "",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "tap": {
+        "document": "",
+        "date": "",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "dataQuality": {
+        "hasCt": true,
+        "hasVt": true,
+        "hasRelay": true,
+        "hasDistance": false,
+        "hasTapDocument": false
+      }
+    },
+    {
+      "id": "gi_150kv_muarakarang_lama_pht_150kv_ugc_angke_1_1_31",
+      "sourceRow": 31,
+      "ultg": "ULTG ANGKE",
+      "substation": "GI 150kV MUARAKARANG LAMA",
+      "bay": "PHT 150kV UGC ANGKE#1",
+      "circuit": "#1",
+      "ctRatio": "2000/5",
+      "vtRatio": "150 kV/100 V",
+      "relay": {
+        "make": "Siemens",
+        "model": "7SL87",
+        "serial": "BM1712005935",
+        "functionGroup": "LCD+DIST",
+        "arStatus": "NOT ACTIVE",
+        "relayType": "Numerik",
+        "operationYear": 2018
+      },
+      "currentDiff": {
+        "in": 5,
+        "is1": 1,
+        "is2": 10,
+        "k1": null,
+        "k2": null
+      },
+      "distance": {
+        "lineImpedanceOhm": null,
+        "timeMode": "instant",
+        "z1PhPh": 1.5,
+        "z1PhGnd": 2.5,
+        "z2PhPh": 2.5,
+        "z2PhGnd": 5,
+        "z3PhPh": 5,
+        "z3PhGnd": 10,
+        "t1S": 0,
+        "t2S": 0.3,
+        "t3S": 0.6
+      },
+      "tap": {
+        "document": "Rev.01 MKLMA-ANGKE dan Sebaliknya.pdf",
+        "date": "14-Dec-18",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "dataQuality": {
+        "hasCt": true,
+        "hasVt": true,
+        "hasRelay": true,
+        "hasDistance": true,
+        "hasTapDocument": true
+      }
+    },
+    {
+      "id": "gi_150kv_muarakarang_lama_pht_150kv_ugc_angke_2_2_32",
+      "sourceRow": 32,
+      "ultg": "ULTG ANGKE",
+      "substation": "GI 150kV MUARAKARANG LAMA",
+      "bay": "PHT 150kV UGC ANGKE#2",
+      "circuit": "#2",
+      "ctRatio": "2000/5",
+      "vtRatio": "150 kV/100 V",
+      "relay": {
+        "make": "Siemens",
+        "model": "7SL87",
+        "serial": "BM1712005931",
+        "functionGroup": "LCD+DIST",
+        "arStatus": "NOT ACTIVE",
+        "relayType": "Numerik",
+        "operationYear": 2018
+      },
+      "currentDiff": {
+        "in": 5,
+        "is1": 1,
+        "is2": 10,
+        "k1": null,
+        "k2": null
+      },
+      "distance": {
+        "lineImpedanceOhm": null,
+        "timeMode": "instant",
+        "z1PhPh": 1.5,
+        "z1PhGnd": 2.5,
+        "z2PhPh": 2.5,
+        "z2PhGnd": 5,
+        "z3PhPh": 5,
+        "z3PhGnd": 10,
+        "t1S": 0,
+        "t2S": 0.3,
+        "t3S": 0.6
+      },
+      "tap": {
+        "document": "Rev.01 MKLMA-ANGKE dan Sebaliknya.pdf",
+        "date": "14-Dec-18",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "dataQuality": {
+        "hasCt": true,
+        "hasVt": true,
+        "hasRelay": true,
+        "hasDistance": true,
+        "hasTapDocument": true
+      }
+    },
+    {
+      "id": "gis_150kv_daan_mogot_pht_150kv_durikosambi_1_1_33",
+      "sourceRow": 33,
+      "ultg": "ULTG ANGKE",
+      "substation": "GIS 150kV DAAN MOGOT",
+      "bay": "PHT 150kV DURIKOSAMBI#1",
+      "circuit": "#1",
+      "ctRatio": "3000/1",
+      "vtRatio": "150 kV/100 V",
+      "relay": {
+        "make": "ABB",
+        "model": "RED 670",
+        "serial": "T1645093",
+        "functionGroup": "LCD+DIST",
+        "arStatus": "INTERNAL",
+        "relayType": "Numerik",
+        "operationYear": 2019
+      },
+      "currentDiff": {
+        "in": 1,
+        "is1": 0.2,
+        "is2": 1,
+        "k1": 30,
+        "k2": 80
+      },
+      "distance": {
+        "lineImpedanceOhm": null,
+        "timeMode": "instant",
+        "z1PhPh": 2.073,
+        "z1PhGnd": 6.219,
+        "z2PhPh": 3.11,
+        "z2PhGnd": 9.329,
+        "z3PhPh": 22.212,
+        "z3PhGnd": 36.219,
+        "t1S": 0,
+        "t2S": 0.4,
+        "t3S": 1.6
+      },
+      "tap": {
+        "document": "official tap setting proteksi sutt daan mogot - durikosambi 1,2_rev01.pdf",
+        "date": "28-Aug-19",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "dataQuality": {
+        "hasCt": true,
+        "hasVt": true,
+        "hasRelay": true,
+        "hasDistance": true,
+        "hasTapDocument": true
+      }
+    },
+    {
+      "id": "gis_150kv_daan_mogot_pht_150kv_durikosambi_2_2_34",
+      "sourceRow": 34,
+      "ultg": "ULTG ANGKE",
+      "substation": "GIS 150kV DAAN MOGOT",
+      "bay": "PHT 150kV DURIKOSAMBI#2",
+      "circuit": "#2",
+      "ctRatio": "3000/1",
+      "vtRatio": "150 kV/100 V",
+      "relay": {
+        "make": "ABB",
+        "model": "RED 670",
+        "serial": "T1645092",
+        "functionGroup": "LCD+DIST",
+        "arStatus": "INTERNAL",
+        "relayType": "Numerik",
+        "operationYear": 2019
+      },
+      "currentDiff": {
+        "in": 1,
+        "is1": 0.2,
+        "is2": 1,
+        "k1": 30,
+        "k2": 80
+      },
+      "distance": {
+        "lineImpedanceOhm": null,
+        "timeMode": "instant",
+        "z1PhPh": 2.073,
+        "z1PhGnd": 6.219,
+        "z2PhPh": 3.11,
+        "z2PhGnd": 9.329,
+        "z3PhPh": 22.212,
+        "z3PhGnd": 36.219,
+        "t1S": 0,
+        "t2S": 0.4,
+        "t3S": 1.6
+      },
+      "tap": {
+        "document": "official tap setting proteksi sutt daan mogot - durikosambi 1,2_rev01.pdf",
+        "date": "28-Aug-19",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "dataQuality": {
+        "hasCt": true,
+        "hasVt": true,
+        "hasRelay": true,
+        "hasDistance": true,
+        "hasTapDocument": true
+      }
+    },
+    {
+      "id": "gis_150kv_daan_mogot_pht_150kv_pantai_indah_kapuk_1_1_35",
+      "sourceRow": 35,
+      "ultg": "ULTG ANGKE",
+      "substation": "GIS 150kV DAAN MOGOT",
+      "bay": "PHT 150kV PANTAI INDAH KAPUK#1",
+      "circuit": "#1",
+      "ctRatio": "3000/1",
+      "vtRatio": "150 kV/100 V",
+      "relay": {
+        "make": "Alstom",
+        "model": "MiCom P545",
+        "serial": "32197932/07/12",
+        "functionGroup": "LCD+DIST",
+        "arStatus": "INTERNAL",
+        "relayType": "Numerik",
+        "operationYear": 2022
+      },
+      "currentDiff": {
+        "in": 1,
+        "is1": 0.2,
+        "is2": 2,
+        "k1": 30,
+        "k2": 150
+      },
+      "distance": {
+        "lineImpedanceOhm": 11.484,
+        "timeMode": "instant",
+        "z1PhPh": 9.187,
+        "z1PhGnd": 9.187,
+        "z2PhPh": 16.696,
+        "z2PhGnd": 16.696,
+        "z3PhPh": 27.861,
+        "z3PhGnd": 27.861,
+        "t1S": 0,
+        "t2S": 0.4,
+        "t3S": 1.6
+      },
+      "tap": {
+        "document": "official tap setting proteksi sutt daan mogot - pik 1,2.pdf",
+        "date": "31-Jul-19",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "dataQuality": {
+        "hasCt": true,
+        "hasVt": true,
+        "hasRelay": true,
+        "hasDistance": true,
+        "hasTapDocument": true
+      }
+    },
+    {
+      "id": "gis_150kv_daan_mogot_pht_150kv_pantai_indah_kapuk_2_2_36",
+      "sourceRow": 36,
+      "ultg": "ULTG ANGKE",
+      "substation": "GIS 150kV DAAN MOGOT",
+      "bay": "PHT 150kV PANTAI INDAH KAPUK#2",
+      "circuit": "#2",
+      "ctRatio": "3000/1",
+      "vtRatio": "150 kV/100 V",
+      "relay": {
+        "make": "Alstom",
+        "model": "MiCom P545",
+        "serial": "34164813/08/17",
+        "functionGroup": "LCD+DIST",
+        "arStatus": "INTERNAL",
+        "relayType": "Numerik",
+        "operationYear": 2019
+      },
+      "currentDiff": {
+        "in": 1,
+        "is1": 0.2,
+        "is2": 2,
+        "k1": 30,
+        "k2": 150
+      },
+      "distance": {
+        "lineImpedanceOhm": 11.484,
+        "timeMode": "instant",
+        "z1PhPh": 9.187,
+        "z1PhGnd": 9.187,
+        "z2PhPh": 16.696,
+        "z2PhGnd": 16.696,
+        "z3PhPh": 27.861,
+        "z3PhGnd": 27.861,
+        "t1S": 0,
+        "t2S": 0.4,
+        "t3S": 1.6
+      },
+      "tap": {
+        "document": "official tap setting proteksi sutt daan mogot - pik 1,2.pdf",
+        "date": "31-Jul-19",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "dataQuality": {
+        "hasCt": true,
+        "hasVt": true,
+        "hasRelay": true,
+        "hasDistance": true,
+        "hasTapDocument": true
+      }
+    },
+    {
+      "id": "gis_150kv_grogol_pht_150kv_grogol_baru_1_1_37",
+      "sourceRow": 37,
+      "ultg": "ULTG ANGKE",
+      "substation": "GIS 150kV GROGOL",
+      "bay": "PHT 150kV GROGOL BARU#1",
+      "circuit": "#1",
+      "ctRatio": "1600/1",
+      "vtRatio": "150 kV/100 V",
+      "relay": {
+        "make": "Siemens",
+        "model": "7SL87",
+        "serial": "BM1909000341",
+        "functionGroup": "LCD+DIST",
+        "arStatus": "EXTERNAL",
+        "relayType": "Numerik",
+        "operationYear": 2019
+      },
+      "currentDiff": {
+        "in": 1,
+        "is1": 0.2,
+        "is2": 2,
+        "k1": null,
+        "k2": null
+      },
+      "distance": {
+        "lineImpedanceOhm": null,
+        "timeMode": "instant",
+        "z1PhPh": 0.484,
+        "z1PhGnd": 0.479,
+        "z2PhPh": 1.735,
+        "z2PhGnd": 1.718,
+        "z3PhPh": 3.071,
+        "z3PhGnd": 3.043,
+        "t1S": 0,
+        "t2S": 0.4,
+        "t3S": 1.6
+      },
+      "tap": {
+        "document": "Official Grogol-Grogol II.pdf",
+        "date": "23-Oct-19",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "dataQuality": {
+        "hasCt": true,
+        "hasVt": true,
+        "hasRelay": true,
+        "hasDistance": true,
+        "hasTapDocument": true
+      }
+    },
+    {
+      "id": "gis_150kv_grogol_pht_150kv_grogol_baru_2_2_38",
+      "sourceRow": 38,
+      "ultg": "ULTG ANGKE",
+      "substation": "GIS 150kV GROGOL",
+      "bay": "PHT 150kV GROGOL BARU#2",
+      "circuit": "#2",
+      "ctRatio": "1600/1",
+      "vtRatio": "150 kV/100 V",
+      "relay": {
+        "make": "Siemens",
+        "model": "7SL87",
+        "serial": "BM1909000269",
+        "functionGroup": "LCD+DIST",
+        "arStatus": "EXTERNAL",
+        "relayType": "Numerik",
+        "operationYear": 2020
+      },
+      "currentDiff": {
+        "in": 1,
+        "is1": 0.2,
+        "is2": 2,
+        "k1": null,
+        "k2": null
+      },
+      "distance": {
+        "lineImpedanceOhm": null,
+        "timeMode": "instant",
+        "z1PhPh": 0.484,
+        "z1PhGnd": 0.479,
+        "z2PhPh": 1.735,
+        "z2PhGnd": 1.718,
+        "z3PhPh": 3.071,
+        "z3PhGnd": 3.043,
+        "t1S": 0,
+        "t2S": 0.4,
+        "t3S": 1.6
+      },
+      "tap": {
+        "document": "Official Grogol-Grogol II.pdf",
+        "date": "23-Oct-19",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "dataQuality": {
+        "hasCt": true,
+        "hasVt": true,
+        "hasRelay": true,
+        "hasDistance": true,
+        "hasTapDocument": true
+      }
+    },
+    {
+      "id": "gis_150kv_grogol_pht_150kv_tomang_1_1_39",
+      "sourceRow": 39,
+      "ultg": "ULTG ANGKE",
+      "substation": "GIS 150kV GROGOL",
+      "bay": "PHT 150kV TOMANG#1",
+      "circuit": "#1",
+      "ctRatio": "2000/1",
+      "vtRatio": "150 kV/100 V",
+      "relay": {
+        "make": "Alstom",
+        "model": "MiCom P545",
+        "serial": "753937F",
+        "functionGroup": "LCD+DIST",
+        "arStatus": "NOT ACTIVE",
+        "relayType": "Numerik",
+        "operationYear": 2021
+      },
+      "currentDiff": {
+        "in": 1,
+        "is1": 0.3,
+        "is2": 2,
+        "k1": 30,
+        "k2": 150
+      },
+      "distance": {
+        "lineImpedanceOhm": 0.831,
+        "timeMode": "instant",
+        "z1PhPh": 0.664,
+        "z1PhGnd": 0.664,
+        "z2PhPh": 1.196,
+        "z2PhGnd": 1.196,
+        "z3PhPh": 1.993,
+        "z3PhGnd": 1.993,
+        "t1S": 0,
+        "t2S": 0.4,
+        "t3S": 1.2
+      },
+      "tap": {
+        "document": "official tap setting LCD, DIST, OCR grogol - tomang 1,2.pdf",
+        "date": "31-Oct-19",
+        "z1PhPh": 0.66,
+        "z1PhGnd": 0.66,
+        "z2PhPh": 1.19,
+        "z2PhGnd": 1.19,
+        "z3PhPh": 1.99,
+        "z3PhGnd": 1.99,
+        "t1S": 0,
+        "t2S": 0.4,
+        "t3S": 1.2
+      },
+      "dataQuality": {
+        "hasCt": true,
+        "hasVt": true,
+        "hasRelay": true,
+        "hasDistance": true,
+        "hasTapDocument": true
+      }
+    },
+    {
+      "id": "gis_150kv_grogol_pht_150kv_tomang_2_2_40",
+      "sourceRow": 40,
+      "ultg": "ULTG ANGKE",
+      "substation": "GIS 150kV GROGOL",
+      "bay": "PHT 150kV TOMANG#2",
+      "circuit": "#2",
+      "ctRatio": "2000/1",
+      "vtRatio": "150 kV/100 V",
+      "relay": {
+        "make": "Alstom",
+        "model": "MiCom P545",
+        "serial": "753791F",
+        "functionGroup": "LCD+DIST",
+        "arStatus": "NOT ACTIVE",
+        "relayType": "Numerik",
+        "operationYear": 2021
+      },
+      "currentDiff": {
+        "in": 1,
+        "is1": 0.3,
+        "is2": 2,
+        "k1": 30,
+        "k2": 150
+      },
+      "distance": {
+        "lineImpedanceOhm": 0.831,
+        "timeMode": "instant",
+        "z1PhPh": 0.664,
+        "z1PhGnd": 0.664,
+        "z2PhPh": 1.196,
+        "z2PhGnd": 1.196,
+        "z3PhPh": 1.993,
+        "z3PhGnd": 1.993,
+        "t1S": 0,
+        "t2S": 0.4,
+        "t3S": 1.2
+      },
+      "tap": {
+        "document": "official tap setting LCD, DIST, OCR grogol - tomang 1,2.pdf",
+        "date": "31-Oct-19",
+        "z1PhPh": 0.66,
+        "z1PhGnd": 0.66,
+        "z2PhPh": 1.19,
+        "z2PhGnd": 1.19,
+        "z3PhPh": 1.99,
+        "z3PhGnd": 1.99,
+        "t1S": 0,
+        "t2S": 0.4,
+        "t3S": 1.2
+      },
+      "dataQuality": {
+        "hasCt": true,
+        "hasVt": true,
+        "hasRelay": true,
+        "hasDistance": true,
+        "hasTapDocument": true
+      }
+    },
+    {
+      "id": "gis_150kv_grogol_baru_pht_150kv_durikosambi_1_1_41",
+      "sourceRow": 41,
+      "ultg": "ULTG ANGKE",
+      "substation": "GIS 150kV GROGOL BARU",
+      "bay": "PHT 150kV DURIKOSAMBI#1",
+      "circuit": "#1",
+      "ctRatio": "2000/1",
+      "vtRatio": "150 kV/100 V",
+      "relay": {
+        "make": "Siemens",
+        "model": "7SL87",
+        "serial": "BM1804005484",
+        "functionGroup": "LCD+DIST",
+        "arStatus": "",
+        "relayType": "Numerik",
+        "operationYear": 2019
+      },
+      "currentDiff": {
+        "in": 1,
+        "is1": 0.2,
+        "is2": 2,
+        "k1": null,
+        "k2": null
+      },
+      "distance": {
+        "lineImpedanceOhm": null,
+        "timeMode": "instant",
+        "z1PhPh": 1.955,
+        "z1PhGnd": 1.937,
+        "z2PhPh": 2.932,
+        "z2PhGnd": 2.905,
+        "z3PhPh": 28.696,
+        "z3PhGnd": 28.375,
+        "t1S": 0.1,
+        "t2S": 0.8,
+        "t3S": 1.6
+      },
+      "tap": {
+        "document": "Official Grogol II - Durikosambi.pdf",
+        "date": "23-Oct-19",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "dataQuality": {
+        "hasCt": true,
+        "hasVt": true,
+        "hasRelay": true,
+        "hasDistance": true,
+        "hasTapDocument": true
+      }
+    },
+    {
+      "id": "gis_150kv_grogol_baru_pht_150kv_durikosambi_2_2_42",
+      "sourceRow": 42,
+      "ultg": "ULTG ANGKE",
+      "substation": "GIS 150kV GROGOL BARU",
+      "bay": "PHT 150kV DURIKOSAMBI#2",
+      "circuit": "#2",
+      "ctRatio": "2000/1",
+      "vtRatio": "150 kV/100 V",
+      "relay": {
+        "make": "Siemens",
+        "model": "7SL87",
+        "serial": "BM1804005475",
+        "functionGroup": "LCD+DIST",
+        "arStatus": "",
+        "relayType": "Numerik",
+        "operationYear": 2020
+      },
+      "currentDiff": {
+        "in": 1,
+        "is1": 0.2,
+        "is2": 2,
+        "k1": null,
+        "k2": null
+      },
+      "distance": {
+        "lineImpedanceOhm": null,
+        "timeMode": "instant",
+        "z1PhPh": 1.955,
+        "z1PhGnd": 1.937,
+        "z2PhPh": 2.932,
+        "z2PhGnd": 2.905,
+        "z3PhPh": 28.696,
+        "z3PhGnd": 28.375,
+        "t1S": 0.1,
+        "t2S": 0.8,
+        "t3S": 1.6
+      },
+      "tap": {
+        "document": "Official Grogol II - Durikosambi.pdf",
+        "date": "23-Oct-19",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "dataQuality": {
+        "hasCt": true,
+        "hasVt": true,
+        "hasRelay": true,
+        "hasDistance": true,
+        "hasTapDocument": true
+      }
+    },
+    {
+      "id": "gis_150kv_grogol_baru_pht_150kv_grogol_1_1_43",
+      "sourceRow": 43,
+      "ultg": "ULTG ANGKE",
+      "substation": "GIS 150kV GROGOL BARU",
+      "bay": "PHT 150kV GROGOL#1",
+      "circuit": "#1",
+      "ctRatio": "2000/1",
+      "vtRatio": "150 kV/100 V",
+      "relay": {
+        "make": "Siemens",
+        "model": "7SL87",
+        "serial": "BM1804005481",
+        "functionGroup": "LCD+DIST",
+        "arStatus": "EXTERNAL",
+        "relayType": "Numerik",
+        "operationYear": 2019
+      },
+      "currentDiff": {
+        "in": 1,
+        "is1": 0.2,
+        "is2": 2,
+        "k1": null,
+        "k2": null
+      },
+      "distance": {
+        "lineImpedanceOhm": null,
+        "timeMode": "instant",
+        "z1PhPh": 0.604,
+        "z1PhGnd": 0.604,
+        "z2PhPh": 1.088,
+        "z2PhGnd": 1.088,
+        "z3PhPh": 1.813,
+        "z3PhGnd": 1.813,
+        "t1S": 0,
+        "t2S": 0.4,
+        "t3S": 1.6
+      },
+      "tap": {
+        "document": "Official Grogol II - Grogol.pdf",
+        "date": "23-Oct-19",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "dataQuality": {
+        "hasCt": true,
+        "hasVt": true,
+        "hasRelay": true,
+        "hasDistance": true,
+        "hasTapDocument": true
+      }
+    },
+    {
+      "id": "gis_150kv_grogol_baru_pht_150kv_grogol_2_2_44",
+      "sourceRow": 44,
+      "ultg": "ULTG ANGKE",
+      "substation": "GIS 150kV GROGOL BARU",
+      "bay": "PHT 150kV GROGOL#2",
+      "circuit": "#2",
+      "ctRatio": "2000/1",
+      "vtRatio": "150 kV/100 V",
+      "relay": {
+        "make": "Siemens",
+        "model": "7SL87",
+        "serial": "BM1804005478",
+        "functionGroup": "LCD+DIST",
+        "arStatus": "EXTERNAL",
+        "relayType": "Numerik",
+        "operationYear": 2020
+      },
+      "currentDiff": {
+        "in": 1,
+        "is1": 0.2,
+        "is2": 2,
+        "k1": null,
+        "k2": null
+      },
+      "distance": {
+        "lineImpedanceOhm": null,
+        "timeMode": "instant",
+        "z1PhPh": 0.604,
+        "z1PhGnd": 0.604,
+        "z2PhPh": 1.088,
+        "z2PhGnd": 1.088,
+        "z3PhPh": 1.813,
+        "z3PhGnd": 1.813,
+        "t1S": 0,
+        "t2S": 0.4,
+        "t3S": 1.6
+      },
+      "tap": {
+        "document": "Official Grogol II - Grogol.pdf",
+        "date": "23-Oct-19",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "dataQuality": {
+        "hasCt": true,
+        "hasVt": true,
+        "hasRelay": true,
+        "hasDistance": true,
+        "hasTapDocument": true
+      }
+    },
+    {
+      "id": "gis_150kv_kebon_jeruk_pht_150kv_durikosambi_1_1_45",
+      "sourceRow": 45,
+      "ultg": "ULTG ANGKE",
+      "substation": "GIS 150kV KEBON JERUK",
+      "bay": "PHT 150kV DURIKOSAMBI#1",
+      "circuit": "#1",
+      "ctRatio": "1000/5",
+      "vtRatio": "150 kV/100 V",
+      "relay": {
+        "make": "Alstom",
+        "model": "MiCom P545",
+        "serial": "34665002/12/18",
+        "functionGroup": "LCD+DIST",
+        "arStatus": "NOT ACTIVE",
+        "relayType": "Numerik",
+        "operationYear": 2019
+      },
+      "currentDiff": {
+        "in": 5,
+        "is1": 1.5,
+        "is2": 10,
+        "k1": 30,
+        "k2": 150
+      },
+      "distance": {
+        "lineImpedanceOhm": null,
+        "timeMode": "instant",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "tap": {
+        "document": "2021 10 22 - Rev02.Tap Setting GIS Kebon Jeruk bay Durikosambi 1,2.pdf",
+        "date": "22-Oct-21",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "dataQuality": {
+        "hasCt": true,
+        "hasVt": true,
+        "hasRelay": true,
+        "hasDistance": false,
+        "hasTapDocument": true
+      }
+    },
+    {
+      "id": "gis_150kv_kebon_jeruk_pht_150kv_durikosambi_2_2_46",
+      "sourceRow": 46,
+      "ultg": "ULTG ANGKE",
+      "substation": "GIS 150kV KEBON JERUK",
+      "bay": "PHT 150kV DURIKOSAMBI#2",
+      "circuit": "#2",
+      "ctRatio": "1000/5",
+      "vtRatio": "150 kV/100 V",
+      "relay": {
+        "make": "Alstom",
+        "model": "MiCom P545",
+        "serial": "34482258/06/18",
+        "functionGroup": "LCD+DIST",
+        "arStatus": "NOT ACTIVE",
+        "relayType": "Numerik",
+        "operationYear": 2019
+      },
+      "currentDiff": {
+        "in": 5,
+        "is1": 1,
+        "is2": 9.2,
+        "k1": 30,
+        "k2": 80
+      },
+      "distance": {
+        "lineImpedanceOhm": null,
+        "timeMode": "instant",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "tap": {
+        "document": "DAFTAR SETELAN RELAI PROTEKSI GIS 150kV KEBONJERUK_07.04.26.pdf",
+        "date": "7-Apr-26",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "dataQuality": {
+        "hasCt": true,
+        "hasVt": true,
+        "hasRelay": true,
+        "hasDistance": false,
+        "hasTapDocument": true
+      }
+    },
+    {
+      "id": "gis_150kv_kebon_jeruk_pht_150kv_karet_baru_1_1_47",
+      "sourceRow": 47,
+      "ultg": "ULTG ANGKE",
+      "substation": "GIS 150kV KEBON JERUK",
+      "bay": "PHT 150kV KARET BARU#1",
+      "circuit": "#1",
+      "ctRatio": "500/5",
+      "vtRatio": "150 kV/100 V",
+      "relay": {
+        "make": "Alstom",
+        "model": "MiCom P545",
+        "serial": "34923727/11/19",
+        "functionGroup": "LCD+DIST",
+        "arStatus": "NOT ACTIVE",
+        "relayType": "Numerik",
+        "operationYear": 2020
+      },
+      "currentDiff": {
+        "in": 5,
+        "is1": 1.5,
+        "is2": 10,
+        "k1": 30,
+        "k2": 150
+      },
+      "distance": {
+        "lineImpedanceOhm": null,
+        "timeMode": "instant",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "tap": {
+        "document": "21 10 22 - Rev02.Tap Setting GIS Kebon Jeruk bay Karet 2.pdf",
+        "date": "22-Oct-21",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "dataQuality": {
+        "hasCt": true,
+        "hasVt": true,
+        "hasRelay": true,
+        "hasDistance": false,
+        "hasTapDocument": true
+      }
+    },
+    {
+      "id": "gis_150kv_kebon_jeruk_pht_150kv_karet_baru_2_2_48",
+      "sourceRow": 48,
+      "ultg": "ULTG ANGKE",
+      "substation": "GIS 150kV KEBON JERUK",
+      "bay": "PHT 150kV KARET BARU#2",
+      "circuit": "#2",
+      "ctRatio": "500/5",
+      "vtRatio": "150 kV/100 V",
+      "relay": {
+        "make": "Alstom",
+        "model": "MiCom P545",
+        "serial": "34485202/06/18",
+        "functionGroup": "LCD+DIST",
+        "arStatus": "NOT ACTIVE",
+        "relayType": "Numerik",
+        "operationYear": 2020
+      },
+      "currentDiff": {
+        "in": 5,
+        "is1": 1.5,
+        "is2": 10,
+        "k1": 30,
+        "k2": 150
+      },
+      "distance": {
+        "lineImpedanceOhm": null,
+        "timeMode": "instant",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "tap": {
+        "document": "21 10 22 - Rev02.Tap Setting GIS Kebon Jeruk bay Karet 2.pdf",
+        "date": "22-Oct-21",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "dataQuality": {
+        "hasCt": true,
+        "hasVt": true,
+        "hasRelay": true,
+        "hasDistance": false,
+        "hasTapDocument": true
+      }
+    },
+    {
+      "id": "gis_150kv_muarakarang_baru_pht_150kv_muarakarang_baru_1_1_49",
+      "sourceRow": 49,
+      "ultg": "ULTG ANGKE",
+      "substation": "GIS 150kV MUARAKARANG BARU",
+      "bay": "PHT 150kV MUARAKARANG BARU#1",
+      "circuit": "#1",
+      "ctRatio": "2000/1",
+      "vtRatio": "150 kV/100 V",
+      "relay": {
+        "make": "ALSTOM",
+        "model": "MICOM P545",
+        "serial": "34724838/02/19",
+        "functionGroup": "LCD+DIST",
+        "arStatus": "NOT ACTIVE",
+        "relayType": "Numerik",
+        "operationYear": 2022
+      },
+      "currentDiff": {
+        "in": 1,
+        "is1": 0.3,
+        "is2": 2,
+        "k1": 30,
+        "k2": 150
+      },
+      "distance": {
+        "lineImpedanceOhm": 0.05,
+        "timeMode": "instant",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "tap": {
+        "document": "Copy of UGC GIS Muarakarang Baru - Mkarang Baru (AIS) Sirkit 1_LCD P545_OCR P142_rev01.pdf",
+        "date": "1-Oct-21",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "dataQuality": {
+        "hasCt": true,
+        "hasVt": true,
+        "hasRelay": true,
+        "hasDistance": false,
+        "hasTapDocument": true
+      }
+    },
+    {
+      "id": "gis_150kv_muarakarang_baru_pht_150kv_muarakarang_baru_2_2_50",
+      "sourceRow": 50,
+      "ultg": "ULTG ANGKE",
+      "substation": "GIS 150kV MUARAKARANG BARU",
+      "bay": "PHT 150kV MUARAKARANG BARU#2",
+      "circuit": "#2",
+      "ctRatio": "2000/1",
+      "vtRatio": "150 kV/100 V",
+      "relay": {
+        "make": "ALSTOM",
+        "model": "MICOM P545",
+        "serial": "34724836/02/19",
+        "functionGroup": "LCD+DIST",
+        "arStatus": "NOT ACTIVE",
+        "relayType": "Numerik",
+        "operationYear": 2022
+      },
+      "currentDiff": {
+        "in": 1,
+        "is1": 0.3,
+        "is2": 2,
+        "k1": 30,
+        "k2": 150
+      },
+      "distance": {
+        "lineImpedanceOhm": 0.05,
+        "timeMode": "instant",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "tap": {
+        "document": "Copy of UGC GIS Muarakarang Baru - Mkarang Baru (AIS) Sirkit 2_LCD P545_OCR P142_rev01.pdf",
+        "date": "1-Sep-21",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "dataQuality": {
+        "hasCt": true,
+        "hasVt": true,
+        "hasRelay": true,
+        "hasDistance": false,
+        "hasTapDocument": true
+      }
+    },
+    {
+      "id": "gis_150kv_muarakarang_baru_pht_150kv_pantai_indah_kapuk_1_1_51",
+      "sourceRow": 51,
+      "ultg": "ULTG ANGKE",
+      "substation": "GIS 150kV MUARAKARANG BARU",
+      "bay": "PHT 150kV PANTAI INDAH KAPUK#1",
+      "circuit": "#1",
+      "ctRatio": "4000/1",
+      "vtRatio": "150 kV/100 V",
+      "relay": {
+        "make": "ALSTOM",
+        "model": "MICOM P545",
+        "serial": "34724837/02/19",
+        "functionGroup": "LCD+DIST",
+        "arStatus": "EXTERNAL",
+        "relayType": "Numerik",
+        "operationYear": 2022
+      },
+      "currentDiff": {
+        "in": 1,
+        "is1": 0.3,
+        "is2": 2,
+        "k1": 30,
+        "k2": 150
+      },
+      "distance": {
+        "lineImpedanceOhm": 15.82,
+        "timeMode": "instant",
+        "z1PhPh": 12.657,
+        "z1PhGnd": 12.657,
+        "z2PhPh": 22.457,
+        "z2PhGnd": 22.457,
+        "z3PhPh": 37.36,
+        "z3PhGnd": 37.36,
+        "t1S": 0,
+        "t2S": 0.4,
+        "t3S": 1.6
+      },
+      "tap": {
+        "document": "GIS MUARAKARANG BARU BAY PIK 1,2.PDF",
+        "date": "13-Apr-22",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "dataQuality": {
+        "hasCt": true,
+        "hasVt": true,
+        "hasRelay": true,
+        "hasDistance": true,
+        "hasTapDocument": true
+      }
+    },
+    {
+      "id": "gis_150kv_muarakarang_baru_pht_150kv_pantai_indah_kapuk_2_2_52",
+      "sourceRow": 52,
+      "ultg": "ULTG ANGKE",
+      "substation": "GIS 150kV MUARAKARANG BARU",
+      "bay": "PHT 150kV PANTAI INDAH KAPUK#2",
+      "circuit": "#2",
+      "ctRatio": "4000/1",
+      "vtRatio": "150 kV/100 V",
+      "relay": {
+        "make": "ALSTOM",
+        "model": "MICOM P545",
+        "serial": "34724835/02/19",
+        "functionGroup": "LCD+DIST",
+        "arStatus": "EXTERNAL",
+        "relayType": "Numerik",
+        "operationYear": 2022
+      },
+      "currentDiff": {
+        "in": 1,
+        "is1": 0.3,
+        "is2": 2,
+        "k1": 30,
+        "k2": 150
+      },
+      "distance": {
+        "lineImpedanceOhm": 15.82,
+        "timeMode": "instant",
+        "z1PhPh": 12.657,
+        "z1PhGnd": 12.657,
+        "z2PhPh": 22.457,
+        "z2PhGnd": 22.457,
+        "z3PhPh": 37.36,
+        "z3PhGnd": 37.36,
+        "t1S": 0,
+        "t2S": 0.4,
+        "t3S": 1.6
+      },
+      "tap": {
+        "document": "GIS MUARAKARANG BARU BAY PIK 1,2.PDF",
+        "date": "13-Apr-22",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "dataQuality": {
+        "hasCt": true,
+        "hasVt": true,
+        "hasRelay": true,
+        "hasDistance": true,
+        "hasTapDocument": true
+      }
+    },
+    {
+      "id": "gis_150kv_new_senayan_pht_150kv_kembangan_1_1_53",
+      "sourceRow": 53,
+      "ultg": "ULTG ANGKE",
+      "substation": "GIS 150kV NEW SENAYAN",
+      "bay": "PHT 150kV KEMBANGAN#1",
+      "circuit": "#1",
+      "ctRatio": "1000/5",
+      "vtRatio": "150 kV/100 V",
+      "relay": {
+        "make": "GE",
+        "model": "MICOM P546",
+        "serial": "37132771/07/25",
+        "functionGroup": "LCD+DIST",
+        "arStatus": "INTERNAL",
+        "relayType": "Numerik",
+        "operationYear": 2025
+      },
+      "currentDiff": {
+        "in": 5,
+        "is1": 0.93,
+        "is2": 9.25,
+        "k1": 30,
+        "k2": 80
+      },
+      "distance": {
+        "lineImpedanceOhm": 0.15,
+        "timeMode": "instant",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "tap": {
+        "document": "(Official) NEW SENAYAN - KEMBANGAN 1 DAN 2 - TAP MICOM P545-546_Revisi 1.pdf",
+        "date": "5-Nov-25",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "dataQuality": {
+        "hasCt": true,
+        "hasVt": true,
+        "hasRelay": true,
+        "hasDistance": false,
+        "hasTapDocument": true
+      }
+    },
+    {
+      "id": "gis_150kv_new_senayan_pht_150kv_kembangan_2_2_54",
+      "sourceRow": 54,
+      "ultg": "ULTG ANGKE",
+      "substation": "GIS 150kV NEW SENAYAN",
+      "bay": "PHT 150kV KEMBANGAN#2",
+      "circuit": "#2",
+      "ctRatio": "1000/5",
+      "vtRatio": "150 kV/100 V",
+      "relay": {
+        "make": "GE",
+        "model": "MICOM P546",
+        "serial": "37132773/07/25",
+        "functionGroup": "LCD+DIST",
+        "arStatus": "INTERNAL",
+        "relayType": "Numerik",
+        "operationYear": 2025
+      },
+      "currentDiff": {
+        "in": 5,
+        "is1": 0.93,
+        "is2": 9.25,
+        "k1": 30,
+        "k2": 80
+      },
+      "distance": {
+        "lineImpedanceOhm": 0.15,
+        "timeMode": "instant",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "tap": {
+        "document": "(Official) NEW SENAYAN - KEMBANGAN 1 DAN 2 - TAP MICOM P545-546_Revisi 1.pdf",
+        "date": "5-Nov-25",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "dataQuality": {
+        "hasCt": true,
+        "hasVt": true,
+        "hasRelay": true,
+        "hasDistance": false,
+        "hasTapDocument": true
+      }
+    },
+    {
+      "id": "gis_150kv_new_senayan_pht_150kv_senayan_1_1_55",
+      "sourceRow": 55,
+      "ultg": "ULTG ANGKE",
+      "substation": "GIS 150kV NEW SENAYAN",
+      "bay": "PHT 150kV SENAYAN#1",
+      "circuit": "#1",
+      "ctRatio": "2000/1",
+      "vtRatio": "150 kV/100 V",
+      "relay": {
+        "make": "Alstom",
+        "model": "MiCom P545",
+        "serial": "33493424/11/15",
+        "functionGroup": "LCD+DIST",
+        "arStatus": "NOT ACTIVE",
+        "relayType": "Numerik",
+        "operationYear": 2019
+      },
+      "currentDiff": {
+        "in": 1,
+        "is1": 0.2,
+        "is2": 2,
+        "k1": 30,
+        "k2": 150
+      },
+      "distance": {
+        "lineImpedanceOhm": 0.12,
+        "timeMode": "instant",
+        "z1PhPh": 0.944,
+        "z1PhGnd": 0.944,
+        "z2PhPh": 1.846,
+        "z2PhGnd": 1.846,
+        "z3PhPh": 3.109,
+        "z3PhGnd": 3.109,
+        "t1S": 0,
+        "t2S": 0.4,
+        "t3S": 1.6
+      },
+      "tap": {
+        "document": "Rev.02 NewSenayan-Senayan1,2 (1).pdf",
+        "date": "14-Nov-19",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "dataQuality": {
+        "hasCt": true,
+        "hasVt": true,
+        "hasRelay": true,
+        "hasDistance": true,
+        "hasTapDocument": true
+      }
+    },
+    {
+      "id": "gis_150kv_new_senayan_pht_150kv_senayan_2_2_56",
+      "sourceRow": 56,
+      "ultg": "ULTG ANGKE",
+      "substation": "GIS 150kV NEW SENAYAN",
+      "bay": "PHT 150kV SENAYAN#2",
+      "circuit": "#2",
+      "ctRatio": "2000/1",
+      "vtRatio": "150 kV/100 V",
+      "relay": {
+        "make": "Alstom",
+        "model": "MiCom P545",
+        "serial": "33493423/11/15",
+        "functionGroup": "LCD+DIST",
+        "arStatus": "NOT ACTIVE",
+        "relayType": "Numerik",
+        "operationYear": 2019
+      },
+      "currentDiff": {
+        "in": 1,
+        "is1": 0.2,
+        "is2": 2,
+        "k1": 30,
+        "k2": 150
+      },
+      "distance": {
+        "lineImpedanceOhm": 0.12,
+        "timeMode": "instant",
+        "z1PhPh": 0.944,
+        "z1PhGnd": 0.944,
+        "z2PhPh": 1.846,
+        "z2PhGnd": 1.846,
+        "z3PhPh": 3.109,
+        "z3PhGnd": 3.109,
+        "t1S": 0,
+        "t2S": 0.4,
+        "t3S": 1.6
+      },
+      "tap": {
+        "document": "Rev.02 NewSenayan-Senayan1,2 (1).pdf",
+        "date": "14-Nov-19",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "dataQuality": {
+        "hasCt": true,
+        "hasVt": true,
+        "hasRelay": true,
+        "hasDistance": true,
+        "hasTapDocument": true
+      }
+    },
+    {
+      "id": "gis_150kv_new_senayan_pht_150kv_ulujami_1_1_57",
+      "sourceRow": 57,
+      "ultg": "ULTG ANGKE",
+      "substation": "GIS 150kV NEW SENAYAN",
+      "bay": "PHT 150kV ULUJAMI#1",
+      "circuit": "#1",
+      "ctRatio": "2000/1",
+      "vtRatio": "150 kV/100 V",
+      "relay": {
+        "make": "NR",
+        "model": "PCS-931",
+        "serial": "NRJB2015511480260",
+        "functionGroup": "LCD+DIST",
+        "arStatus": "NOT ACTIVE",
+        "relayType": "Numerik",
+        "operationYear": 2021
+      },
+      "currentDiff": {
+        "in": 1,
+        "is1": 0.2,
+        "is2": 1,
+        "k1": null,
+        "k2": null
+      },
+      "distance": {
+        "lineImpedanceOhm": 0.301,
+        "timeMode": "instant",
+        "z1PhPh": 0.24,
+        "z1PhGnd": 0.24,
+        "z2PhPh": 0.433,
+        "z2PhGnd": 0.433,
+        "z3PhPh": 0.721,
+        "z3PhGnd": 0.721,
+        "t1S": 0,
+        "t2S": 0.4,
+        "t3S": 1.6
+      },
+      "tap": {
+        "document": "151. LCD_PCS931_PCS9611_New Senayan - Senayan Baru II #1.pdf",
+        "date": "13-Nov-20",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "dataQuality": {
+        "hasCt": true,
+        "hasVt": true,
+        "hasRelay": true,
+        "hasDistance": true,
+        "hasTapDocument": true
+      }
+    },
+    {
+      "id": "gis_150kv_new_senayan_pht_150kv_ulujami_2_2_58",
+      "sourceRow": 58,
+      "ultg": "ULTG ANGKE",
+      "substation": "GIS 150kV NEW SENAYAN",
+      "bay": "PHT 150kV ULUJAMI#2",
+      "circuit": "#2",
+      "ctRatio": "2000/1",
+      "vtRatio": "150 kV/100 V",
+      "relay": {
+        "make": "GE Alstom",
+        "model": "MiCom P545",
+        "serial": "34733776/03/19",
+        "functionGroup": "LCD+DIST",
+        "arStatus": "NOT ACTIVE",
+        "relayType": "Numerik",
+        "operationYear": 2021
+      },
+      "currentDiff": {
+        "in": 1,
+        "is1": 0.2,
+        "is2": 2,
+        "k1": 30,
+        "k2": 150
+      },
+      "distance": {
+        "lineImpedanceOhm": 0.301,
+        "timeMode": "instant",
+        "z1PhPh": 0.24,
+        "z1PhGnd": 0.24,
+        "z2PhPh": 0.433,
+        "z2PhGnd": 0.433,
+        "z3PhPh": 0.721,
+        "z3PhGnd": 0.721,
+        "t1S": 0,
+        "t2S": 0.4,
+        "t3S": 1.6
+      },
+      "tap": {
+        "document": "REV01 152. LCD_P545_PCS9611_NEW SENAYAN - NEW SENAYAN II #2 (signed).pdf",
+        "date": "1-Apr-21",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "dataQuality": {
+        "hasCt": true,
+        "hasVt": true,
+        "hasRelay": true,
+        "hasDistance": true,
+        "hasTapDocument": true
+      }
+    },
+    {
+      "id": "gis_150kv_pantai_indah_kapuk_pht_150kv_daan_mogot_1_1_59",
+      "sourceRow": 59,
+      "ultg": "ULTG ANGKE",
+      "substation": "GIS 150kV PANTAI INDAH KAPUK",
+      "bay": "PHT 150kV DAAN MOGOT#1",
+      "circuit": "#1",
+      "ctRatio": "4000/1",
+      "vtRatio": "150 kV/100 V",
+      "relay": {
+        "make": "Alstom",
+        "model": "MiCom P545",
+        "serial": "32288899/09/12",
+        "functionGroup": "LCD+DIST",
+        "arStatus": "INTERNAL",
+        "relayType": "Numerik",
+        "operationYear": 2016
+      },
+      "currentDiff": {
+        "in": 1,
+        "is1": 0.2,
+        "is2": 2,
+        "k1": 30,
+        "k2": 150
+      },
+      "distance": {
+        "lineImpedanceOhm": 15.31,
+        "timeMode": "instant",
+        "z1PhPh": 12.249,
+        "z1PhGnd": 12.249,
+        "z2PhPh": 18.374,
+        "z2PhGnd": 18.374,
+        "z3PhPh": 26.762,
+        "z3PhGnd": 26.762,
+        "t1S": 0,
+        "t2S": 0.4,
+        "t3S": 1.6
+      },
+      "tap": {
+        "document": "official tap setting proteksi sutt pik - daan mogot 1,2.pdf",
+        "date": "31-Jul-19",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "dataQuality": {
+        "hasCt": true,
+        "hasVt": true,
+        "hasRelay": true,
+        "hasDistance": true,
+        "hasTapDocument": true
+      }
+    },
+    {
+      "id": "gis_150kv_pantai_indah_kapuk_pht_150kv_daan_mogot_2_2_60",
+      "sourceRow": 60,
+      "ultg": "ULTG ANGKE",
+      "substation": "GIS 150kV PANTAI INDAH KAPUK",
+      "bay": "PHT 150kV DAAN MOGOT#2",
+      "circuit": "#2",
+      "ctRatio": "4000/1",
+      "vtRatio": "150 kV/100 V",
+      "relay": {
+        "make": "Alstom",
+        "model": "MiCom P545",
+        "serial": "32288900/09/12",
+        "functionGroup": "LCD+DIST",
+        "arStatus": "INTERNAL",
+        "relayType": "Numerik",
+        "operationYear": 2016
+      },
+      "currentDiff": {
+        "in": 1,
+        "is1": 0.2,
+        "is2": 2,
+        "k1": 30,
+        "k2": 150
+      },
+      "distance": {
+        "lineImpedanceOhm": 15.31,
+        "timeMode": "instant",
+        "z1PhPh": 12.249,
+        "z1PhGnd": 12.249,
+        "z2PhPh": 18.374,
+        "z2PhGnd": 18.374,
+        "z3PhPh": 26.762,
+        "z3PhGnd": 26.762,
+        "t1S": 0,
+        "t2S": 0.4,
+        "t3S": 1.6
+      },
+      "tap": {
+        "document": "official tap setting proteksi sutt pik - daan mogot 1,2.pdf",
+        "date": "31-Jul-19",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "dataQuality": {
+        "hasCt": true,
+        "hasVt": true,
+        "hasRelay": true,
+        "hasDistance": true,
+        "hasTapDocument": true
+      }
+    },
+    {
+      "id": "gis_150kv_pantai_indah_kapuk_pht_150kv_gis_muarakarang_baru_1_1_61",
+      "sourceRow": 61,
+      "ultg": "ULTG ANGKE",
+      "substation": "GIS 150kV PANTAI INDAH KAPUK",
+      "bay": "PHT 150kV GIS MUARAKARANG BARU#1",
+      "circuit": "#1",
+      "ctRatio": "4000/1",
+      "vtRatio": "150 kV/100 V",
+      "relay": {
+        "make": "Alstom",
+        "model": "MiCom P545",
+        "serial": "197931U",
+        "functionGroup": "LCD+DIST",
+        "arStatus": "EXTERNAL",
+        "relayType": "Numerik",
+        "operationYear": 2016
+      },
+      "currentDiff": {
+        "in": 1,
+        "is1": 0.2,
+        "is2": 2,
+        "k1": 30,
+        "k2": 150
+      },
+      "distance": {
+        "lineImpedanceOhm": 15.65,
+        "timeMode": "instant",
+        "z1PhPh": 12.516,
+        "z1PhGnd": 12.516,
+        "z2PhPh": 18.774,
+        "z2PhGnd": 18.774,
+        "z3PhPh": 19.41,
+        "z3PhGnd": 19.41,
+        "t1S": 0,
+        "t2S": 0.8,
+        "t3S": 1.6
+      },
+      "tap": {
+        "document": "2021 03 24 - Tap Setting GIS Pantai Indah Kapuk Bay Muarakarang Baru #1,2.pdf",
+        "date": "24-Mar-21",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "dataQuality": {
+        "hasCt": true,
+        "hasVt": true,
+        "hasRelay": true,
+        "hasDistance": true,
+        "hasTapDocument": true
+      }
+    },
+    {
+      "id": "gis_150kv_pantai_indah_kapuk_pht_150kv_gis_muarakarang_baru_2_2_62",
+      "sourceRow": 62,
+      "ultg": "ULTG ANGKE",
+      "substation": "GIS 150kV PANTAI INDAH KAPUK",
+      "bay": "PHT 150kV GIS MUARAKARANG BARU#2",
+      "circuit": "#2",
+      "ctRatio": "4000/1",
+      "vtRatio": "150 kV/100 V",
+      "relay": {
+        "make": "Alstom",
+        "model": "MiCom P545",
+        "serial": "32197933/06/12",
+        "functionGroup": "LCD+DIST",
+        "arStatus": "EXTERNAL",
+        "relayType": "Numerik",
+        "operationYear": 2016
+      },
+      "currentDiff": {
+        "in": 1,
+        "is1": 0.2,
+        "is2": 2,
+        "k1": 30,
+        "k2": 150
+      },
+      "distance": {
+        "lineImpedanceOhm": 15.65,
+        "timeMode": "instant",
+        "z1PhPh": 12.516,
+        "z1PhGnd": 12.516,
+        "z2PhPh": 18.774,
+        "z2PhGnd": 18.774,
+        "z3PhPh": 19.41,
+        "z3PhGnd": 19.41,
+        "t1S": 0,
+        "t2S": 0.8,
+        "t3S": 1.6
+      },
+      "tap": {
+        "document": "2021 03 24 - Tap Setting GIS Pantai Indah Kapuk Bay Muarakarang Baru #1,2.pdf",
+        "date": "24-Mar-21",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "dataQuality": {
+        "hasCt": true,
+        "hasVt": true,
+        "hasRelay": true,
+        "hasDistance": true,
+        "hasTapDocument": true
+      }
+    },
+    {
+      "id": "gis_150kv_tomang_pht_150kv_grogol_1_1_63",
+      "sourceRow": 63,
+      "ultg": "ULTG ANGKE",
+      "substation": "GIS 150kV TOMANG",
+      "bay": "PHT 150kV GROGOL#1",
+      "circuit": "#1",
+      "ctRatio": "2000/1",
+      "vtRatio": "150 kV/100 V",
+      "relay": {
+        "make": "Alstom",
+        "model": "MiCom P545",
+        "serial": "",
+        "functionGroup": "LCD+DIST",
+        "arStatus": "NOT ACTIVE",
+        "relayType": "Numerik",
+        "operationYear": 2021
+      },
+      "currentDiff": {
+        "in": 1,
+        "is1": 0.3,
+        "is2": 2,
+        "k1": 30,
+        "k2": 150
+      },
+      "distance": {
+        "lineImpedanceOhm": 0.831,
+        "timeMode": "instant",
+        "z1PhPh": 0.664,
+        "z1PhGnd": 0.664,
+        "z2PhPh": 1.148,
+        "z2PhGnd": 1.148,
+        "z3PhPh": 2.38,
+        "z3PhGnd": 2.38,
+        "t1S": 0,
+        "t2S": 0.4,
+        "t3S": 1.2
+      },
+      "tap": {
+        "document": "official tap setting LCD, DIST, OCR tomang - grogol 1,2.pdf",
+        "date": "31-Oct-19",
+        "z1PhPh": 0.66,
+        "z1PhGnd": 0.66,
+        "z2PhPh": 1.15,
+        "z2PhGnd": 1.15,
+        "z3PhPh": 2.38,
+        "z3PhGnd": 2.38,
+        "t1S": 0,
+        "t2S": 0.4,
+        "t3S": 1.2
+      },
+      "dataQuality": {
+        "hasCt": true,
+        "hasVt": true,
+        "hasRelay": true,
+        "hasDistance": true,
+        "hasTapDocument": true
+      }
+    },
+    {
+      "id": "gis_150kv_tomang_pht_150kv_grogol_2_2_64",
+      "sourceRow": 64,
+      "ultg": "ULTG ANGKE",
+      "substation": "GIS 150kV TOMANG",
+      "bay": "PHT 150kV GROGOL#2",
+      "circuit": "#2",
+      "ctRatio": "2000/1",
+      "vtRatio": "150 kV/100 V",
+      "relay": {
+        "make": "Alstom",
+        "model": "MiCom P545",
+        "serial": "",
+        "functionGroup": "LCD+DIST",
+        "arStatus": "NOT ACTIVE",
+        "relayType": "Numerik",
+        "operationYear": 2021
+      },
+      "currentDiff": {
+        "in": 1,
+        "is1": 0.3,
+        "is2": 2,
+        "k1": 30,
+        "k2": 150
+      },
+      "distance": {
+        "lineImpedanceOhm": 0.831,
+        "timeMode": "instant",
+        "z1PhPh": 0.664,
+        "z1PhGnd": 0.664,
+        "z2PhPh": 1.148,
+        "z2PhGnd": 1.148,
+        "z3PhPh": 2.38,
+        "z3PhGnd": 2.38,
+        "t1S": 0,
+        "t2S": 0.4,
+        "t3S": 1.2
+      },
+      "tap": {
+        "document": "official tap setting LCD, DIST, OCR tomang - grogol 1,2.pdf",
+        "date": "31-Oct-19",
+        "z1PhPh": 0.66,
+        "z1PhGnd": 0.66,
+        "z2PhPh": 1.15,
+        "z2PhGnd": 1.15,
+        "z3PhPh": 2.38,
+        "z3PhGnd": 2.38,
+        "t1S": 0,
+        "t2S": 0.4,
+        "t3S": 1.2
+      },
+      "dataQuality": {
+        "hasCt": true,
+        "hasVt": true,
+        "hasRelay": true,
+        "hasDistance": true,
+        "hasTapDocument": true
+      }
+    },
+    {
+      "id": "gis_150kv_ulujami_pht_150kv_new_senayan_1_1_65",
+      "sourceRow": 65,
+      "ultg": "ULTG ANGKE",
+      "substation": "GIS 150kV ULUJAMI",
+      "bay": "PHT 150kV NEW SENAYAN#1",
+      "circuit": "#1",
+      "ctRatio": "2000/1",
+      "vtRatio": "150 kV/100 V",
+      "relay": {
+        "make": "NR",
+        "model": "PCS-931",
+        "serial": "NRJB20155116B0230[CE4B8B]",
+        "functionGroup": "LCD+DIST",
+        "arStatus": "NOT ACTIVE",
+        "relayType": "Numerik",
+        "operationYear": 2021
+      },
+      "currentDiff": {
+        "in": 1,
+        "is1": 0.2,
+        "is2": null,
+        "k1": null,
+        "k2": null
+      },
+      "distance": {
+        "lineImpedanceOhm": null,
+        "timeMode": "instant",
+        "z1PhPh": 0.24,
+        "z1PhGnd": 0.24,
+        "z2PhPh": 0.982,
+        "z2PhGnd": 0.982,
+        "z3PhPh": 5.018,
+        "z3PhGnd": 5.018,
+        "t1S": 0,
+        "t2S": 0.4,
+        "t3S": 1.6
+      },
+      "tap": {
+        "document": "20210401_ULUJAMI_NEW SENAYAN_1 (LCD).pdf",
+        "date": "3-Apr-21",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "dataQuality": {
+        "hasCt": true,
+        "hasVt": true,
+        "hasRelay": true,
+        "hasDistance": true,
+        "hasTapDocument": true
+      }
+    },
+    {
+      "id": "gis_150kv_ulujami_pht_150kv_new_senayan_2_2_66",
+      "sourceRow": 66,
+      "ultg": "ULTG ANGKE",
+      "substation": "GIS 150kV ULUJAMI",
+      "bay": "PHT 150kV NEW SENAYAN#2",
+      "circuit": "#2",
+      "ctRatio": "2000/1",
+      "vtRatio": "150 kV/100 V",
+      "relay": {
+        "make": "GE Alstom",
+        "model": "MiCom P545",
+        "serial": "34733777/03/19",
+        "functionGroup": "LCD+DIST",
+        "arStatus": "NOT ACTIVE",
+        "relayType": "Numerik",
+        "operationYear": 2021
+      },
+      "currentDiff": {
+        "in": 1,
+        "is1": 0.2,
+        "is2": 2,
+        "k1": 30,
+        "k2": 150
+      },
+      "distance": {
+        "lineImpedanceOhm": 0.301,
+        "timeMode": "instant",
+        "z1PhPh": 0.24,
+        "z1PhGnd": 0.24,
+        "z2PhPh": 0.982,
+        "z2PhGnd": 0.982,
+        "z3PhPh": 5.018,
+        "z3PhGnd": 5.018,
+        "t1S": 0,
+        "t2S": 0.4,
+        "t3S": 1.6
+      },
+      "tap": {
+        "document": "20210401_ULUJAMI_NEW SENAYAN_2.pdf",
+        "date": "3-Apr-21",
+        "z1PhPh": null,
+        "z1PhGnd": null,
+        "z2PhPh": null,
+        "z2PhGnd": null,
+        "z3PhPh": null,
+        "z3PhGnd": null,
+        "t1S": null,
+        "t2S": null,
+        "t3S": null
+      },
+      "dataQuality": {
+        "hasCt": true,
+        "hasVt": true,
+        "hasRelay": true,
+        "hasDistance": true,
+        "hasTapDocument": true
+      }
+    }
+  ]
+}

@@ -1,0 +1,1655 @@
+{
+  "summary": {
+    "generatedAt": "2026-05-09T11:17:17.344Z",
+    "roots": [
+      "C:\\Users\\hafizna.fadhli\\Downloads\\ULTG DURIKOSAMBI-20230215T100950Z-001",
+      "C:\\Users\\hafizna.fadhli\\Downloads"
+    ],
+    "fileCount": 39,
+    "byDocumentType": {
+      "sld": 21,
+      "validation_ct": 1,
+      "validation_pms": 1,
+      "validation_pmt": 1,
+      "supporting_pdf": 3,
+      "tap_setting": 12
+    },
+    "byExtractionStatus": {
+      "text_layer": 35,
+      "scanned_needs_ocr": 4
+    }
+  },
+  "records": [
+    {
+      "id": "users_hafizna_fadhli_downloads_ultg_durikosambi_20230215t100950z_001_ultg_durikosambi_gi_angke_single_line_angke_ver_8_2021_pdf",
+      "fileName": "SINGLE LINE ANGKE Ver 8 2021.pdf",
+      "fullPath": "C:\\Users\\hafizna.fadhli\\Downloads\\ULTG DURIKOSAMBI-20230215T100950Z-001\\ULTG DURIKOSAMBI\\GI ANGKE\\SINGLE LINE ANGKE Ver 8 2021.pdf",
+      "stationFolder": "GI ANGKE",
+      "localStationHint": "ANGKE",
+      "documentType": "sld",
+      "extractionStatus": "text_layer",
+      "extractionError": "",
+      "pageCount": 1,
+      "sizeBytes": 154205,
+      "lastModified": "2026-05-09T03:24:18.236Z",
+      "stationHints": [
+        "DURIKOSAMBI",
+        "MUARAKARANG LAMA",
+        "MUARAKARANG",
+        "ANGKE",
+        "KARET LAMA",
+        "ANCOL",
+        "KETAPANG"
+      ],
+      "bayHints": [],
+      "relayHints": [],
+      "functionHints": [
+        "AR"
+      ],
+      "endpointCandidates": [
+        {
+          "id": "gi_angke_durikosambi_single_line_angke_ver_8_2021_pdf",
+          "localStation": "ANGKE",
+          "remoteStation": "DURIKOSAMBI",
+          "source": "sld_text_layer",
+          "confidence": "low",
+          "evidence": "514 TELP. 021 7542656, 7543566 FAX. 021 7542516 WWW.PLN.CO.ID PLN UIT JBB - UPT DURIKOSAMBI SLD/DRKS.34001075/SMA-001 DIGAMBAR LOLA DATA DIPERIKSA K. AGUNG SATRIA DISETUJUI GUNAWAN WIJAYA TANGGAL 29 AGUSTUS 2022"
+        },
+        {
+          "id": "gi_angke_muarakarang_lama_single_line_angke_ver_8_2021_pdf",
+          "localStation": "ANGKE",
+          "remoteStation": "MUARAKARANG LAMA",
+          "source": "sld_text_layer",
+          "confidence": "high",
+          "evidence": "MUARAKARANG LAMA TACSR 410 1 X 480,86 MM2 (1324 A) 2 150 KV KARET LAMA 1 ACFR 315/40 2 X 348,47 MM2 ( 2650 A ) ALAMAT : JL. JEMBATAN 3 N"
+        },
+        {
+          "id": "gi_angke_muarakarang_single_line_angke_ver_8_2021_pdf",
+          "localStation": "ANGKE",
+          "remoteStation": "MUARAKARANG",
+          "source": "sld_text_layer",
+          "confidence": "high",
+          "evidence": "MUARAKARANG LAMA TACSR 410 1 X 480,86 MM2 (1324 A) 2 150 KV KARET LAMA 1 ACFR 315/40 2 X 348,47 MM2 ( 2650 A ) ALAMAT : JL. JEMBATA"
+        },
+        {
+          "id": "gi_angke_karet_lama_single_line_angke_ver_8_2021_pdf",
+          "localStation": "ANGKE",
+          "remoteStation": "KARET LAMA",
+          "source": "sld_text_layer",
+          "confidence": "high",
+          "evidence": "MUARAKARANG LAMA TACSR 410 1 X 480,86 MM2 (1324 A) 2 150 KV KARET LAMA 1 ACFR 315/40 2 X 348,47 MM2 ( 2650 A ) ALAMAT : JL. JEMBATAN 3 NO.1, PEJAGALAN, PENJARINGAN, JAKARTA UTARA KOORDINAT :"
+        },
+        {
+          "id": "gi_angke_ancol_single_line_angke_ver_8_2021_pdf",
+          "localStation": "ANGKE",
+          "remoteStation": "ANCOL",
+          "source": "sld_text_layer",
+          "confidence": "medium",
+          "evidence": "A 150-300-2000- 4000/5 A 3150 A KAPASITOR 1 25 MVAR 1600 A KAPASITOR 2 25 MVAR ANCOL 2 ACCC WARSAW 1 X 547,9 MM2 (1766 A) ANCOL 2 ACCC WARSAW 1 X 547,9 MM2 (1766 A) 4000 A 2000- 4000/5 A 4000 A 4000 A 200"
+        },
+        {
+          "id": "gi_angke_ketapang_single_line_angke_ver_8_2021_pdf",
+          "localStation": "ANGKE",
+          "remoteStation": "KETAPANG",
+          "source": "sld_text_layer",
+          "confidence": "high",
+          "evidence": "2000-4000/5 A 150-300/5 A 2000/5 A 150-300-2000-4000/5 A 150-300/5 A 2000/5 A I KETAPANG XLPE CU 1 X 1000 MM2 ( 920 A ) 150 KV/V3 110 V/V3 1600 A 4000 A 1600 A 1600 A II 1600 A 1600A 1600 A 150 KV/V3 110 V/V3"
+        }
+      ],
+      "textCharCount": 2589,
+      "textPreview": "MUARAKARANG LAMA TACSR 410 1 x 480,86 mm2 (1324 A) 2 150 kV KARET LAMA 1 ACFR 315/40 2 x 348,47 mm2 ( 2650 A ) Alamat : Jl. Jembatan 3 No.1, Pejagalan, Penjaringan, Jakarta Utara Koordinat : Lintang -6.134313° Bujur 106.791144° No Telpon : 0882 1343 9914 / 021 6693146 150 kV/v3 100 V/v3 3150 A 1000-2000- 4000/5 A 3150 A 3150 A 3150 A II 2500 A 150-300-2000- 4000/5 A 3150 A KAPASITOR 1 25 MVAR 1600 A KAPASITOR 2 25 MVAR ANCOL 2 ACCC WARSAW 1 x 547,9 mm2 (1766 A) ANCOL 2 ACCC WARSAW 1 x 547,9 mm2 (1766 A) 4000 A 2000- 4000/5 A 4000 A 4000 A 2000- 4000/5 A 1600 A 1600 A 150-300-2000- 4000/5 A 150-300/5 A 2000 A 1600 A1600 A 1600 A 2500 A        2000 A 2000 A TRAFO 1 UNINDO 60 MVA 150/20 kV YNyn0(d11) 1732 A 20 kV/v3 100 V/v3 150 kV/v3 100 V/v3 I 4000 A 4000 A 2500 A 150 kV/v3 100 V/v3 II 4000 A 2000- 4000/5 A 2500 A 4000 A 400/1 A 150-300-2000-4000/5 A 150-300/5 A 150-300-2000-4000/5 A 150-300/5 A 2000/5 A 150-300-2000-4000/5 A 150-300/5 A 2000/5 A I KETAPANG XLPE CU 1 x 1000 mm2 ( 920 A ) 150 kV/v3 110 V/v3 1600 A 4000 A 1600 A 1600 A II 1600 A 1600A 1600 A 150 kV/v3 110 V/v3 UGC MUARAKARANG LAMA XLPE CU 2 X 1200 mm2 1752,2 A BUSBAR TAL 2 X 850 mm2; 4000 A; 40kA GIB 4000 "
+    },
+    {
+      "id": "users_hafizna_fadhli_downloads_ultg_durikosambi_20230215t100950z_001_ultg_durikosambi_gi_angke_single_line_angke_ver_8_1_2022_pdf",
+      "fileName": "SINGLE LINE ANGKE Ver 8.1 2022.pdf",
+      "fullPath": "C:\\Users\\hafizna.fadhli\\Downloads\\ULTG DURIKOSAMBI-20230215T100950Z-001\\ULTG DURIKOSAMBI\\GI ANGKE\\SINGLE LINE ANGKE Ver 8.1 2022.pdf",
+      "stationFolder": "GI ANGKE",
+      "localStationHint": "ANGKE",
+      "documentType": "sld",
+      "extractionStatus": "text_layer",
+      "extractionError": "",
+      "pageCount": 1,
+      "sizeBytes": 156056,
+      "lastModified": "2026-05-09T03:24:18.336Z",
+      "stationHints": [
+        "DURIKOSAMBI",
+        "MUARAKARANG LAMA",
+        "MUARAKARANG",
+        "ANGKE",
+        "KARET LAMA",
+        "ANCOL",
+        "KETAPANG"
+      ],
+      "bayHints": [],
+      "relayHints": [],
+      "functionHints": [
+        "AR"
+      ],
+      "endpointCandidates": [
+        {
+          "id": "gi_angke_durikosambi_single_line_angke_ver_8_1_2022_pdf",
+          "localStation": "ANGKE",
+          "remoteStation": "DURIKOSAMBI",
+          "source": "sld_text_layer",
+          "confidence": "low",
+          "evidence": "514 TELP. 021 7542656, 7543566 FAX. 021 7542516 WWW.PLN.CO.ID PLN UIT JBB - UPT DURIKOSAMBI SLD/DRKS.34001075/SMA-001 DIGAMBAR LOLA DATA DIPERIKSA K. AGUNG SATRIA DISETUJUI GUNAWAN WIJAYA TANGGAL 29 AGUSTUS 2022"
+        },
+        {
+          "id": "gi_angke_muarakarang_lama_single_line_angke_ver_8_1_2022_pdf",
+          "localStation": "ANGKE",
+          "remoteStation": "MUARAKARANG LAMA",
+          "source": "sld_text_layer",
+          "confidence": "high",
+          "evidence": "MUARAKARANG LAMA TACSR 410 1 X 480,86 MM2 (1324 A) 2 150 KV KARET LAMA 1 ACFR 315/40 2 X 348,47 MM2 ( 2650 A ) ALAMAT : JL. JEMBATAN 3 N"
+        },
+        {
+          "id": "gi_angke_muarakarang_single_line_angke_ver_8_1_2022_pdf",
+          "localStation": "ANGKE",
+          "remoteStation": "MUARAKARANG",
+          "source": "sld_text_layer",
+          "confidence": "high",
+          "evidence": "MUARAKARANG LAMA TACSR 410 1 X 480,86 MM2 (1324 A) 2 150 KV KARET LAMA 1 ACFR 315/40 2 X 348,47 MM2 ( 2650 A ) ALAMAT : JL. JEMBATA"
+        },
+        {
+          "id": "gi_angke_karet_lama_single_line_angke_ver_8_1_2022_pdf",
+          "localStation": "ANGKE",
+          "remoteStation": "KARET LAMA",
+          "source": "sld_text_layer",
+          "confidence": "high",
+          "evidence": "MUARAKARANG LAMA TACSR 410 1 X 480,86 MM2 (1324 A) 2 150 KV KARET LAMA 1 ACFR 315/40 2 X 348,47 MM2 ( 2650 A ) ALAMAT : JL. JEMBATAN 3 NO.1, PEJAGALAN, PENJARINGAN, JAKARTA UTARA KOORDINAT :"
+        },
+        {
+          "id": "gi_angke_ancol_single_line_angke_ver_8_1_2022_pdf",
+          "localStation": "ANGKE",
+          "remoteStation": "ANCOL",
+          "source": "sld_text_layer",
+          "confidence": "medium",
+          "evidence": "4000/5 A 3150 A KAPASITOR 1 25 MVAR (TIDAK OPERASI) 1600 A KAPASITOR 2 25 MVAR ANCOL 2 ACCC WARSAW 1 X 547,9 MM2 (1766 A) ANCOL 2 ACCC WARSAW 1 X 547,9 MM2 (1766 A) 4000 A 2000- 4000/5 A 4000 A 4000 A 200"
+        },
+        {
+          "id": "gi_angke_ketapang_single_line_angke_ver_8_1_2022_pdf",
+          "localStation": "ANGKE",
+          "remoteStation": "KETAPANG",
+          "source": "sld_text_layer",
+          "confidence": "high",
+          "evidence": "2000-4000/5 A 150-300/5 A 2000/5 A 150-300-2000-4000/5 A 150-300/5 A 2000/5 A I KETAPANG XLPE CU 1 X 1000 MM2 ( 920 A ) 150 KV/V3 110 V/V3 1600 A 4000 A 1600 A 1600 A II 1600 A 1600A 1600 A 150 KV/V3 110 V/V3"
+        }
+      ],
+      "textCharCount": 2605,
+      "textPreview": "MUARAKARANG LAMA TACSR 410 1 x 480,86 mm2 (1324 A) 2 150 kV KARET LAMA 1 ACFR 315/40 2 x 348,47 mm2 ( 2650 A ) Alamat : Jl. Jembatan 3 No.1, Pejagalan, Penjaringan, Jakarta Utara Koordinat : Lintang -6.134313° Bujur 106.791144° No Telpon : 0882 1343 9914 / 021 6693146 150 kV/v3 100 V/v3 3150 A 1000-2000- 4000/5 A 3150 A 3150 A 3150 A II 2500 A 150-300-2000- 4000/5 A 3150 A KAPASITOR 1 25 MVAR (Tidak Operasi) 1600 A KAPASITOR 2 25 MVAR ANCOL 2 ACCC WARSAW 1 x 547,9 mm2 (1766 A) ANCOL 2 ACCC WARSAW 1 x 547,9 mm2 (1766 A) 4000 A 2000- 4000/5 A 4000 A 4000 A 2000- 4000/5 A 1600 A 1600 A 150-300-2000- 4000/5 A 150-300/5 A 2000 A 1600 A1600 A 1600 A 2500 A        2000 A 2000 A TRAFO 1 UNINDO 60 MVA 150/20 kV YNyn0(d11) 1732 A 20 kV/v3 100 V/v3 150 kV/v3 100 V/v3 I 4000 A 4000 A 2500 A 150 kV/v3 100 V/v3 II 4000 A 2000- 4000/5 A 2500 A 4000 A 400/1 A 150-300-2000-4000/5 A 150-300/5 A 150-300-2000-4000/5 A 150-300/5 A 2000/5 A 150-300-2000-4000/5 A 150-300/5 A 2000/5 A I KETAPANG XLPE CU 1 x 1000 mm2 ( 920 A ) 150 kV/v3 110 V/v3 1600 A 4000 A 1600 A 1600 A II 1600 A 1600A 1600 A 150 kV/v3 110 V/v3 UGC MUARAKARANG LAMA XLPE CU 2 X 1200 mm2 1752,2 A BUSBAR TAL 2 X 850 mm2; 4000 A"
+    },
+    {
+      "id": "users_hafizna_fadhli_downloads_ultg_durikosambi_20230215t100950z_001_ultg_durikosambi_gi_dadap_single_line_dadap_2022_ver_1_pdf",
+      "fileName": "SINGLE LINE DADAP 2022 - Ver 1.pdf",
+      "fullPath": "C:\\Users\\hafizna.fadhli\\Downloads\\ULTG DURIKOSAMBI-20230215T100950Z-001\\ULTG DURIKOSAMBI\\GI DADAP\\SINGLE LINE DADAP 2022 - Ver 1.pdf",
+      "stationFolder": "GI DADAP",
+      "localStationHint": "DADAP",
+      "documentType": "sld",
+      "extractionStatus": "text_layer",
+      "extractionError": "",
+      "pageCount": 1,
+      "sizeBytes": 187580,
+      "lastModified": "2026-05-09T03:24:17.780Z",
+      "stationHints": [
+        "DURIKOSAMBI",
+        "DADAP",
+        "LONTAR",
+        "TELUK NAGA"
+      ],
+      "bayHints": [],
+      "relayHints": [],
+      "functionHints": [
+        "AR"
+      ],
+      "endpointCandidates": [
+        {
+          "id": "gi_dadap_durikosambi_single_line_dadap_2022_ver_1_pdf",
+          "localStation": "DADAP",
+          "remoteStation": "DURIKOSAMBI",
+          "source": "sld_text_layer",
+          "confidence": "low",
+          "evidence": "DIGAMBAR DIPERIKSA DISETUJUI TANGGAL NOMOR SLD SLD GI ……………… PLN UIT JBB – UPT DURIKOSAMBI PT PLN (PERSERO) UNIT INDUK TRANSMISI JAWA BAGIAN BARAT JL. JCC NO. 1 CINERE LIMO DEPOK JAWA BARAT 16514 TELP. 021 7542"
+        },
+        {
+          "id": "gi_dadap_lontar_single_line_dadap_2022_ver_1_pdf",
+          "localStation": "DADAP",
+          "remoteStation": "LONTAR",
+          "source": "sld_text_layer",
+          "confidence": "medium",
+          "evidence": "A B TELUK NAGA 1 B 3150A 2000-4000/1A 3150A 3150A 3150A TRAFO 1 TRAFO 2 LONTAR 2 KOPEL 1250A 1250A 3150A 150-300-2000-4000/ 1A 1250A 1250A 3150A 150-300-2000-4000/ 1A 3150A 2000-4000/1A 3150A 3150A"
+        },
+        {
+          "id": "gi_dadap_teluk_naga_single_line_dadap_2022_ver_1_pdf",
+          "localStation": "DADAP",
+          "remoteStation": "TELUK NAGA",
+          "source": "sld_text_layer",
+          "confidence": "medium",
+          "evidence": "A B TELUK NAGA 1 B 3150A 2000-4000/1A 3150A 3150A 3150A TRAFO 1 TRAFO 2 LONTAR 2 KOPEL 1250A 1250A 3150A 150-300-2000-4000/ 1A 1250A 1"
+        }
+      ],
+      "textCharCount": 1646,
+      "textPreview": "A B TELUK NAGA 1 B 3150A 2000-4000/1A 3150A 3150A 3150A TRAFO 1 TRAFO 2 LONTAR 2 KOPEL 1250A 1250A 3150A 150-300-2000-4000/ 1A 1250A 1250A 3150A 150-300-2000-4000/ 1A 3150A 2000-4000/1A 3150A 3150A 3150A 3150A 2000-4000/1A 3150A 3150A 3150A 3150A 2000-4000/1A 3150A 3150A 3150A 4000A 4000A 2000-4000/1A 2000-4000/1A 4000A TAL 2 x 850 ( 4000 A ) B & D YNyn0+d 60 MVA 150 / 22 KV 1575 A 2000 A 2000 A B & D YNyn0+d1 60 MVA 150 / 22 KV 1575 A Alamat : Salembaran Jati, Kosambi Kab. Tangerang Banten Koordinat : Lintang -6.0601712° Bujur 106.6780448° No Telpon : 20 kA 20 kA 20 kA 20 kA 20 kA 20 kA 12 Ohm 12 Ohm 1000-2000/5 A 1000-2000/5 A 2000/5-5 A 2000/5-5 A 300/1 A 300/1 A 150 kV/√3 0,1 kV/√ 3 150 kV/√3 0,1 kV/√ 3 150 kV/√3 0,1 kV/√ 3 150 kV/√3 0,1 kV/√ 3 150 kV/√3 0,1 kV/√ 3 150 kV/√3 0,1 kV/√ 3 20 kV/√3 0,1 kV/√ 3 20 kV/√3 0,1 kV/√ 3 SUTT TACSR 410 2x480,868 mm² ( 2648 A ) TELUK NAGA 2 LONTAR 1 SUTT TACSR 410 2x480,868 mm² ( 2648 A ) SUTT TACSR 410 2x480,868 mm² ( 2648 A ) SUTT TACSR 410 2x480,868 mm² ( 2648 A ) LOLA DATA K. AGUNG SATRIA GUNAWAN WIJAYA 20 DESEMBER 2022 DIGAMBAR DIPERIKSA DISETUJUI TANGGAL NOMOR SLD SLD GI ……………… PLN UIT JBB – UPT DURIKOSAMBI PT PLN (PERSERO) UNIT INDUK "
+    },
+    {
+      "id": "users_hafizna_fadhli_downloads_ultg_durikosambi_20230215t100950z_001_ultg_durikosambi_gi_durikosambi_single_line_dksbi_ver_8_2022_fix_pdf",
+      "fileName": "SINGLE LINE DKSBI Ver 8 2022 - FIX.pdf",
+      "fullPath": "C:\\Users\\hafizna.fadhli\\Downloads\\ULTG DURIKOSAMBI-20230215T100950Z-001\\ULTG DURIKOSAMBI\\GI DURIKOSAMBI\\SINGLE LINE DKSBI Ver 8 2022 - FIX.pdf",
+      "stationFolder": "GI DURIKOSAMBI",
+      "localStationHint": "DURIKOSAMBI",
+      "documentType": "sld",
+      "extractionStatus": "text_layer",
+      "extractionError": "",
+      "pageCount": 1,
+      "sizeBytes": 186616,
+      "lastModified": "2026-05-09T03:24:19.518Z",
+      "stationHints": [
+        "DURIKOSAMBI",
+        "DAAN MOGOT",
+        "KEMBANGAN",
+        "GROGOL BARU",
+        "GROGOL",
+        "CENGKARENG",
+        "PETUKANGAN",
+        "LMK"
+      ],
+      "bayHints": [],
+      "relayHints": [],
+      "functionHints": [
+        "AR"
+      ],
+      "endpointCandidates": [
+        {
+          "id": "gi_durikosambi_daan_mogot_single_line_dksbi_ver_8_2022_fix_pdf",
+          "localStation": "DURIKOSAMBI",
+          "remoteStation": "DAAN MOGOT",
+          "source": "sld_text_layer",
+          "confidence": "high",
+          "evidence": "0A 2000A 4000A 4000A 1600A 3150A 3150A KEMBANGAN (SKTT) OIL CU 800 MM2 (920 A ) DAAN MOGOT (SUTT) GTACSR 410 2 X 461,4 MM2 ( 2514A ) GROGOL BARU (SUTT) ACSR ZEBRA 2 X 484,5 MM2 ( 1600 A ) ALMALEC 2 X 1140 MM2;"
+        },
+        {
+          "id": "gi_durikosambi_kembangan_single_line_dksbi_ver_8_2022_fix_pdf",
+          "localStation": "DURIKOSAMBI",
+          "remoteStation": "KEMBANGAN",
+          "source": "sld_text_layer",
+          "confidence": "high",
+          "evidence": "A 4000A 2000A 3150A 3150A 1600A 4000A 2000A 2000A 4000A 4000A 1600A 3150A 3150A KEMBANGAN (SKTT) OIL CU 800 MM2 (920 A ) DAAN MOGOT (SUTT) GTACSR 410 2 X 461,4 MM2 ( 2514A ) GROGOL BARU (SUTT) ACSR ZEBRA 2 X 4"
+        },
+        {
+          "id": "gi_durikosambi_grogol_baru_single_line_dksbi_ver_8_2022_fix_pdf",
+          "localStation": "DURIKOSAMBI",
+          "remoteStation": "GROGOL BARU",
+          "source": "sld_text_layer",
+          "confidence": "high",
+          "evidence": "T) OIL CU 800 MM2 (920 A ) DAAN MOGOT (SUTT) GTACSR 410 2 X 461,4 MM2 ( 2514A ) GROGOL BARU (SUTT) ACSR ZEBRA 2 X 484,5 MM2 ( 1600 A ) ALMALEC 2 X 1140 MM2; 4000 A; 40 KA ALMALEC 2 X 1140 MM2 4000 A CENGKARENG T"
+        },
+        {
+          "id": "gi_durikosambi_grogol_single_line_dksbi_ver_8_2022_fix_pdf",
+          "localStation": "DURIKOSAMBI",
+          "remoteStation": "GROGOL",
+          "source": "sld_text_layer",
+          "confidence": "high",
+          "evidence": "T) OIL CU 800 MM2 (920 A ) DAAN MOGOT (SUTT) GTACSR 410 2 X 461,4 MM2 ( 2514A ) GROGOL BARU (SUTT) ACSR ZEBRA 2 X 484,5 MM2 ( 1600 A ) ALMALEC 2 X 1140 MM2; 4000 A; 40 KA ALMALEC 2 X 1140 MM2 4000 A CENGKAR"
+        },
+        {
+          "id": "gi_durikosambi_cengkareng_single_line_dksbi_ver_8_2022_fix_pdf",
+          "localStation": "DURIKOSAMBI",
+          "remoteStation": "CENGKARENG",
+          "source": "sld_text_layer",
+          "confidence": "high",
+          "evidence": "MM2 ( 1600 A ) ALMALEC 2 X 1140 MM2; 4000 A; 40 KA ALMALEC 2 X 1140 MM2 4000 A CENGKARENG TACSR 520 1 X 587,3 MM2 ( 1600 A ) II I II I KEBONJERUK (SKTT) OIL CU 800 MM2 ( 920 A ) II I II I 2000A 4000 A 2000A MU"
+        },
+        {
+          "id": "gi_durikosambi_petukangan_single_line_dksbi_ver_8_2022_fix_pdf",
+          "localStation": "DURIKOSAMBI",
+          "remoteStation": "PETUKANGAN",
+          "source": "sld_text_layer",
+          "confidence": "high",
+          "evidence": "NG LAMA (SUTT) ACSR DRAKE 2 X 468 MM2 (1560A) GTACSR 410 2 X 461,4 (2514A) II I PETUKANGAN (SUTT) (TIDAK OPERASI) I II LMK ACSR DRAKE 468 MM2 ( 780 A ) TRAFO 2 TRAFO 3 TRAFO 3 I II I II II I 200-400/1-1 A 3150"
+        },
+        {
+          "id": "gi_durikosambi_lmk_single_line_dksbi_ver_8_2022_fix_pdf",
+          "localStation": "DURIKOSAMBI",
+          "remoteStation": "LMK",
+          "source": "sld_text_layer",
+          "confidence": "high",
+          "evidence": "1560A) GTACSR 410 2 X 461,4 (2514A) II I PETUKANGAN (SUTT) (TIDAK OPERASI) I II LMK ACSR DRAKE 468 MM2 ( 780 A ) TRAFO 2 TRAFO 3 TRAFO 3 I II I II II I 200-400/1-1 A 3150 A 1250 A KAPASITOR SEKSI II 2500"
+        }
+      ],
+      "textCharCount": 3573,
+      "textPreview": "1A 150 kV 4000A 4000A 4000A 2500A 4000A 2000A 4000A 2000A 4000A 20kV/v3 100V/v3 4000A SEKSI I 4000A 4000A 4000A 4000A 4000A 4000A 4000A 4000A 3150A 3150A 4000A 3150A 3150A 2000A 20kV/v3 100V/v3 3150A 2000A 20kV/v3 100V/v3 20kV/v3 100V/v3 1600A 3500A 2500A 3500A 2500A 2500A 4000A 4000A 2000A 3150A 3150A 1600A 4000A 2000A 2000A 4000A 4000A 1600A 3150A 3150A KEMBANGAN (SKTT) OIL CU 800 mm2 (920 A ) DAAN MOGOT (SUTT) GTACSR 410 2 x 461,4 mm2 ( 2514A ) GROGOL BARU (SUTT) ACSR ZEBRA 2 x 484,5 mm2 ( 1600 A ) ALMALEC 2 X 1140 mm2; 4000 A; 40 kA ALMALEC 2 X 1140 mm2 4000 A CENGKARENG TACSR 520 1 x 587,3 mm2 ( 1600 A ) II I II I KEBONJERUK (SKTT) OIL CU 800 mm2 ( 920 A ) II I II I 2000A 4000 A 2000A MURAKARANG LAMA (SUTT) ACSR DRAKE 2 X 468 mm2 (1560A) GTACSR 410 2 X 461,4 (2514A) II I PETUKANGAN (SUTT) (TIDAK OPERASI) I II LMK ACSR DRAKE 468 mm2 ( 780 A ) TRAFO 2 TRAFO 3 TRAFO 3 I II I II II I 200-400/1-1 A 3150 A 1250 A KAPASITOR SEKSI II 2500A 20kV/v3 100V/v3 20kV/v3 100V/v3 3150A 1600A 20kV/v3 100V/v3 20kV/v3 100V/v3 TRAFO 5 TRAFO 5 1600A 1600A 2000A 2000A 4000A 4000A 4000A 2000A 2000A 2000A 2000A 4000A 4000A 4000A 4000A 3150A 3150A 4000A 2000A 2000A 1250 A 1600A 1600A KOPEL 2 KOPEL 1 25"
+    },
+    {
+      "id": "users_hafizna_fadhli_downloads_ultg_durikosambi_20230215t100950z_001_ultg_durikosambi_gi_durikosambi_validasi_ct_pdf",
+      "fileName": "Validasi CT.pdf",
+      "fullPath": "C:\\Users\\hafizna.fadhli\\Downloads\\ULTG DURIKOSAMBI-20230215T100950Z-001\\ULTG DURIKOSAMBI\\GI DURIKOSAMBI\\Validasi CT.pdf",
+      "stationFolder": "GI DURIKOSAMBI",
+      "localStationHint": "DURIKOSAMBI",
+      "documentType": "validation_ct",
+      "extractionStatus": "text_layer",
+      "extractionError": "",
+      "pageCount": 2,
+      "sizeBytes": 70970,
+      "lastModified": "2026-05-09T03:24:19.584Z",
+      "stationHints": [
+        "DURIKOSAMBI",
+        "DAAN MOGOT",
+        "MUARAKARANG LAMA",
+        "MUARAKARANG",
+        "KEMBANGAN",
+        "GROGOL BARU",
+        "GROGOL",
+        "KEBON JERUK",
+        "CENGKARENG",
+        "LMK"
+      ],
+      "bayHints": [
+        "PHT 150KV CENGKARENG#1",
+        "PHT 150KV CENGKARENG#2",
+        "PHT 150KV DAAN MOGOT#1",
+        "PHT 150KV DAAN MOGOT#2",
+        "PHT 150KV GROGOL BARU#1",
+        "PHT 150KV GROGOL BARU#2",
+        "PHT 150KV KEBON JERUK#1"
+      ],
+      "relayHints": [],
+      "functionHints": [
+        "AR"
+      ],
+      "endpointCandidates": [],
+      "textCharCount": 18253,
+      "textPreview": "PILIH GARDU INDUK GI 150KV DURIKOSAMBI PILIH ULTG PILIH ALL NO NO GARDU INDUK BAY PENGHANTAR TECHIDENTNO SERIAL_ID KD_STATUS TEG_OPRS MERK TIPE PHASA BUATAN THN_BUAT TGL_OPRS FLAG JENIS CLASS JML_CORE RATIO CT CHECKING 1 GI 150KV DURIKOSAMBI BUS SECTION/TIE #1 150kV 13312606206200000035 55745,07 01 150 BALTEAU QDR170P R FRANCE 1991 33639 2 TOP CORE X 4 600-1000-1200/5 OKE 2 GI 150KV DURIKOSAMBI BUS SECTION/TIE #1 150kV 13312606206200000067 55745,04 01 150 BALTEAU QDR170P R FRANCE 1991 33639 2 TOP CORE X 2 600-1000-1200/5 OKE 3 GI 150KV DURIKOSAMBI BUS SECTION/TIE #1 150kV 13312606206200000039 55745,05 01 150 BALTEAU QDR170P S FRANCE 1991 33639 2 TOP CORE X 4 600-1000-1200/5 OKE 4 GI 150KV DURIKOSAMBI BUS SECTION/TIE #1 150kV 13312606206200000065 55745,08 01 150 BALTEAU QDR170P S FRANCE 1991 33639 2 TOP CORE X 4 600-1000-1200/5 OKE 5 GI 150KV DURIKOSAMBI BUS SECTION/TIE #1 150kV 13312606206200000066 55745.07. 01 150 BALTEAU QDR170P T FRANCE 1991 33639 2 TOP CORE X 2 600-1000-1200/5 OKE 6 GI 150KV DURIKOSAMBI BUS SECTION/TIE #1 150kV 13312606206200000068 55745,06 01 150 BALTEAU QDR170P T FRANCE 1991 33639 2 TOP CORE X 2 600-1000-1200/5 OKE 7 GI 150KV DURIKOSAMBI BUS SECTION/TIE #2 15"
+    },
+    {
+      "id": "users_hafizna_fadhli_downloads_ultg_durikosambi_20230215t100950z_001_ultg_durikosambi_gi_durikosambi_validasi_pms_pdf",
+      "fileName": "Validasi PMS.pdf",
+      "fullPath": "C:\\Users\\hafizna.fadhli\\Downloads\\ULTG DURIKOSAMBI-20230215T100950Z-001\\ULTG DURIKOSAMBI\\GI DURIKOSAMBI\\Validasi PMS.pdf",
+      "stationFolder": "GI DURIKOSAMBI",
+      "localStationHint": "DURIKOSAMBI",
+      "documentType": "validation_pms",
+      "extractionStatus": "text_layer",
+      "extractionError": "",
+      "pageCount": 2,
+      "sizeBytes": 58062,
+      "lastModified": "2026-05-09T03:24:19.706Z",
+      "stationHints": [
+        "DURIKOSAMBI",
+        "DAAN MOGOT",
+        "MUARAKARANG LAMA",
+        "MUARAKARANG",
+        "KEMBANGAN",
+        "GROGOL BARU",
+        "GROGOL",
+        "KEBON JERUK",
+        "CENGKARENG",
+        "LMK"
+      ],
+      "bayHints": [
+        "PHT 150 KV DAAN MOGOT#1",
+        "PHT 150 KV DAAN MOGOT#2",
+        "PHT 150KV CENGKARENG#1",
+        "PHT 150KV CENGKARENG#2",
+        "PHT 150KV GROGOL BARU#1",
+        "PHT 150KV GROGOL BARU#2",
+        "PHT 150KV KEBON JERUK#1"
+      ],
+      "relayHints": [],
+      "functionHints": [
+        "AR"
+      ],
+      "endpointCandidates": [],
+      "textCharCount": 10397,
+      "textPreview": "PILIH GARDU INDUK GI 150KV DURIKOSAMBIPILIH ULTG PILIH ALL NO NO GARDU INDUK BAY PENGHANTAR TECHIDENTNO SERIAL_ID KD_STATUS TEG_OPRS MERK TIPE PHASA BUATAN THN_BUAT TGL_OPRS FLAG TEG_NOM ARUS_NOM MKNK_PGRK BILCHECKING 1 GI 150KV DURIKOSAMBI BUS SECTION/TIE #1 150kV 15312606206200000028 68068 1 150 AREVA S2DA-3150 RST FRANCE 1996 05/03/2009 2 170 3150 MOTOR 750 Ok 2 GI 150KV DURIKOSAMBI BUS SECTION/TIE #1 150kV 15312606206200000032 68069 1 150 AREVA S2DA-1250 RST FRANCE 1996 05/03/2009 2 170 1250 MOTOR 750 Ok 3 GI 150KV DURIKOSAMBI BUS SECTION/TIE #2 150kV 15312606206200000029 68070 1 150 AREVA S2DA-3150 RST FRANCE 1996 10/03/2009 2 170 3150 MOTOR 750 Ok 4 GI 150KV DURIKOSAMBI BUS SECTION/TIE #2 150kV 15312606206200000033 68071 1 150 AREVA S2DA-3150 RST FRANCE 1996 10/03/2009 2 170 3150 MOTOR 750 Ok 5 GI 150KV DURIKOSAMBI IBT#1 500/150kV (LV) 15341306206200000001 A66292 1 150 ALSTHOM S2DA RST ITALY 2017 02/01/2020 2 170 2500 MOTOR 750 Ok 6 GI 150KV DURIKOSAMBI IBT#1 500/150kV (LV) 15341306206200000002 A66291 1 150 ALSTHOM S2DA RST ITALY 2017 02/01/2020 2 170 2500 MOTOR 750 Ok 7 GI 150KV DURIKOSAMBI IBT#1 500/150kV (LV) 15341306206200000003 A66290 1 150 ALSTHOM S2DA RST ITALY 2017 02"
+    },
+    {
+      "id": "users_hafizna_fadhli_downloads_ultg_durikosambi_20230215t100950z_001_ultg_durikosambi_gi_durikosambi_validasi_pmt_pdf",
+      "fileName": "Validasi PMT.pdf",
+      "fullPath": "C:\\Users\\hafizna.fadhli\\Downloads\\ULTG DURIKOSAMBI-20230215T100950Z-001\\ULTG DURIKOSAMBI\\GI DURIKOSAMBI\\Validasi PMT.pdf",
+      "stationFolder": "GI DURIKOSAMBI",
+      "localStationHint": "DURIKOSAMBI",
+      "documentType": "validation_pmt",
+      "extractionStatus": "text_layer",
+      "extractionError": "",
+      "pageCount": 1,
+      "sizeBytes": 51746,
+      "lastModified": "2026-05-09T03:24:19.466Z",
+      "stationHints": [
+        "DURIKOSAMBI",
+        "DAAN MOGOT",
+        "MUARAKARANG LAMA",
+        "MUARAKARANG",
+        "KEMBANGAN",
+        "GROGOL BARU",
+        "GROGOL",
+        "KEBON JERUK",
+        "CENGKARENG",
+        "LMK"
+      ],
+      "bayHints": [
+        "PHT 150 KV DAAN MOGOT#1",
+        "PHT 150 KV DAAN MOGOT#2",
+        "PHT 150KV CENGKARENG#1",
+        "PHT 150KV CENGKARENG#2",
+        "PHT 150KV GROGOL BARU#1",
+        "PHT 150KV GROGOL BARU#2",
+        "PHT 150KV KEBON JERUK#1",
+        "PHT 150KV KEBON JERUK#2"
+      ],
+      "relayHints": [],
+      "functionHints": [
+        "AR"
+      ],
+      "endpointCandidates": [],
+      "textCharCount": 6620,
+      "textPreview": "PILIH GARDU INDUK GI 150KV DURIKOSAMBI PILIH ULTG PILIH ALL NO NO GARDU INDUK BAY PENGHANTAR TECHIDENTNO SERIAL_ID KD_STATUS TEG_OPRS PHASA TGL_OPRS THN_BUAT BUATAN FLAG MERK TIPE RATING_ARUS BREAKING_CURRENT MKNK_PGRK BIL CHECKING 1 GI 150KV DURIKOSAMBI BUS SECTION/TIE #1 150kV 14312606206200000023 C16-727-6 1 150 RST 33924,5 1992 FRANCE 2 ALSTHOM FX.12 4000 40 HYDRAULIC 750 OKE 2 GI 150KV DURIKOSAMBI BUS SECTION/TIE #2 150kV 14312606206200000004 C167277A 1 150 RST 33924,5 1990 SWEDEN 2 ABB EDF SV 3-1 3150 40 HYDRAULIC 750 OKE 3 GI 150KV DURIKOSAMBI IBT#1 500/150kV (LV) 14341306206200000002 228700000000 1 150 RST 43832 2017 FRANCE 2 GE GL314 4000 50 SPRING 1050 OKE 4 GI 150KV DURIKOSAMBI IBT#2 500/150kV (LV) 14341306206200000003 228700000000 1 150 RST 43798 2017 FRANCE 2 GE GL314 4000 50 SPRING 1050 OKE 5 GI 150KV DURIKOSAMBI KAPASITOR SC#1 150kV 14341306206200000004 4587-10-2010075/2 1 150 RST 42320 2005 GERMANY 2 AREVA GL313F3 3150 40 SPRING 750 OKE 6 GI 150KV DURIKOSAMBI KOPEL BUS#1 150kV 14312606206200000024 C16-727-5 1 150 RST 34017,5 1992 FRANCE 2 ALSTHOM FX.12 4000 40 HYDRAULIC 750 OKE 7 GI 150KV DURIKOSAMBI KOPEL BUS#2 150kV 14312606206200000033 35079674 1 150 RST 38480,5 "
+    },
+    {
+      "id": "users_hafizna_fadhli_downloads_ultg_durikosambi_20230215t100950z_001_ultg_durikosambi_gi_muarakarang_single_line_mkrng_ver_8_2022_pdf",
+      "fileName": "SINGLE LINE MKRNG Ver 8 2022.pdf",
+      "fullPath": "C:\\Users\\hafizna.fadhli\\Downloads\\ULTG DURIKOSAMBI-20230215T100950Z-001\\ULTG DURIKOSAMBI\\GI MUARAKARANG\\SINGLE LINE MKRNG Ver 8 2022.pdf",
+      "stationFolder": "GI MUARAKARANG",
+      "localStationHint": "MUARAKARANG",
+      "documentType": "sld",
+      "extractionStatus": "text_layer",
+      "extractionError": "",
+      "pageCount": 1,
+      "sizeBytes": 175268,
+      "lastModified": "2026-05-09T03:24:17.917Z",
+      "stationHints": [
+        "DURIKOSAMBI",
+        "MUARAKARANG LAMA",
+        "MUARAKARANG",
+        "ANGKE"
+      ],
+      "bayHints": [],
+      "relayHints": [],
+      "functionHints": [
+        "AR"
+      ],
+      "endpointCandidates": [
+        {
+          "id": "gi_muarakarang_durikosambi_single_line_mkrng_ver_8_2022_pdf",
+          "localStation": "MUARAKARANG",
+          "remoteStation": "DURIKOSAMBI",
+          "source": "sld_text_layer",
+          "confidence": "low",
+          "evidence": "8. 3 150 KV/V3 115 V/V3 1 AB 8 2000 A AB 8.2 AB 8.1 BUDI KEMULIAAN ( SKTT ) II DURIKOSAMBI ( SUTT ) ACSR DRAKE 2 X 468 MM2 (1560A) GTACSR 410 2 X 461,4 MM2 (2514 A) ANGKE ( SUTT ) TACSR 410 1 X 480,86 MM2 ( 132"
+        },
+        {
+          "id": "gi_muarakarang_muarakarang_lama_single_line_mkrng_ver_8_2022_pdf",
+          "localStation": "MUARAKARANG",
+          "remoteStation": "MUARAKARANG LAMA",
+          "source": "sld_text_layer",
+          "confidence": "medium",
+          "evidence": "022 DIGAMBAR DIPERIKSA DISETUJUI TANGGAL SLD/DRKS.34001075/SMA-001 SLD GI 150KV MUARAKARANG LAMA PLN UIT JBB – UPT DURIKOSAMBI PT PLN (PERSERO) UNIT INDUK TRANSMISI JAWA BAGIAN BARAT JL. JCC NO. 1 CINERE LIMO DEPOK J"
+        },
+        {
+          "id": "gi_muarakarang_angke_single_line_mkrng_ver_8_2022_pdf",
+          "localStation": "MUARAKARANG",
+          "remoteStation": "ANGKE",
+          "source": "sld_text_layer",
+          "confidence": "high",
+          "evidence": "SAMBI ( SUTT ) ACSR DRAKE 2 X 468 MM2 (1560A) GTACSR 410 2 X 461,4 MM2 (2514 A) ANGKE ( SUTT ) TACSR 410 1 X 480,86 MM2 ( 1324 A ) MKBRU XLPE CU 2 X 2000 MM2 (1684 A) 3500 A 3500 A 2000 A ACSR 468,5 MM2 (7"
+        }
+      ],
+      "textCharCount": 3754,
+      "textPreview": "ACSR 468,5 mm2 (780 A) HOLLOW ; 4000 A; 50 kA 2 B8.1 B 8 B8. 2 2000 A 150 kV/v3 115 V/v3 3000 A B 8. 3 150 kV/v3 115 V/v3 A8.1 3500 A A 8 A8. 2 2000 A 150 kV/v3 115 V/v3 3000 A A 8. 3 150 kV/v3 115 V/v3 1 AB 8 2000 A AB 8.2 AB 8.1 BUDI KEMULIAAN ( SKTT ) II DURIKOSAMBI ( SUTT ) ACSR DRAKE 2 x 468 mm2 (1560A) GTACSR 410 2 x 461,4 mm2 (2514 A) ANGKE ( SUTT ) TACSR 410 1 x 480,86 mm2 ( 1324 A ) MKBRU XLPE CU 2 X 2000 mm2 (1684 A) 3500 A 3500 A 2000 A ACSR 468,5 mm2 (780 A) ( SKTT ) XLPE CU 2x1200 mm² (1752,2 A ) ANGKE STG 2.3 AB 5 1200 A A 5 1200 A A 5.1 1200 A B 5.1 1200 A AB 5. 2 AB 5.1 B 5 B 5. 2 1200 A 1200 A B 5. 3 A 5.2 A 5.3 I 3500 A 3500 A 3500 A BUDI KEMULYAAN ( SKTT ) XLPE CU 800 mm2 (920A) AB 4 2000 A A 4 2000 A A 4.1 2000 A B 4.1 2000 A AB 4. 2 AB 4.1 B 4 B 4. 2 2000 A 2000 A 150 kV/v3 100 V/v3 10 kA 3000 A B 4.3 A 4.2 I 3500 A 3500 A 3500 A TACSR 520 mm2 (1600 A) AB 7 1200 A A 7 1200 A A 7.1 1200 A B7.1 1200 A AB 7.2 AB 7.1 B7 B7. 2 1200 A 1200 A A 7.2 3500 A A 7.3 PLTU 5 RAT 3&4 3500 A 3500 A B 6. 3 AB 6 1200 A A 6 1200 A A 6.1 1200 A B 6.1 1200 A AB 6. 2 AB 6.1 B 6 B6. 2 1200 A 1200 A A 6.2 A 6.3 PLTU 4 3500 A 3500 A 3500 A 3 PH AB1 1200 A A1 1200 A 1200- 2000- 4000/5A "
+    },
+    {
+      "id": "users_hafizna_fadhli_downloads_ultg_durikosambi_20230215t100950z_001_ultg_durikosambi_gi_muarakarang_baru_single_line_mkbru_ver_8_2022_pdf",
+      "fileName": "SINGLE LINE MKBRU Ver 8 2022.pdf",
+      "fullPath": "C:\\Users\\hafizna.fadhli\\Downloads\\ULTG DURIKOSAMBI-20230215T100950Z-001\\ULTG DURIKOSAMBI\\GI MUARAKARANG BARU\\SINGLE LINE MKBRU Ver 8 2022.pdf",
+      "stationFolder": "GI MUARAKARANG BARU",
+      "localStationHint": "MUARAKARANG BARU",
+      "documentType": "sld",
+      "extractionStatus": "text_layer",
+      "extractionError": "",
+      "pageCount": 1,
+      "sizeBytes": 220953,
+      "lastModified": "2026-05-09T03:24:17.632Z",
+      "stationHints": [
+        "DURIKOSAMBI",
+        "MUARAKARANG BARU",
+        "MUARAKARANG LAMA",
+        "MUARAKARANG"
+      ],
+      "bayHints": [],
+      "relayHints": [],
+      "functionHints": [
+        "AR"
+      ],
+      "endpointCandidates": [
+        {
+          "id": "gi_muarakarang_baru_durikosambi_single_line_mkbru_ver_8_2022_pdf",
+          "localStation": "MUARAKARANG BARU",
+          "remoteStation": "DURIKOSAMBI",
+          "source": "sld_text_layer",
+          "confidence": "low",
+          "evidence": "NGGAL SLD/DRKS.34001073/SMA-001 SLD GI 150KV MUARAKARANG BARU PLN UIT JBB – UPT DURIKOSAMBI PT PLN (PERSERO) UNIT INDUK TRANSMISI JAWA BAGIAN BARAT JL. JCC NO. 1 CINERE LIMO DEPOK JAWA BARAT 16514 TELP. 021 7542"
+        },
+        {
+          "id": "gi_muarakarang_baru_muarakarang_lama_single_line_mkbru_ver_8_2022_pdf",
+          "localStation": "MUARAKARANG BARU",
+          "remoteStation": "MUARAKARANG LAMA",
+          "source": "sld_text_layer",
+          "confidence": "medium",
+          "evidence": "300/5A B7.3 B7.3E TRAFO 20MVA 150/6.3 KV GTG 1.2 A5.3E 4000/5A 4000/5A 2500/5A MUARAKARANG LAMA MUARAKARANG LAMA SST A7.2 3150 A 4000/5A 4000 A A7 A7.1 3150 A 3150 A A7.3E 300/5A AB7.1 A7.3 GIS MUARAKARANG BARU I II"
+        },
+        {
+          "id": "gi_muarakarang_baru_muarakarang_single_line_mkbru_ver_8_2022_pdf",
+          "localStation": "MUARAKARANG BARU",
+          "remoteStation": "MUARAKARANG",
+          "source": "sld_text_layer",
+          "confidence": "medium",
+          "evidence": "300/5A B7.3 B7.3E TRAFO 20MVA 150/6.3 KV GTG 1.2 A5.3E 4000/5A 4000/5A 2500/5A MUARAKARANG LAMA MUARAKARANG LAMA SST A7.2 3150 A 4000/5A 4000 A A7 A7.1 3150 A 3150 A A7.3E 300/5A AB7.1 A7.3 GIS MUARAKARANG BARU"
+        }
+      ],
+      "textCharCount": 2054,
+      "textPreview": "TACSR 520 mm2 (1600 A) 1 2 AB7 B7.1 3150 A 4000/5A AB7.2 4000/5A 3500 A 3500 A B7 B7.2 3150 A 3150 A AB6 3150 A A6 3150 A A6.1 3150 A B6.1 3150 A 4000/5A AB6.2 4000/5A AB6.1 3500 A 3500 A B6 B6.2 3150 A 3150 A A6.2 3500 A A6.3 AB5 3150 A A5 3150 A A5.1 3150 A B5.1 3150 A AB5.2 AB5.1 3500 A 3500 A B5 B5.2 3150 A 3150 A A5.2 3500 A A5.3 AB4 3150 A A4 3150 A 4000/5A A4.1 3150 A B41 3150 A 4000/5A AB4.2 4000/5A AB4.1 3500 A 3500 A B4 B4.2 3150 A 3150 A A4.2 3500 A A4.3 AB3 3150 A A3 3150 A 4000/5A A3.1 3150 A B3.1 3150 A 4000/5A AB3.2 4000/5A AB3.1 3500 A 3500 A B3 B3.2 3150 A 3150 A A3.2 3500 A A3.3 STG 1.0 GTG 1.3 HOLLOW ; 4000 A; 50 kA GTG 1.1 4000/5A A1. 1 3150 A 10 kA A1. 3E B2. 3 I 150 kV/v3 115 V/v3 10 kA 4000/5A 3150 A 10 kA B2. 3E II 150 kV/v3 100 V/v3 10 kA B3.3 B3.3E 2500/5A A3.3E B4.3 B4.3E A4.3E B6.3 B6.3E A6.3E 300/5A 300/5A B7.3 B7.3E TRAFO 20MVA 150/6.3 kV GTG 1.2 A5.3E 4000/5A 4000/5A 2500/5A MUARAKARANG LAMA MUARAKARANG LAMA SST A7.2 3150 A 4000/5A 4000 A A7 A7.1 3150 A 3150 A A7.3E 300/5A AB7.1 A7.3 GIS MUARAKARANG BARU I II GT 4 14,5/150 kV 185 MW GT 3 11,5/150 kV 100 MW GT 2 11,5/150 kV 100 MW GT 1 11,5/150 kV 100MW B5 .3E 4000/5A 4000/5A 150 kV/v3 110 V/v3 With AP"
+    },
+    {
+      "id": "users_hafizna_fadhli_downloads_ultg_durikosambi_20230215t100950z_001_ultg_durikosambi_gis_daan_mogot_single_line_dnmgt_ver_8_2022_pdf",
+      "fileName": "SINGLE LINE DNMGT Ver 8 2022.pdf",
+      "fullPath": "C:\\Users\\hafizna.fadhli\\Downloads\\ULTG DURIKOSAMBI-20230215T100950Z-001\\ULTG DURIKOSAMBI\\GIS DAAN MOGOT\\SINGLE LINE DNMGT Ver 8 2022.pdf",
+      "stationFolder": "GIS DAAN MOGOT",
+      "localStationHint": "DAAN MOGOT",
+      "documentType": "sld",
+      "extractionStatus": "text_layer",
+      "extractionError": "",
+      "pageCount": 1,
+      "sizeBytes": 209576,
+      "lastModified": "2026-05-09T03:24:18.170Z",
+      "stationHints": [
+        "DURIKOSAMBI",
+        "DAAN MOGOT",
+        "PANTAI INDAH KAPUK",
+        "CENGKARENG"
+      ],
+      "bayHints": [],
+      "relayHints": [],
+      "functionHints": [
+        "AR"
+      ],
+      "endpointCandidates": [
+        {
+          "id": "gis_daan_mogot_durikosambi_single_line_dnmgt_ver_8_2022_pdf",
+          "localStation": "DAAN MOGOT",
+          "remoteStation": "DURIKOSAMBI",
+          "source": "sld_text_layer",
+          "confidence": "low",
+          "evidence": "1 DURIKOSAMBI 1 PANTAI INDAH KAPUK 1 2 150 KV/√3 100 V/√3 4000 A 3150 A 4000 A 3150 A 10 KA 150 KV/√3 100 V/√3 4000 A 3150 A 4000 A 3"
+        },
+        {
+          "id": "gis_daan_mogot_pantai_indah_kapuk_single_line_dnmgt_ver_8_2022_pdf",
+          "localStation": "DAAN MOGOT",
+          "remoteStation": "PANTAI INDAH KAPUK",
+          "source": "sld_text_layer",
+          "confidence": "medium",
+          "evidence": "1 DURIKOSAMBI 1 PANTAI INDAH KAPUK 1 2 150 KV/√3 100 V/√3 4000 A 3150 A 4000 A 3150 A 10 KA 150 KV/√3 100 V/√3 4000 A 3150 A 4000 A 3150 A 150 KV/√3 100 V"
+        },
+        {
+          "id": "gis_daan_mogot_cengkareng_single_line_dnmgt_ver_8_2022_pdf",
+          "localStation": "DAAN MOGOT",
+          "remoteStation": "CENGKARENG",
+          "source": "sld_text_layer",
+          "confidence": "medium",
+          "evidence": "MVA 150/20 KV YNYN0+D1 1732 A ALAMAT : JL. BANGUN NUSA RAYA RT.02/RW.15, KAPUK, CENGKARENG, JAKARTA BARAT 11720 KOORDINAT : 6°09'03.0\"S 106°44'20.3\"E NO TELPON : 081290893015 DURIKOSAMBI 2 PANTAI INDAH KAPUK 2"
+        }
+      ],
+      "textCharCount": 1815,
+      "textPreview": "1 DURIKOSAMBI 1 PANTAI INDAH KAPUK 1 2 150 kV/√3 100 V/√3 4000 A 3150 A 4000 A 3150 A 10 kA 150 kV/√3 100 V/√3 4000 A 3150 A 4000 A 3150 A 150 kV/√3 100 V/√3 4000 A 3150 A 4000 A 3150 A 150 kV/√3 100 V/√3 100VA 4000 A 3150 A 4000 A 3150 A 4000A 4000 A 4000 A 2000-4000/1 A 12 Ω 4000 A 4000 A 1250 A 2000 A 20 kV/√3 100 V/√3 12 Ω 4000 A 4000 A 1250 A 150-300-2000- 4000/1 A 2000 A 20 kV/√3 100 V/√3 12 Ω 4000 A 4000 A 1250 A 2000 A 20 kV/√3 100 V/√3 KOPEL VT BUS 2 150 kV/√3 100 V/√3 VT BUS 2 150 kV/√3 100 V/√3 VT BUS 1 150 kV/√3 100 V/√3 VT BUS 1 150 kV/√3 100 V/√3 VT BUS 1 150 kV/√3 100 V/√3 TRAFO 1 TRAFO 2 TRAFO 3 CG PAUWELS 60 MVA 150/20 kV YNyn0+d1 1732 A CG PAUWELS 60 MVA 150/20 kV YNyn0+d1 1732 A CG PAUWELS 60 MVA 150/20 kV YNyn0+d1 1732 A Alamat : Jl. Bangun Nusa Raya RT.02/RW.15, Kapuk, Cengkareng, Jakarta Barat 11720 Koordinat : 6°09'03.0\"S 106°44'20.3\"E No Telpon : 081290893015 DURIKOSAMBI 2 PANTAI INDAH KAPUK 2 SUTT GTACSR 410 2x461,4 mm² ( 2514 A ) 10 kA 10 kA 10 kA 1000-2000-3000/1 A 2000-4000/1 A 1000-2000-3000- 4000/1 A 1000-2000-3000/1 A 1000-2000-3000/1 A 1000-2000-3000/1 A 150-300-2000- 4000/1 A 150-300-2000- 4000/1 A 1000-2000/1 A 2000/1 A 1000-2000/1 A 1000-2000/1 A "
+    },
+    {
+      "id": "users_hafizna_fadhli_downloads_ultg_durikosambi_20230215t100950z_001_ultg_durikosambi_gis_grogol_single_line_grgol_ver_8_2022_pdf",
+      "fileName": "SINGLE LINE GRGOL Ver 8 2022.pdf",
+      "fullPath": "C:\\Users\\hafizna.fadhli\\Downloads\\ULTG DURIKOSAMBI-20230215T100950Z-001\\ULTG DURIKOSAMBI\\GIS GROGOL\\SINGLE LINE GRGOL Ver 8 2022.pdf",
+      "stationFolder": "GIS GROGOL",
+      "localStationHint": "GROGOL",
+      "documentType": "sld",
+      "extractionStatus": "text_layer",
+      "extractionError": "",
+      "pageCount": 1,
+      "sizeBytes": 128133,
+      "lastModified": "2026-05-09T03:24:18.730Z",
+      "stationHints": [
+        "DURIKOSAMBI",
+        "DAAN MOGOT",
+        "GROGOL BARU",
+        "GROGOL",
+        "TOMANG"
+      ],
+      "bayHints": [],
+      "relayHints": [],
+      "functionHints": [
+        "AR"
+      ],
+      "endpointCandidates": [
+        {
+          "id": "gis_grogol_durikosambi_single_line_grgol_ver_8_2022_pdf",
+          "localStation": "GROGOL",
+          "remoteStation": "DURIKOSAMBI",
+          "source": "sld_text_layer",
+          "confidence": "low",
+          "evidence": "ETUJUI TANGGAL SLD/DRKS.34001065/SMA-001 SLD GIS 150KV GROGOL PLN UIT JBB – UPT DURIKOSAMBI PT PLN (PERSERO) UNIT INDUK TRANSMISI JAWA BAGIAN BARAT JL. JCC NO. 1 CINERE LIMO DEPOK JAWA BARAT 16514 TELP. 021 7542"
+        },
+        {
+          "id": "gis_grogol_daan_mogot_single_line_grgol_ver_8_2022_pdf",
+          "localStation": "GROGOL",
+          "remoteStation": "DAAN MOGOT",
+          "source": "sld_text_layer",
+          "confidence": "medium",
+          "evidence": "1250 A   1000-2000/5-5 A 10 KA 10 KA TRAFO 3 20 KV/V3 110 V/V3 ALAMAT : JL. DAAN MOGOT 1, KALI SEKRETARIS, TANJUNG DUREN UTARA, JAKARTA BARAT KOORDINAT : LINTANG -6.166449° BUJUR 106.783709° NO TELPON : 081"
+        },
+        {
+          "id": "gis_grogol_grogol_baru_single_line_grgol_ver_8_2022_pdf",
+          "localStation": "GROGOL",
+          "remoteStation": "GROGOL BARU",
+          "source": "sld_text_layer",
+          "confidence": "high",
+          "evidence": "GROGOL BARU 2 SUTT 1 2 150 KV 2000/1A 2000 A 150 KV/V3 100 V/V3 1600 A 1600A 1600 A 1600 A 1000-2000/5-5 A   TRAFO 2 1250 A 1250"
+        },
+        {
+          "id": "gis_grogol_tomang_single_line_grgol_ver_8_2022_pdf",
+          "localStation": "GROGOL",
+          "remoteStation": "TOMANG",
+          "source": "sld_text_layer",
+          "confidence": "high",
+          "evidence": "150-300-2000/1 A 150-300-2000/1 A 150-300/1 A ACSR ZEBRA 2 X 484,5 MM2 (1600 A) TOMANG SKTT 1 2 XLPE CU 1 X 2000 MM2 (1191 A) LOLA DATA K. AGUNG SATRIA GUNAWAN WIJAYA 29 AGUSTUS 2022 DIGAMBAR DIPERIKSA DISE"
+        }
+      ],
+      "textCharCount": 1469,
+      "textPreview": "GROGOL BARU 2 SUTT 1 2 150 kV 2000/1A 2000 A 150 kV/v3 100 V/v3 1600 A 1600A 1600 A 1600 A 1000-2000/5-5 A   TRAFO 2 1250 A 1250 A 150-300-2000/1 A TRAFO 1 2000 A 2000 A 2000 A 1000-2000/ 5-5 A 2000 A 2000/1A ACSR ZEBRA 2 x 484,5 mm2 (1600 A) 1000-2000/ 5-5 A GROGOL BARU 1 SUTT 150 kV/v3 100 V/v3 1600 A 1600A 1600 A 1600 A 1250A 1250 A 1250 A 1250A 1250 A 1250 A 1250 A 1000-2000/5-5 A   1000-2000/ 5-5 A 2500 A ELIN 2 X 772 mm2; 2000 A; 40 kA 1250 A 1250 A 1250 A   1000-2000/5-5 A 10 kA 10 kA TRAFO 3 20 kV/v3 110 V/v3 Alamat : Jl. Daan Mogot 1, Kali Sekretaris, Tanjung Duren Utara, Jakarta Barat Koordinat : Lintang -6.166449° Bujur 106.783709° No Telpon : 081315235734 PAUWELS 60 MVA 150 / 20 kV YNyn0+d 1732 A CG PAUWELS 60 MVA 150 / 22 kV YNyn0+d 1574 A CG PAUWELS 60 MVA 150 / 20 kV YNyn0(d) 1732 A 1600/1 A 800-1600-2000/1 A 800-1600-2000/1 A 150-300-2000/1 A 150-300-2000/1 A 150-300/1 A ACSR ZEBRA 2 x 484,5 mm2 (1600 A) TOMANG SKTT 1 2 XLPE CU 1 x 2000 mm2 (1191 A) LOLA DATA K. AGUNG SATRIA GUNAWAN WIJAYA 29 AGUSTUS 2022 DIGAMBAR DIPERIKSA DISETUJUI TANGGAL SLD/DRKS.34001065/SMA-001 SLD GIS 150KV GROGOL PLN UIT JBB – UPT DURIKOSAMBI PT PLN (PERSERO) UNIT INDUK TRANSMISI JA"
+    },
+    {
+      "id": "users_hafizna_fadhli_downloads_ultg_durikosambi_20230215t100950z_001_ultg_durikosambi_gis_grogol_baru_single_line_grlbr_ver_8_2022_pdf",
+      "fileName": "SINGLE LINE GRLBR Ver 8 2022.pdf",
+      "fullPath": "C:\\Users\\hafizna.fadhli\\Downloads\\ULTG DURIKOSAMBI-20230215T100950Z-001\\ULTG DURIKOSAMBI\\GIS GROGOL BARU\\SINGLE LINE GRLBR Ver 8 2022.pdf",
+      "stationFolder": "GIS GROGOL BARU",
+      "localStationHint": "GROGOL BARU",
+      "documentType": "sld",
+      "extractionStatus": "text_layer",
+      "extractionError": "",
+      "pageCount": 1,
+      "sizeBytes": 141261,
+      "lastModified": "2026-05-09T03:24:18.522Z",
+      "stationHints": [
+        "DURIKOSAMBI",
+        "GROGOL BARU",
+        "GROGOL",
+        "KEBON JERUK"
+      ],
+      "bayHints": [],
+      "relayHints": [],
+      "functionHints": [
+        "AR"
+      ],
+      "endpointCandidates": [
+        {
+          "id": "gis_grogol_baru_durikosambi_single_line_grlbr_ver_8_2022_pdf",
+          "localStation": "GROGOL BARU",
+          "remoteStation": "DURIKOSAMBI",
+          "source": "sld_text_layer",
+          "confidence": "low",
+          "evidence": "KV/V3 100 V/V3 TRAFO 1   1250 A 2000 A 20 KV/V3 100 V/V3 150 KV/V3 100 V/V3 DURIKOSAMBI DURIKOSAMBI 3150 A 3150 A 3150 A 3150 A 4000 A CG PAUWELS YNYN0+D 60 MVA 150 / 22 KV 1574 A CG PAUWELS YNYN0+D 60 MVA 1"
+        },
+        {
+          "id": "gis_grogol_baru_grogol_single_line_grlbr_ver_8_2022_pdf",
+          "localStation": "GROGOL BARU",
+          "remoteStation": "GROGOL",
+          "source": "sld_text_layer",
+          "confidence": "medium",
+          "evidence": "67225° NO TELPON : KOPEL KEBON JERUK BARU 150 KV/V3 100 V/V3 150 KV/V3 100 V/V3 GROGOL 150 KV/V3 100 V/V3 TRAFO 2   1250 A 2000 A 20 KV/V3 100 V/V3 GROGOL 150 KV/V3 100 V/V3 150 KV/V3 100 V/V3 TRAFO 1 "
+        },
+        {
+          "id": "gis_grogol_baru_kebon_jeruk_single_line_grlbr_ver_8_2022_pdf",
+          "localStation": "GROGOL BARU",
+          "remoteStation": "KEBON JERUK",
+          "source": "sld_text_layer",
+          "confidence": "medium",
+          "evidence": "USUS IBUKOTA JAKARTA 11520 KOORDINAT : -6.163092° 106.767225° NO TELPON : KOPEL KEBON JERUK BARU 150 KV/V3 100 V/V3 150 KV/V3 100 V/V3 GROGOL 150 KV/V3 100 V/V3 TRAFO 2   1250 A 2000 A 20 KV/V3 100 V/V3 GROGO"
+        }
+      ],
+      "textCharCount": 1524,
+      "textPreview": "1 2 AL & CU 4000 A; 40 kA Alamat : Jl. Ratu Alamanda No.3, RW.1, Kedoya Utara, Kec. Kb. Jeruk, Kota Jakarta Barat, Daerah Khusus Ibukota Jakarta 11520 Koordinat : -6.163092° 106.767225° No Telpon : KOPEL KEBON JERUK BARU 150 kV/v3 100 V/v3 150 kV/v3 100 V/v3 GROGOL 150 kV/v3 100 V/v3 TRAFO 2   1250 A 2000 A 20 kV/v3 100 V/v3 GROGOL 150 kV/v3 100 V/v3 150 kV/v3 100 V/v3 TRAFO 1   1250 A 2000 A 20 kV/v3 100 V/v3 150 kV/v3 100 V/v3 DURIKOSAMBI DURIKOSAMBI 3150 A 3150 A 3150 A 3150 A 4000 A CG PAUWELS YNyn0+d 60 MVA 150 / 22 KV 1574 A CG PAUWELS YNyn0+d 60 MVA 150 / 22 KV 1574 A TRAFO 3 3150 A 3150 A 1250 A 1250 A 1250 A 1250 A 3150 A 3150 A 3150 A 3150 A 3150 A 3150 A SUTT ACSR ZEBRA 2X484,5 mm2 (1600 A) 3150 A 3150 A 3150 A 3150 A 150-300-2000-4000/1 A 2000-4000/1 A 2000-4000/1 A 2000-4000/1 A II I II KEBON JERUK BARU I II I 20kA 20kA 20kA 20kA 2000-4000/1 A 2000-4000/1 A 2000-4000/1 A 2000-4000/1 A 2000-4000/1 A 150-300-2000-4000/1 A 1000-2000/1 A 1000-2000/1 A 150-300/1 A 1000-2000/1 A 1000-2000/1 A 2000-4000/1 A 2000-4000/1 A SUTT ACSR ZEBRA 2X484,5 mm2 (1600 A) SUTT ACSR ZEBRA 2X484,5 mm2 (1600 A) SUTT ACSR ZEBRA 2X484,5 mm2 (1600 A) LOLA DATA K. AGUNG SATRIA GUNAWAN WIJAYA"
+    },
+    {
+      "id": "users_hafizna_fadhli_downloads_ultg_durikosambi_20230215t100950z_001_ultg_durikosambi_gis_kebon_jeruk_single_line_kbjrk_ver_8_2022_pdf",
+      "fileName": "SINGLE LINE KBJRK Ver 8 2022.pdf",
+      "fullPath": "C:\\Users\\hafizna.fadhli\\Downloads\\ULTG DURIKOSAMBI-20230215T100950Z-001\\ULTG DURIKOSAMBI\\GIS KEBON JERUK\\SINGLE LINE KBJRK Ver 8 2022.pdf",
+      "stationFolder": "GIS KEBON JERUK",
+      "localStationHint": "KEBON JERUK",
+      "documentType": "sld",
+      "extractionStatus": "text_layer",
+      "extractionError": "",
+      "pageCount": 1,
+      "sizeBytes": 128558,
+      "lastModified": "2026-05-09T03:24:18.660Z",
+      "stationHints": [
+        "DURIKOSAMBI",
+        "KEBON JERUK"
+      ],
+      "bayHints": [],
+      "relayHints": [],
+      "functionHints": [
+        "AR"
+      ],
+      "endpointCandidates": [
+        {
+          "id": "gis_kebon_jeruk_durikosambi_single_line_kbjrk_ver_8_2022_pdf",
+          "localStation": "KEBON JERUK",
+          "remoteStation": "DURIKOSAMBI",
+          "source": "sld_text_layer",
+          "confidence": "low",
+          "evidence": "/5 A 250/5 A 1000-2000/5 A   1000-2000/ 5 A 20 KV/V3 100 V/V3 2000/5 A KOPEL DURIKOSAMBI OIL CU 800 MM2 ( 920 A ) DURIKOSAMBI OIL CU 800 MM2 ( 920 A ) DURIKOSAMBI OIL CU 800 MM2 ( 920 A ) 2000 A KARETBARU KAR"
+        }
+      ],
+      "textCharCount": 1438,
+      "textPreview": "2000 A 2000/5 A 2000/5 A 2000 A 2000 A I TRAFO 2 TRAFO 1 II 1 2 150 kV AL; 2000 A; 31,5 kA TRAFO 3 630 A 1600 A 1600 A II 250-500/5 A 150 kV/v3 100 V/v3 1250 A 1600 A 1250 A 1250 A 500-1000/5 A 630 A 630 A 630 A 250/5 A 250/5 A 1000-2000/5 A   1000-2000/ 5 A 20 kV/v3 100 V/v3 2000/5 A 150 kV/v3 100 V/v3 1250 A 1600 A 1250 A 1250 A I 500-1000/5 A 630 A 250/5 A 250/5 A 1000-2000/5 A   1000-2000/ 5 A 20 kV/v3 100 V/v3 2000/5 A 250-500/5 A 630 A 1600 A 630 A 630 A 1250 A 630 A 250/5 A 250/5 A 1000-2000/5 A   1000-2000/ 5 A 20 kV/v3 100 V/v3 2000/5 A KOPEL DURIKOSAMBI OIL CU 800 mm2 ( 920 A ) DURIKOSAMBI OIL CU 800 mm2 ( 920 A ) DURIKOSAMBI OIL CU 800 mm2 ( 920 A ) 2000 A KARETBARU KARETBARU XLPE CU 1x1000 mm2 ( 786 A ) 1600 A Alamat : Jl. Budi Raya Kemanggisan, Kebon Jeruk, Jakarta Barat Koordinat : Lintang -6.190578° Bujur 106.781952° No Telpon : 0813-6288-2536 2000 A CG PAUWELS 60 MVA 150/22 kV YNyn0/d1 1574 A UNINDO 60 MVA 150/20 kV YNyn0 1732 A CG PAUWELS 60 MVA 150/22 kV YNyn0/d1 1574 A 1250 A 1250 A 1250 A 150 kV/v3 100 V/v3 150 kV/v3 100 V/v3 LOLA DATA K. AGUNG SATRIA GUNAWAN WIJAYA 29 AGUSTUS 2022 DIGAMBAR DIPERIKSA DISETUJUI TANGGAL SLD/DRKS.34001064/SMA-001 SLD GIS 1"
+    },
+    {
+      "id": "users_hafizna_fadhli_downloads_ultg_durikosambi_20230215t100950z_001_ultg_durikosambi_gis_kembangan_single_line_kmbgn_150kv_ver_8_2022_pdf",
+      "fileName": "SINGLE LINE KMBGN 150KV Ver 8 2022.pdf",
+      "fullPath": "C:\\Users\\hafizna.fadhli\\Downloads\\ULTG DURIKOSAMBI-20230215T100950Z-001\\ULTG DURIKOSAMBI\\GIS KEMBANGAN\\SINGLE LINE KMBGN 150KV Ver 8 2022.pdf",
+      "stationFolder": "GIS KEMBANGAN",
+      "localStationHint": "KEMBANGAN",
+      "documentType": "sld",
+      "extractionStatus": "text_layer",
+      "extractionError": "",
+      "pageCount": 1,
+      "sizeBytes": 169071,
+      "lastModified": "2026-05-09T03:24:17.436Z",
+      "stationHints": [
+        "DURIKOSAMBI",
+        "KEMBANGAN",
+        "NEW SENAYAN",
+        "PETUKANGAN"
+      ],
+      "bayHints": [],
+      "relayHints": [],
+      "functionHints": [
+        "AR"
+      ],
+      "endpointCandidates": [
+        {
+          "id": "gis_kembangan_durikosambi_single_line_kmbgn_150kv_ver_8_2022_pdf",
+          "localStation": "KEMBANGAN",
+          "remoteStation": "DURIKOSAMBI",
+          "source": "sld_text_layer",
+          "confidence": "low",
+          "evidence": "V/V3 2500 A 3150/5 A 1000/5 A 2500 A 3150/5A 2500 A 3150/5 A 2500 A 150-300/5 A DURIKOSAMBI SKTT OIL CU 800 MM2 ( 920 A ) 2000 A 2000 A II 2000 A 2000 A I 150 KV/V3 100 V/V3 2000 A 3150/5 A 2000/5 A 2000 A 150 K"
+        },
+        {
+          "id": "gis_kembangan_new_senayan_single_line_kmbgn_150kv_ver_8_2022_pdf",
+          "localStation": "KEMBANGAN",
+          "remoteStation": "NEW SENAYAN",
+          "source": "sld_text_layer",
+          "confidence": "high",
+          "evidence": "3150 A 3150 A NEW SENAYAN TACSR 520 MM2 (1600 A) ACSR 468,5 MM2 (780 A) 2 2500 A 2500 A 150 KV/V3 100 V/V3 2XZEBRA 484,5 MM2 (1270 A) 150 KV/V3 1"
+        },
+        {
+          "id": "gis_kembangan_petukangan_single_line_kmbgn_150kv_ver_8_2022_pdf",
+          "localStation": "KEMBANGAN",
+          "remoteStation": "PETUKANGAN",
+          "source": "sld_text_layer",
+          "confidence": "high",
+          "evidence": "0 A 3150/5 A 2000/5 A 2000 A 150 KV/V3 100 V/V3 2000 A 3150/5 A 2000/5 A 2000 A PETUKANGAN SUTT GTACSR 410 2 X 461,4 MM2 (2514 A) - #1 ACSR DRAKE 2 X 468 MM2 (1802 A) - #1 & #2 SKTT XLPE CU 2 X 2000 MM2 (2032 A"
+        }
+      ],
+      "textCharCount": 2296,
+      "textPreview": "3150 A 3150 A NEW SENAYAN TACSR 520 mm2 (1600 A) ACSR 468,5 mm2 (780 A) 2 2500 A 2500 A 150 kV/v3 100 V/v3 2XZebra 484,5 mm2 (1270 A) 150 kV/v3 100 V/v3 1 300/5A 2500 A 2500 A 2000/5 A 2000/5 A   TRAFO 1 2000 A 3150 A 3150/5 A 3150 A 3150 A 2500 A 2500 A II 2500 A 2500 A I 300/5 A 2000/5 A 2500 A 2500 A 2000/5 A TRAFO 2 2000 A     3150/5 A 2500 A 2500 A 2500/5 A 2500 A 2500 A 2500 A 2500 A II 2500 A 2500 A I 3150 A 3150 A 3150/5 A 3150 A 3150/5 A 3200/5 A 3150 A CILEDUG 3150 A 3150/5 A 3200/5A 3150 A 150 kV/v3 100 V/v3 150 kV/v3 100 V/v3 2500 A 3150/5 A 1000/5 A 2500 A 150 kV/v3 100 V/v3 2500 A 3150/5 A 1000/5 A 2500 A 150 kV/v3 100 V/v3 2500 A 3150/5 A 1000/5 A 2500 A 150 kV/v3 100 V/v3 2500 A 3150/5 A 1000/5 A 2500 A 3150/5A 2500 A 3150/5 A 2500 A 150-300/5 A DURIKOSAMBI SKTT OIL CU 800 mm2 ( 920 A ) 2000 A 2000 A II 2000 A 2000 A I 150 kV/v3 100 V/v3 2000 A 3150/5 A 2000/5 A 2000 A 150 kV/v3 100 V/v3 2000 A 3150/5 A 2000/5 A 2000 A PETUKANGAN SUTT GTACSR 410 2 x 461,4 mm2 (2514 A) - #1 ACSR Drake 2 x 468 mm2 (1802 A) - #1 & #2 SKTT XLPE CU 2 x 2000 mm2 (2032 A) - #1 & #2 IBT 1 500 KV IBT 2 500 KV CU; 3150 A; 31,5 kA 2500 A 1000/5 A 150 kV/v3 100 V/v3 3150/5 A 2500/5 A 2"
+    },
+    {
+      "id": "users_hafizna_fadhli_downloads_ultg_durikosambi_20230215t100950z_001_ultg_durikosambi_gis_muarakarang_baru_single_line_gmkru_ver_8_2022_feedback_pdf",
+      "fileName": "SINGLE LINE GMKRU Ver 8 2022 - feedback.pdf",
+      "fullPath": "C:\\Users\\hafizna.fadhli\\Downloads\\ULTG DURIKOSAMBI-20230215T100950Z-001\\ULTG DURIKOSAMBI\\GIS MUARAKARANG BARU\\SINGLE LINE GMKRU Ver 8 2022 - feedback.pdf",
+      "stationFolder": "GIS MUARAKARANG BARU",
+      "localStationHint": "MUARAKARANG BARU",
+      "documentType": "sld",
+      "extractionStatus": "text_layer",
+      "extractionError": "",
+      "pageCount": 1,
+      "sizeBytes": 748594,
+      "lastModified": "2026-05-09T03:24:19.960Z",
+      "stationHints": [
+        "DURIKOSAMBI",
+        "PANTAI INDAH KAPUK",
+        "MUARAKARANG BARU",
+        "MUARAKARANG"
+      ],
+      "bayHints": [],
+      "relayHints": [],
+      "functionHints": [
+        "AR"
+      ],
+      "endpointCandidates": [
+        {
+          "id": "gis_muarakarang_baru_durikosambi_single_line_gmkru_ver_8_2022_feedback_pdf",
+          "localStation": "MUARAKARANG BARU",
+          "remoteStation": "DURIKOSAMBI",
+          "source": "sld_text_layer",
+          "confidence": "low",
+          "evidence": "4000/1 A 2000 A 2000 A 2000 A SLD GIS 150KV MUARAKARANG BARU PLN UIT JBB – UPT DURIKOSAMBI PT PLN (PERSERO) UNIT INDUK TRANSMISI JAWA BAGIAN BARAT JL. JCC NO. 1 CINERE LIMO DEPOK JAWA BARAT 16514 TELP. 021 7542"
+        },
+        {
+          "id": "gis_muarakarang_baru_pantai_indah_kapuk_single_line_gmkru_ver_8_2022_feedback_pdf",
+          "localStation": "MUARAKARANG BARU",
+          "remoteStation": "PANTAI INDAH KAPUK",
+          "source": "sld_text_layer",
+          "confidence": "high",
+          "evidence": ".2 A1.2 A1.3 SST B1.3 B1.3E 1 150 KV/V3 100 V/V3 10 KA 150 KV/V3 100 V/V3 10 KA PANTAI INDAH KAPUK I II SUTT GTACSR 410 2 X 461,4 MM2 (2514 A) FUTURE GT 1.2 FUTURE GT 1.3 FUTURE ST 1.0 FUTURE FUTURE 150 KV/V3 100 V/V3"
+        },
+        {
+          "id": "gis_muarakarang_baru_muarakarang_single_line_gmkru_ver_8_2022_feedback_pdf",
+          "localStation": "MUARAKARANG BARU",
+          "remoteStation": "MUARAKARANG",
+          "source": "sld_text_layer",
+          "confidence": "high",
+          "evidence": "FUTURE GT 1.3 FUTURE ST 1.0 FUTURE FUTURE 150 KV/V3 100 V/V3 150 KV/V3 100 V/V3 MUARAKARANG BARU I II SKTT XLPE CU 2 X 2000 MM2 (2218,7 A) FUTURE IBT 1 500 KV FUTURE IBT 2 500 KV FUTURE 4000 A 4000 A 4000 A 4000"
+        }
+      ],
+      "textCharCount": 3345,
+      "textPreview": "2 AB8 B8.1 AB8.2 B8 B8.2 AB7 A7 A7.1 B7.1 AB7.2 AB7.1 B7 B7.2 A7.2 A7.3 1 B7.3 B7.3E B8.3 B8.3E A8.2 4000 A A8 A8.1 AB8.1 A8.3 Alamat : Jl. Pluit Karang Ayu Barat, Kel.Pluit, Kec.Penjaringan, Jakarta Utara 14450 Koordinat : Lintang -6.109424014894081° Bujur 106.78083448706012° No Telpon : 7 8 GT 1.1 AB6 A6 A6.1 B6.1 AB6.2 AB6.1 B6 B6.2 A6.2 A6.3 B6.3 B6.3E 6 AB5 A5 A5.1 B5.1 AB5.2 AB5.1 B5 B5.2 A5.2 A5.3 B5.3 B5.3E 5 AB4 B4.1 AB4.2 B4 B4.2 B4.3 A4.2 A4 A4.1 AB4.1 A4.3 TRAFO 1 4 AB3 B3.1 AB3.2 B3 B3.2 B3.3 B3.3E A3.2 A3 A3.1 AB3.1 A3.3 TRAFO 2 3 AB2 B2.1 AB2.2 B2 B2.2 B2.3 B2.3E A2.2 A2 A2.1 AB2.1 A2.3 TRAFO 3 2 AB1 A1 A1.1 B1.1 AB1.2 AB1.1 B1 B1.2 A1.2 A1.3 SST B1.3 B1.3E 1 150 kV/v3 100 V/v3 10 kA 150 kV/v3 100 V/v3 10 kA PANTAI INDAH KAPUK I II SUTT GTACSR 410 2 x 461,4 mm2 (2514 A) FUTURE GT 1.2 FUTURE GT 1.3 FUTURE ST 1.0 FUTURE FUTURE 150 kV/v3 100 V/v3 150 kV/v3 100 V/v3 MUARAKARANG BARU I II SKTT XLPE CU 2 x 2000 mm2 (2218,7 A) FUTURE IBT 1 500 KV FUTURE IBT 2 500 KV FUTURE 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4"
+    },
+    {
+      "id": "users_hafizna_fadhli_downloads_ultg_durikosambi_20230215t100950z_001_ultg_durikosambi_gis_muarakarang_baru_single_line_gmkru_ver_8_2022_pdf",
+      "fileName": "SINGLE LINE GMKRU Ver 8 2022.pdf",
+      "fullPath": "C:\\Users\\hafizna.fadhli\\Downloads\\ULTG DURIKOSAMBI-20230215T100950Z-001\\ULTG DURIKOSAMBI\\GIS MUARAKARANG BARU\\SINGLE LINE GMKRU Ver 8 2022.pdf",
+      "stationFolder": "GIS MUARAKARANG BARU",
+      "localStationHint": "MUARAKARANG BARU",
+      "documentType": "sld",
+      "extractionStatus": "text_layer",
+      "extractionError": "",
+      "pageCount": 1,
+      "sizeBytes": 197436,
+      "lastModified": "2026-05-09T03:24:19.786Z",
+      "stationHints": [
+        "DURIKOSAMBI",
+        "PANTAI INDAH KAPUK",
+        "MUARAKARANG BARU",
+        "MUARAKARANG"
+      ],
+      "bayHints": [],
+      "relayHints": [],
+      "functionHints": [
+        "AR"
+      ],
+      "endpointCandidates": [
+        {
+          "id": "gis_muarakarang_baru_durikosambi_single_line_gmkru_ver_8_2022_pdf",
+          "localStation": "MUARAKARANG BARU",
+          "remoteStation": "DURIKOSAMBI",
+          "source": "sld_text_layer",
+          "confidence": "low",
+          "evidence": "4000/1 A 2000 A 2000 A 2000 A SLD GIS 150KV MUARAKARANG BARU PLN UIT JBB – UPT DURIKOSAMBI PT PLN (PERSERO) UNIT INDUK TRANSMISI JAWA BAGIAN BARAT JL. JCC NO. 1 CINERE LIMO DEPOK JAWA BARAT 16514 TELP. 021 7542"
+        },
+        {
+          "id": "gis_muarakarang_baru_pantai_indah_kapuk_single_line_gmkru_ver_8_2022_pdf",
+          "localStation": "MUARAKARANG BARU",
+          "remoteStation": "PANTAI INDAH KAPUK",
+          "source": "sld_text_layer",
+          "confidence": "high",
+          "evidence": ".2 A1.2 A1.3 SST B1.3 B1.3E 1 150 KV/V3 100 V/V3 10 KA 150 KV/V3 100 V/V3 10 KA PANTAI INDAH KAPUK I II SUTT GTACSR 410 2 X 461,4 MM2 (2514 A) FUTURE GT 1.2 FUTURE GT 1.3 FUTURE ST 1.0 FUTURE FUTURE 150 KV/V3 100 V/V3"
+        },
+        {
+          "id": "gis_muarakarang_baru_muarakarang_single_line_gmkru_ver_8_2022_pdf",
+          "localStation": "MUARAKARANG BARU",
+          "remoteStation": "MUARAKARANG",
+          "source": "sld_text_layer",
+          "confidence": "high",
+          "evidence": "FUTURE GT 1.3 FUTURE ST 1.0 FUTURE FUTURE 150 KV/V3 100 V/V3 150 KV/V3 100 V/V3 MUARAKARANG BARU I II SKTT XLPE CU 2 X 2000 MM2 (2218,7 A) FUTURE IBT 1 500 KV FUTURE IBT 2 500 KV FUTURE 4000 A 4000 A 4000 A 4000"
+        }
+      ],
+      "textCharCount": 3345,
+      "textPreview": "2 AB8 B8.1 AB8.2 B8 B8.2 AB7 A7 A7.1 B7.1 AB7.2 AB7.1 B7 B7.2 A7.2 A7.3 1 B7.3 B7.3E B8.3 B8.3E A8.2 4000 A A8 A8.1 AB8.1 A8.3 Alamat : Jl. Pluit Karang Ayu Barat, Kel.Pluit, Kec.Penjaringan, Jakarta Utara 14450 Koordinat : Lintang -6.109424014894081° Bujur 106.78083448706012° No Telpon : 7 8 GT 1.1 AB6 A6 A6.1 B6.1 AB6.2 AB6.1 B6 B6.2 A6.2 A6.3 B6.3 B6.3E 6 AB5 A5 A5.1 B5.1 AB5.2 AB5.1 B5 B5.2 A5.2 A5.3 B5.3 B5.3E 5 AB4 B4.1 AB4.2 B4 B4.2 B4.3 A4.2 A4 A4.1 AB4.1 A4.3 TRAFO 1 4 AB3 B3.1 AB3.2 B3 B3.2 B3.3 B3.3E A3.2 A3 A3.1 AB3.1 A3.3 TRAFO 2 3 AB2 B2.1 AB2.2 B2 B2.2 B2.3 B2.3E A2.2 A2 A2.1 AB2.1 A2.3 TRAFO 3 2 AB1 A1 A1.1 B1.1 AB1.2 AB1.1 B1 B1.2 A1.2 A1.3 SST B1.3 B1.3E 1 150 kV/v3 100 V/v3 10 kA 150 kV/v3 100 V/v3 10 kA PANTAI INDAH KAPUK I II SUTT GTACSR 410 2 x 461,4 mm2 (2514 A) FUTURE GT 1.2 FUTURE GT 1.3 FUTURE ST 1.0 FUTURE FUTURE 150 kV/v3 100 V/v3 150 kV/v3 100 V/v3 MUARAKARANG BARU I II SKTT XLPE CU 2 x 2000 mm2 (2218,7 A) FUTURE IBT 1 500 KV FUTURE IBT 2 500 KV FUTURE 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4"
+    },
+    {
+      "id": "users_hafizna_fadhli_downloads_ultg_durikosambi_20230215t100950z_001_ultg_durikosambi_gis_muarakarang_baru_single_line_gmkru_ver_8_1_2022_pdf",
+      "fileName": "SINGLE LINE GMKRU Ver 8.1 2022.pdf",
+      "fullPath": "C:\\Users\\hafizna.fadhli\\Downloads\\ULTG DURIKOSAMBI-20230215T100950Z-001\\ULTG DURIKOSAMBI\\GIS MUARAKARANG BARU\\SINGLE LINE GMKRU Ver 8.1 2022.pdf",
+      "stationFolder": "GIS MUARAKARANG BARU",
+      "localStationHint": "MUARAKARANG BARU",
+      "documentType": "sld",
+      "extractionStatus": "text_layer",
+      "extractionError": "",
+      "pageCount": 1,
+      "sizeBytes": 215704,
+      "lastModified": "2026-05-09T03:24:19.896Z",
+      "stationHints": [
+        "DURIKOSAMBI",
+        "PANTAI INDAH KAPUK",
+        "MUARAKARANG BARU",
+        "MUARAKARANG"
+      ],
+      "bayHints": [],
+      "relayHints": [],
+      "functionHints": [
+        "AR"
+      ],
+      "endpointCandidates": [
+        {
+          "id": "gis_muarakarang_baru_durikosambi_single_line_gmkru_ver_8_1_2022_pdf",
+          "localStation": "MUARAKARANG BARU",
+          "remoteStation": "DURIKOSAMBI",
+          "source": "sld_text_layer",
+          "confidence": "low",
+          "evidence": "4000/1 A 2000 A 2000 A 2000 A SLD GIS 150KV MUARAKARANG BARU PLN UIT JBB – UPT DURIKOSAMBI PT PLN (PERSERO) UNIT INDUK TRANSMISI JAWA BAGIAN BARAT JL. JCC NO. 1 CINERE LIMO DEPOK JAWA BARAT 16514 TELP. 021 7542"
+        },
+        {
+          "id": "gis_muarakarang_baru_pantai_indah_kapuk_single_line_gmkru_ver_8_1_2022_pdf",
+          "localStation": "MUARAKARANG BARU",
+          "remoteStation": "PANTAI INDAH KAPUK",
+          "source": "sld_text_layer",
+          "confidence": "high",
+          "evidence": ".2 A1.2 A1.3 SST B1.3 B1.3E 1 150 KV/V3 100 V/V3 10 KA 150 KV/V3 100 V/V3 10 KA PANTAI INDAH KAPUK I II SUTT GTACSR 410 2 X 461,4 MM2 (2514 A) FUTURE GT 1.2 FUTURE GT 1.3 FUTURE ST 1.0 FUTURE FUTURE 150 KV/V3 100 V/V3"
+        },
+        {
+          "id": "gis_muarakarang_baru_muarakarang_single_line_gmkru_ver_8_1_2022_pdf",
+          "localStation": "MUARAKARANG BARU",
+          "remoteStation": "MUARAKARANG",
+          "source": "sld_text_layer",
+          "confidence": "high",
+          "evidence": "FUTURE GT 1.3 FUTURE ST 1.0 FUTURE FUTURE 150 KV/V3 100 V/V3 150 KV/V3 100 V/V3 MUARAKARANG BARU I II SKTT XLPE CU 2 X 2000 MM2 (2218,7 A) FUTURE IBT 1 500 KV FUTURE IBT 2 500 KV FUTURE 4000 A 4000 A 4000 A 4000"
+        }
+      ],
+      "textCharCount": 3650,
+      "textPreview": "2 AB8 B8.1 AB8.2 B8 B8.2 AB7 A7 A7.1 B7.1 AB7.2 AB7.1 B7 B7.2 A7.2 A7.3 1 B7.3 B7.3E B8.3 B8.3E A8.2 4000 A A8 A8.1 AB8.1 A8.3 Alamat : Jl. Pluit Karang Ayu Barat, Kel.Pluit, Kec.Penjaringan, Jakarta Utara 14450 Koordinat : Lintang -6.109424014894081° Bujur 106.78083448706012° No Telpon : 7 8 GT 1.1 AB6 A6 A6.1 B6.1 AB6.2 AB6.1 B6 B6.2 A6.2 A6.3 B6.3 B6.3E 6 AB5 A5 A5.1 B5.1 AB5.2 AB5.1 B5 B5.2 A5.2 A5.3 B5.3 B5.3E 5 AB4 B4.1 AB4.2 B4 B4.2 B4.3 A4.2 A4 A4.1 AB4.1 A4.3 TRAFO 1 4 AB3 B3.1 AB3.2 B3 B3.2 B3.3 B3.3E A3.2 A3 A3.1 AB3.1 A3.3 TRAFO 2 3 AB2 B2.1 AB2.2 B2 B2.2 B2.3 B2.3E A2.2 A2 A2.1 AB2.1 A2.3 TRAFO 3 2 AB1 A1 A1.1 B1.1 AB1.2 AB1.1 B1 B1.2 A1.2 A1.3 SST B1.3 B1.3E 1 150 kV/v3 100 V/v3 10 kA 150 kV/v3 100 V/v3 10 kA PANTAI INDAH KAPUK I II SUTT GTACSR 410 2 x 461,4 mm2 (2514 A) FUTURE GT 1.2 FUTURE GT 1.3 FUTURE ST 1.0 FUTURE FUTURE 150 kV/v3 100 V/v3 150 kV/v3 100 V/v3 MUARAKARANG BARU I II SKTT XLPE CU 2 x 2000 mm2 (2218,7 A) FUTURE IBT 1 500 KV FUTURE IBT 2 500 KV FUTURE 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4000 A 4"
+    },
+    {
+      "id": "users_hafizna_fadhli_downloads_ultg_durikosambi_20230215t100950z_001_ultg_durikosambi_gis_new_senayan_single_line_nwsyn_ver_8_2022_pdf",
+      "fileName": "SINGLE LINE NWSYN Ver 8 2022.pdf",
+      "fullPath": "C:\\Users\\hafizna.fadhli\\Downloads\\ULTG DURIKOSAMBI-20230215T100950Z-001\\ULTG DURIKOSAMBI\\GIS NEW SENAYAN\\SINGLE LINE NWSYN Ver 8 2022.pdf",
+      "stationFolder": "GIS NEW SENAYAN",
+      "localStationHint": "NEW SENAYAN",
+      "documentType": "sld",
+      "extractionStatus": "text_layer",
+      "extractionError": "",
+      "pageCount": 1,
+      "sizeBytes": 207550,
+      "lastModified": "2026-05-09T03:24:20.080Z",
+      "stationHints": [
+        "DURIKOSAMBI",
+        "KEMBANGAN",
+        "GROGOL",
+        "ULUJAMI",
+        "NEW SENAYAN"
+      ],
+      "bayHints": [],
+      "relayHints": [],
+      "functionHints": [
+        "AR"
+      ],
+      "endpointCandidates": [
+        {
+          "id": "gis_new_senayan_durikosambi_single_line_nwsyn_ver_8_2022_pdf",
+          "localStation": "NEW SENAYAN",
+          "remoteStation": "DURIKOSAMBI",
+          "source": "sld_text_layer",
+          "confidence": "low",
+          "evidence": "I TANGGAL SLD/DRKS.34001139/SMA-001 SLD GIS 150KV NEW SENAYAN PLN UIT JBB – UPT DURIKOSAMBI PT PLN (PERSERO) UNIT INDUK TRANSMISI JAWA BAGIAN BARAT JL. JCC NO. 1 CINERE LIMO DEPOK JAWA BARAT 16514 TELP. 021 7542"
+        },
+        {
+          "id": "gis_new_senayan_kembangan_single_line_nwsyn_ver_8_2022_pdf",
+          "localStation": "NEW SENAYAN",
+          "remoteStation": "KEMBANGAN",
+          "source": "sld_text_layer",
+          "confidence": "high",
+          "evidence": "KEMBANGAN 1 ACSR 468,5 MM2 (780 A) 2 2XZEBRA 484,5 MM2 (1270 A) 1 300/1 A 2000 A 2000 A 2000/1 A 1000-2000/ 1 A   2500 A 2000"
+        },
+        {
+          "id": "gis_new_senayan_grogol_single_line_nwsyn_ver_8_2022_pdf",
+          "localStation": "NEW SENAYAN",
+          "remoteStation": "GROGOL",
+          "source": "sld_text_layer",
+          "confidence": "high",
+          "evidence": "AFO 3 150 KV SENAYAN XLPE CU 800MM2 ( 925 A ) 2 1 ALAMAT : JL. PANJANG CIDODOL, GROGOL SELATAN, KEBAYORAN LAMA, JAKARTA BARAT KOORDINAT : LINTANG -6.227583° BUJUR 106.771707° NO TELPON : 081218663873 GANZ 6"
+        },
+        {
+          "id": "gis_new_senayan_ulujami_single_line_nwsyn_ver_8_2022_pdf",
+          "localStation": "NEW SENAYAN",
+          "remoteStation": "ULUJAMI",
+          "source": "sld_text_layer",
+          "confidence": "high",
+          "evidence": "1000 MM2 ( 920 A ) 2000 A 2000 A 2000 A 150 KV√3 100 V√3 2000/1 A 2000-1000/1 A ULUJAMI 2 1 3150 A 3150 A 1250 A 150 KV√3 100 V√3 SKTT XLPE CU 1000 MM2 ( 737 A ) 3150 A 3150 A 150 KV√3 100 V√3 LOLA DATA K. A"
+        }
+      ],
+      "textCharCount": 1618,
+      "textPreview": "KEMBANGAN 1 ACSR 468,5 mm2 (780 A) 2 2XZebra 484,5 mm2 (1270 A) 1 300/1 A 2000 A 2000 A 2000/1 A 1000-2000/ 1 A   2500 A 2000 A 2000/1 A 2000 A 2000 A 2000 A 2000 A 150 kV√3 100 V√3 2000 A 2000/1 A 500-1000/5 A 1600 A 2000 A 20 kV√3 100 V√3 SKTT 3 Core XLPE CU 800 mm2 ( 925 A ) KEMBANGAN 2 2000 A 2000 A 150 kV√3 100 V√3 2000 A 1600 A SKTT 2000/1 A TRAFO 1 300/1 A 2000 A 2000 A 2000/1 A 1000-2000/ 1 A   2500 A 2000/1 A 2000 A 20 kV√3 100 V√3 TRAFO 2 300/1 A 2000 A 2000 A 2000/1 A 1000-2000/ 1 A   2500 A 2000 A 300-150/1 A 20 kV√3 100 V√3 TRAFO 3 150 kV SENAYAN XLPE CU 800mm2 ( 925 A ) 2 1 Alamat : Jl. Panjang Cidodol, Grogol Selatan, Kebayoran Lama, Jakarta Barat Koordinat : Lintang -6.227583° Bujur 106.771707° No Telpon : 081218663873 GANZ 60 MVA 150/20 kV YNyn0/d 1732 A GANZ 60 MVA 150/20 kV YNyn0/d 1732 A UNINDO 60 MVA 150/20 kV YNyn0/d 1732 A 2000 A 2000 A 2000 A 150 kV√3 100 V√3 2000/1 A AL 102 mm ; 2000 A; 40 kA ) 500-1000/5 A 2000/1 A 2000/1 A 2000/1 A SKTT XLPE CU 1000 mm2 ( 920 A ) 2000 A 2000 A 2000 A 150 kV√3 100 V√3 2000/1 A 2000-1000/1 A ULUJAMI 2 1 3150 A 3150 A 1250 A 150 kV√3 100 V√3 SKTT XLPE CU 1000 mm2 ( 737 A ) 3150 A 3150 A 150 kV√3 100 V√3 LOLA DATA K."
+    },
+    {
+      "id": "users_hafizna_fadhli_downloads_ultg_durikosambi_20230215t100950z_001_ultg_durikosambi_gis_pantai_indah_kapuk_single_line_pinka_ver_8_2022_feedback_pdf",
+      "fileName": "SINGLE LINE PINKA Ver 8 2022 - feedback.pdf",
+      "fullPath": "C:\\Users\\hafizna.fadhli\\Downloads\\ULTG DURIKOSAMBI-20230215T100950Z-001\\ULTG DURIKOSAMBI\\GIS PANTAI INDAH KAPUK\\SINGLE LINE PINKA Ver 8 2022 - feedback.pdf",
+      "stationFolder": "GIS PANTAI INDAH KAPUK",
+      "localStationHint": "PANTAI INDAH KAPUK",
+      "documentType": "sld",
+      "extractionStatus": "text_layer",
+      "extractionError": "",
+      "pageCount": 1,
+      "sizeBytes": 598855,
+      "lastModified": "2026-05-09T03:24:19.152Z",
+      "stationHints": [
+        "DURIKOSAMBI",
+        "DAAN MOGOT",
+        "PANTAI INDAH KAPUK"
+      ],
+      "bayHints": [],
+      "relayHints": [],
+      "functionHints": [
+        "AR"
+      ],
+      "endpointCandidates": [
+        {
+          "id": "gis_pantai_indah_kapuk_durikosambi_single_line_pinka_ver_8_2022_feedback_pdf",
+          "localStation": "PANTAI INDAH KAPUK",
+          "remoteStation": "DURIKOSAMBI",
+          "source": "sld_text_layer",
+          "confidence": "low",
+          "evidence": "AL SLD/DRKS.34001177/SMA-001 SLD GIS 150KV PANTAI INDAH KAPUK PLN UIT JBB – UPT DURIKOSAMBI PT PLN (PERSERO) UNIT INDUK TRANSMISI JAWA BAGIAN BARAT JL. JCC NO. 1 CINERE LIMO DEPOK JAWA BARAT 16514 TELP. 021 7542"
+        },
+        {
+          "id": "gis_pantai_indah_kapuk_daan_mogot_single_line_pinka_ver_8_2022_feedback_pdf",
+          "localStation": "PANTAI INDAH KAPUK",
+          "remoteStation": "DAAN MOGOT",
+          "source": "sld_text_layer",
+          "confidence": "high",
+          "evidence": "000 A/ 1 A 2000-4000 A/ 1 A 20 KV/√3 0,1 KV/√ 3 20 KV/√3 0,1 KV/√ 3 10 KA 10 KA DAAN MOGOT 2 1 2 SUTT GTACSR 410 2X461,4 MM2 (2514 A) LOLA DATA K. AGUNG SATRIA GUNAWAN WIJAYA 29 AGUSTUS 2022 DIGAMBAR DIPERIKSA"
+        }
+      ],
+      "textCharCount": 1464,
+      "textPreview": "TRAFO 1 (FUTURE) TRAFO 1 (FUTURE) A B 1 4000 A 4000 A GIS MUARA KARANG BARU 4000 A 4000 A 150 kV/v3 100 V/v3 4000 A 4000 A 4000 A 4000 A 2000 A 2000 A 4000A 4000A 4000A 4000A 4000A 4000A 4000A AL PIPA ( 4000A ) 4000 A 4000 A 4000 A 4000 A SUTT GTACSR 410 2x461,4 mm2 (2514 A) 150-300-2000- 4000 A/1 A 20 kA 20 kA 20 kA 20 kA Alamat : Jl. Pantai Indah Barat, Kamal Muara, Penjaringan, Kota Jakarta Utara, Daerah Khusus Ibukota Jakarta 14470 Koordinat : 6°07'25.1\"S 106°45'05.0\"E No Telpon : 081380762825 4000 A 4000 A 4000 A 4000 A 4000A 4000A SHANDONG TAIKAI 60 MVA 150/20 kV YNyn0 1732 A TRAFO 2 TRAFO 3 SHANDONG TAIKAI 60 MVA 150/20 kV YNyn0 1732 A     1000-2000 A/1 A 1000-2000 A/1 A 150-300-2000- 4000 A/1 A 150-300-2000- 4000 A/1 A 150-300-2000- 4000 A/1 A 1000-2000/1 A 1000-2000/1 A 150 kV/√3 0,1 kV/√ 3 150 kV/√3 0,1 kV/√ 3 150 kV/√3 0,1 kV/√ 3 150 kV/√3 0,1 kV/√ 3 150 kV/√3 0,1 kV/√ 3 4000A 4000A 2000-4000 A/1 A 2000-4000 A/1 A 2000-4000 A/ 1 A 2000-4000 A/ 1 A 2000-4000 A/ 1 A 2000-4000 A/ 1 A 20 kV/√3 0,1 kV/√ 3 20 kV/√3 0,1 kV/√ 3 10 kA 10 kA DAAN MOGOT 2 1 2 SUTT GTACSR 410 2x461,4 mm2 (2514 A) LOLA DATA K. AGUNG SATRIA GUNAWAN WIJAYA 29 AGUSTUS 2022 DIGAMBAR DIPERIKSA DISET"
+    },
+    {
+      "id": "users_hafizna_fadhli_downloads_ultg_durikosambi_20230215t100950z_001_ultg_durikosambi_gis_pantai_indah_kapuk_single_line_pinka_ver_8_2022_pdf",
+      "fileName": "SINGLE LINE PINKA Ver 8 2022.pdf",
+      "fullPath": "C:\\Users\\hafizna.fadhli\\Downloads\\ULTG DURIKOSAMBI-20230215T100950Z-001\\ULTG DURIKOSAMBI\\GIS PANTAI INDAH KAPUK\\SINGLE LINE PINKA Ver 8 2022.pdf",
+      "stationFolder": "GIS PANTAI INDAH KAPUK",
+      "localStationHint": "PANTAI INDAH KAPUK",
+      "documentType": "sld",
+      "extractionStatus": "text_layer",
+      "extractionError": "",
+      "pageCount": 1,
+      "sizeBytes": 203975,
+      "lastModified": "2026-05-09T03:24:19.091Z",
+      "stationHints": [
+        "DURIKOSAMBI",
+        "DAAN MOGOT",
+        "PANTAI INDAH KAPUK"
+      ],
+      "bayHints": [],
+      "relayHints": [],
+      "functionHints": [
+        "AR"
+      ],
+      "endpointCandidates": [
+        {
+          "id": "gis_pantai_indah_kapuk_durikosambi_single_line_pinka_ver_8_2022_pdf",
+          "localStation": "PANTAI INDAH KAPUK",
+          "remoteStation": "DURIKOSAMBI",
+          "source": "sld_text_layer",
+          "confidence": "low",
+          "evidence": "AL SLD/DRKS.34001177/SMA-001 SLD GIS 150KV PANTAI INDAH KAPUK PLN UIT JBB – UPT DURIKOSAMBI PT PLN (PERSERO) UNIT INDUK TRANSMISI JAWA BAGIAN BARAT JL. JCC NO. 1 CINERE LIMO DEPOK JAWA BARAT 16514 TELP. 021 7542"
+        },
+        {
+          "id": "gis_pantai_indah_kapuk_daan_mogot_single_line_pinka_ver_8_2022_pdf",
+          "localStation": "PANTAI INDAH KAPUK",
+          "remoteStation": "DAAN MOGOT",
+          "source": "sld_text_layer",
+          "confidence": "high",
+          "evidence": "000 A/ 1 A 2000-4000 A/ 1 A 20 KV/√3 0,1 KV/√ 3 20 KV/√3 0,1 KV/√ 3 10 KA 10 KA DAAN MOGOT 2 1 2 SUTT GTACSR 410 2X461,4 MM2 (2514 A) LOLA DATA K. AGUNG SATRIA GUNAWAN WIJAYA 29 AGUSTUS 2022 DIGAMBAR DIPERIKSA"
+        }
+      ],
+      "textCharCount": 1469,
+      "textPreview": "TRAFO 1 (FUTURE) TRAFO 1 (FUTURE) 1 2 1 4000 A 4000 A GIS MUARA KARANG BARU 4000 A 4000 A 150 kV/v3 100 V/v3 4000 A 4000 A 4000 A 4000 A 2000 A 2000 A 4000A 4000A 4000A 4000A 4000A 4000A 4000A AL PIPA; 4000 A; 40 kA 4000 A 4000 A 4000 A 4000 A SUTT GTACSR 410 2x461,4 mm2 (2514 A) 150-300-2000- 4000 A/1 A 20 kA 20 kA 20 kA 20 kA Alamat : Jl. Pantai Indah Barat, Kamal Muara, Penjaringan, Kota Jakarta Utara, Daerah Khusus Ibukota Jakarta 14470 Koordinat : 6°07'25.1\"S 106°45'05.0\"E No Telpon : 081380762825 4000 A 4000 A 4000 A 4000 A 4000A 4000A SHANDONG TAIKAI 60 MVA 150/20 kV YNyn0 1732 A TRAFO 2 TRAFO 3 SHANDONG TAIKAI 60 MVA 150/20 kV YNyn0 1732 A     1000-2000 A/1 A 1000-2000 A/1 A 150-300-2000- 4000 A/1 A 150-300-2000- 4000 A/1 A 150-300-2000- 4000 A/1 A 1000-2000/1 A 1000-2000/1 A 150 kV/√3 0,1 kV/√ 3 150 kV/√3 0,1 kV/√ 3 150 kV/√3 0,1 kV/√ 3 150 kV/√3 0,1 kV/√ 3 150 kV/√3 0,1 kV/√ 3 4000A 4000A 2000-4000 A/1 A 2000-4000 A/1 A 2000-4000 A/ 1 A 2000-4000 A/ 1 A 2000-4000 A/ 1 A 2000-4000 A/ 1 A 20 kV/√3 0,1 kV/√ 3 20 kV/√3 0,1 kV/√ 3 10 kA 10 kA DAAN MOGOT 2 1 2 SUTT GTACSR 410 2x461,4 mm2 (2514 A) LOLA DATA K. AGUNG SATRIA GUNAWAN WIJAYA 29 AGUSTUS 2022 DIGAMBAR DIPERIKSA "
+    },
+    {
+      "id": "users_hafizna_fadhli_downloads_ultg_durikosambi_20230215t100950z_001_ultg_durikosambi_gis_tomang_single_line_tomang_ver_8_2022_pdf",
+      "fileName": "SINGLE LINE TOMANG Ver 8 2022.pdf",
+      "fullPath": "C:\\Users\\hafizna.fadhli\\Downloads\\ULTG DURIKOSAMBI-20230215T100950Z-001\\ULTG DURIKOSAMBI\\GIS TOMANG\\SINGLE LINE TOMANG Ver 8 2022.pdf",
+      "stationFolder": "GIS TOMANG",
+      "localStationHint": "TOMANG",
+      "documentType": "sld",
+      "extractionStatus": "text_layer",
+      "extractionError": "",
+      "pageCount": 1,
+      "sizeBytes": 183863,
+      "lastModified": "2026-05-09T03:24:19.273Z",
+      "stationHints": [
+        "DURIKOSAMBI",
+        "GROGOL",
+        "TOMANG"
+      ],
+      "bayHints": [],
+      "relayHints": [],
+      "functionHints": [
+        "AR"
+      ],
+      "endpointCandidates": [
+        {
+          "id": "gis_tomang_durikosambi_single_line_tomang_ver_8_2022_pdf",
+          "localStation": "TOMANG",
+          "remoteStation": "DURIKOSAMBI",
+          "source": "sld_text_layer",
+          "confidence": "low",
+          "evidence": "ETUJUI TANGGAL SLD/DRKS.34001220/SMA-001 SLD GIS 150KV TOMANG PLN UIT JBB – UPT DURIKOSAMBI PT PLN (PERSERO) UNIT INDUK TRANSMISI JAWA BAGIAN BARAT JL. JCC NO. 1 CINERE LIMO DEPOK JAWA BARAT 16514 TELP. 021 7542"
+        },
+        {
+          "id": "gis_tomang_grogol_single_line_tomang_ver_8_2022_pdf",
+          "localStation": "TOMANG",
+          "remoteStation": "GROGOL",
+          "source": "sld_text_layer",
+          "confidence": "high",
+          "evidence": "R 106.7760072° NO TELPON : 081285500121 4000A 4000A 2 4000A 4000A 2000-4000/ 1A GROGOL 150 KV/√3 0,1 KV/√ 3 XLPE CU 1X2000 MM2 ( 1191 A ) 1000-2000/5-5 A   TRAFO 1 1000-2000/ 5-5 A 2000 A 4000 A 4000 A 4"
+        }
+      ],
+      "textCharCount": 1114,
+      "textPreview": "1 2 150 kV 2000- 4000/1A 4000 A 4000 A 4000 A 2000- 4000/1A AL 4000 A, 40 kA Alamat : Blk. I No.2, RT.1/RW.2, Duri Kepa, Kec. Kb. Jeruk, Kota Jakarta Barat, Jakarta Koordinat : Lintang -6.1869133° Bujur 106.7760072° No Telpon : 081285500121 4000A 4000A 2 4000A 4000A 2000-4000/ 1A GROGOL 150 kV/√3 0,1 kV/√ 3 XLPE CU 1x2000 mm2 ( 1191 A ) 1000-2000/5-5 A   TRAFO 1 1000-2000/ 5-5 A 2000 A 4000 A 4000 A 4000A B&D 60 MVA 150 / 22 kV YNyn0+d 1574 A 150-300-2000- 4000/1 A 150-300-2000/1 A 150 kV/√3 0,1 kV/√ 3 150 kV/√3 0,1 kV/√ 3 1000-2000/5-5 A   TRAFO 2 1000-2000/ 5-5 A 2000 A 4000 A 4000 A 4000A B&D 60 MVA 150 / 22 kV YNyn0+d 1574 A 150-300-2000- 4000/1 A 150-300-2000/1 A 4000A 4000A 1 4000A 4000A 2000-4000/ 1A GROGOL 150 kV/√3 0,1 kV/√ 3 XLPE CU 1x2000 mm2 ( 1191 A ) LOLA DATA K. AGUNG SATRIA GUNAWAN WIJAYA 29 AGUSTUS 2022 DIGAMBAR DIPERIKSA DISETUJUI TANGGAL SLD/DRKS.34001220/SMA-001 SLD GIS 150KV TOMANG PLN UIT JBB – UPT DURIKOSAMBI PT PLN (PERSERO) UNIT INDUK TRANSMISI JAWA BAGIAN BARAT JL. JCC NO. 1 CINERE LIMO DEPOK JAWA BARAT 16514 Telp. 021 7542656, 7543566 Fax. 021 7542516 www.pln.co.id"
+    },
+    {
+      "id": "users_hafizna_fadhli_downloads_ultg_durikosambi_20230215t100950z_001_ultg_durikosambi_gis_ulujami_single_line_ulujami_ver_8_2022_pdf",
+      "fileName": "SINGLE LINE ULUJAMI Ver 8 2022.pdf",
+      "fullPath": "C:\\Users\\hafizna.fadhli\\Downloads\\ULTG DURIKOSAMBI-20230215T100950Z-001\\ULTG DURIKOSAMBI\\GIS ULUJAMI\\SINGLE LINE ULUJAMI Ver 8 2022.pdf",
+      "stationFolder": "GIS ULUJAMI",
+      "localStationHint": "ULUJAMI",
+      "documentType": "sld",
+      "extractionStatus": "text_layer",
+      "extractionError": "",
+      "pageCount": 1,
+      "sizeBytes": 184914,
+      "lastModified": "2026-05-09T03:24:19.392Z",
+      "stationHints": [
+        "DURIKOSAMBI",
+        "ULUJAMI",
+        "NEW SENAYAN"
+      ],
+      "bayHints": [],
+      "relayHints": [],
+      "functionHints": [
+        "AR"
+      ],
+      "endpointCandidates": [
+        {
+          "id": "gis_ulujami_durikosambi_single_line_ulujami_ver_8_2022_pdf",
+          "localStation": "ULUJAMI",
+          "remoteStation": "DURIKOSAMBI",
+          "source": "sld_text_layer",
+          "confidence": "low",
+          "evidence": "TUJUI TANGGAL SLD/DRKS.34001216/SMA-001 SLD GIS 150KV ULUJAMI PLN UIT JBB – UPT DURIKOSAMBI PT PLN (PERSERO) UNIT INDUK TRANSMISI JAWA BAGIAN BARAT JL. JCC NO. 1 CINERE LIMO DEPOK JAWA BARAT 16514 TELP. 021 7542"
+        },
+        {
+          "id": "gis_ulujami_new_senayan_single_line_ulujami_ver_8_2022_pdf",
+          "localStation": "ULUJAMI",
+          "remoteStation": "NEW SENAYAN",
+          "source": "sld_text_layer",
+          "confidence": "medium",
+          "evidence": "R 106.7631123° NO TELPON : 088808033341 3150A 3150A 1 3150A 3150A 2000-4000/ 1A NEW SENAYAN 150 KV/√3 0,1 KV/√ 3 150-300/1 A   TRAFO 1 1000-2000/ 5-5 A 2000 A 1250A 1250A 1250A B&D 60 MVA 150 / 22 KV YNYN0+D"
+        }
+      ],
+      "textCharCount": 1081,
+      "textPreview": "1 2 150 kV 2000- 4000/1A 4000 A 4000 A 4000 A 2000- 4000/1A BARE CU; 4000 A, 40 kA Alamat : Jl. Ulujami Raya, RT.2/RW.7, Ulujami, Kec. Pesanggrahan, Kota Jakarta Selatan, Daerah Khusus Ibukota Jakarta Koordinat : Lintang -6.2452821° Bujur 106.7631123° No Telpon : 088808033341 3150A 3150A 1 3150A 3150A 2000-4000/ 1A NEW SENAYAN 150 kV/√3 0,1 kV/√ 3 150-300/1 A   TRAFO 1 1000-2000/ 5-5 A 2000 A 1250A 1250A 1250A B&D 60 MVA 150 / 22 kV YNyn0+d 1574 A 150-300-2000- 4000/1 A 150-300-2000/1 A 150 kV/√3 0,1 kV/√ 3 150 kV/√3 0,1 kV/√ 3 TRAFO 2 1000-2000/ 5-5 A 2000 A 1250A 1250A 1250A 150-300-2000- 4000/1 A 3150A 3150A 2 3150 3150A 2000-4000/ 1A NEW SENAYAN 150 kV/√3 0,1 kV/√ 3 XLPE CU 1x1000 mm2 ( 737 A ) XLPE CU 1x1000 mm2 ( 737 A ) FUTURE LOLA DATA K. AGUNG SATRIA GUNAWAN WIJAYA 29 AGUSTUS 2022 DIGAMBAR DIPERIKSA DISETUJUI TANGGAL SLD/DRKS.34001216/SMA-001 SLD GIS 150KV ULUJAMI PLN UIT JBB – UPT DURIKOSAMBI PT PLN (PERSERO) UNIT INDUK TRANSMISI JAWA BAGIAN BARAT JL. JCC NO. 1 CINERE LIMO DEPOK JAWA BARAT 16514 Telp. 021 7542656, 7543566 Fax. 021 7542516 www.pln.co.id"
+    },
+    {
+      "id": "users_hafizna_fadhli_downloads_ultg_durikosambi_20230215t100950z_001_ultg_durikosambi_gistet_durikosambi_single_line_gitet_dksb7_ver_8_2022_pdf",
+      "fileName": "SINGLE LINE GITET DKSB7 Ver 8 2022.pdf",
+      "fullPath": "C:\\Users\\hafizna.fadhli\\Downloads\\ULTG DURIKOSAMBI-20230215T100950Z-001\\ULTG DURIKOSAMBI\\GISTET DURIKOSAMBI\\SINGLE LINE GITET DKSB7 Ver 8 2022.pdf",
+      "stationFolder": "GISTET DURIKOSAMBI",
+      "localStationHint": "DURIKOSAMBI",
+      "documentType": "sld",
+      "extractionStatus": "text_layer",
+      "extractionError": "",
+      "pageCount": 1,
+      "sizeBytes": 237883,
+      "lastModified": "2026-05-09T03:24:18.929Z",
+      "stationHints": [
+        "DURIKOSAMBI",
+        "MUARAKARANG",
+        "KEMBANGAN",
+        "CENGKARENG"
+      ],
+      "bayHints": [],
+      "relayHints": [],
+      "functionHints": [
+        "AR"
+      ],
+      "endpointCandidates": [
+        {
+          "id": "gistet_durikosambi_muarakarang_single_line_gitet_dksb7_ver_8_2022_pdf",
+          "localStation": "DURIKOSAMBI",
+          "remoteStation": "MUARAKARANG",
+          "source": "sld_text_layer",
+          "confidence": "medium",
+          "evidence": "IBT 1 IBT 2 IBT 3 FUTURE GANDUL KEMBANGAN 2 MUARAKARANG 1 MUARAKARANG 2 1 2 3 IBT 4 FUTURE 2000-4000/1A 2000-4000/1A 4000 A 4000 A 4000 A 4000 A 2000-4000/1A 4000 A 4000 A 400"
+        },
+        {
+          "id": "gistet_durikosambi_kembangan_single_line_gitet_dksb7_ver_8_2022_pdf",
+          "localStation": "DURIKOSAMBI",
+          "remoteStation": "KEMBANGAN",
+          "source": "sld_text_layer",
+          "confidence": "medium",
+          "evidence": "IBT 1 IBT 2 IBT 3 FUTURE GANDUL KEMBANGAN 2 MUARAKARANG 1 MUARAKARANG 2 1 2 3 IBT 4 FUTURE 2000-4000/1A 2000-4000/1A 4000 A 4000 A 4000 A 4000 A 2000-4000/1A 400"
+        },
+        {
+          "id": "gistet_durikosambi_cengkareng_single_line_gitet_dksb7_ver_8_2022_pdf",
+          "localStation": "DURIKOSAMBI",
+          "remoteStation": "CENGKARENG",
+          "source": "sld_text_layer",
+          "confidence": "medium",
+          "evidence": "3 100 V/√3 500 KV/√3 100 V/√3 2000-4000/1A ALAMAT : JL. RAYA PONDOK RANDU. KEC. CENGKARENG JAKARTA BARAT.11750 KOORDINAT : LINTANG -6.170969° BUJUR 106.725938° NO TELPON : 081291579366 20 KA 20 KA 20 KA 20 KA 5"
+        }
+      ],
+      "textCharCount": 2061,
+      "textPreview": "IBT 1 IBT 2 IBT 3 FUTURE GANDUL KEMBANGAN 2 MUARAKARANG 1 MUARAKARANG 2 1 2 3 IBT 4 FUTURE 2000-4000/1A 2000-4000/1A 4000 A 4000 A 4000 A 4000 A 2000-4000/1A 4000 A 4000 A 4000 A 2000-4000/1A 4000 A 2000-4000/1A 4000 A 1000-2000-4000/1A 4000 A 500 kV/√3 100 V/√3 2000-4000/1A 4000 A 500 kV/√3 100 V/√3 2000-4000/1A 4000 A 4000 A 2000-4000/1A 4000 A 2000-4000/1A 4000 A 4000 A 2000-4000/1A 4000 A 500 kV/√3 100 V/√3 4000 A 4000 A 4000 A 2000-4000/1A 2000-4000/1A 4000 A 4000 A 1000-2000-4000/1A 500 kV/√3 100 V/√3 4000 A 2000-4000/1A 4000 A 2000-4000/1A 4000 A 2000-4000/1A 4000 A 4000 A 2000-4000/1A 4000 A 4000 A 4000 A 2000-4000/1A 2000-4000/1A 4000 A 4000 A 500 kV/√3 100 V/√3 500 kV/√3 100 V/√3 500 kV/√3 100 V/√3 500 kV/√3 100 V/√3 2000-4000/1A 4000 A 4000 A 2000-4000/1A 2000-4000/1A 4000 A 4000 A 2000-4000/1A 4000 A 4000 A 4000 A 2000-4000/1A 2000-4000/1A 4000 A 4000 A 4000 A 500 kV/√3 100 V/√3 500 kV/√3 100 V/√3 2000-4000/1A Alamat : Jl. Raya Pondok Randu. Kec. Cengkareng Jakarta Barat.11750 Koordinat : Lintang -6.170969° Bujur 106.725938° No Telpon : 081291579366 20 kA 20 kA 20 kA 20 kA 5 4 SUTT ACSR/AS 450 4 x 492,5 mm2 ( 3380 A ) BUSBAR B BUSBAR A 4000 A ; 50 kA HYOSUNG 500 MVA 500"
+    },
+    {
+      "id": "users_hafizna_fadhli_downloads_ultg_durikosambi_20230215t100950z_001_ultg_durikosambi_gistet_kembangan_single_line_kmbng_500kv_ver_8_pdf",
+      "fileName": "SINGLE LINE KMBNG 500kV Ver 8.pdf",
+      "fullPath": "C:\\Users\\hafizna.fadhli\\Downloads\\ULTG DURIKOSAMBI-20230215T100950Z-001\\ULTG DURIKOSAMBI\\GISTET KEMBANGAN\\SINGLE LINE KMBNG 500kV Ver 8.pdf",
+      "stationFolder": "GISTET KEMBANGAN",
+      "localStationHint": "KEMBANGAN",
+      "documentType": "sld",
+      "extractionStatus": "text_layer",
+      "extractionError": "",
+      "pageCount": 1,
+      "sizeBytes": 272689,
+      "lastModified": "2026-05-09T03:24:17.996Z",
+      "stationHints": [
+        "DURIKOSAMBI",
+        "KEMBANGAN"
+      ],
+      "bayHints": [],
+      "relayHints": [],
+      "functionHints": [
+        "AR"
+      ],
+      "endpointCandidates": [
+        {
+          "id": "gistet_kembangan_durikosambi_single_line_kmbng_500kv_ver_8_pdf",
+          "localStation": "KEMBANGAN",
+          "remoteStation": "DURIKOSAMBI",
+          "source": "sld_text_layer",
+          "confidence": "low",
+          "evidence": "ORDINAT : LINTANG -6.188128° BUJUR 106.719739° NO TELPON : 081362882538 2 1 3 4 DURIKOSAMBI 2 ACSR/AS 450 4 X 492,5 MM2 (3380A) LOLA DATA K. AGUNG SATRIA GUNAWAN WIJAYA 29 AGUSTUS 2022 DIGAMBAR DIPERIKSA DISETUJ"
+        }
+      ],
+      "textCharCount": 1630,
+      "textPreview": "500 kV/v3 100 V/v3 3150 A 3000/1A 3150 A 3150 A 3150 A 3 PH 3150 A 3000/1A 3150 A 3150 A 3150 A 3150 A 3150 A 3000/1A 3150 A 500 kV/v3 100 V/v3 3000/1A 3 PH 500 kV/v3 100 V/v3 20kA 500 kV/v3 100 V/v3 3150 A 2000/1A 3150 A 3150 A 3150 A 3 PH 3150 A 2000/1A 3150 A 3150 A 3150 A 3150 A 3150 A 2000/1A 3150 A 500 kV/v3 100 V/v3 2000/1A 3 PH 500 kV/v3 100 V/v3 10kA IBT 1 66 kV/v3 100 V/v3 GANDUL I ACSR Gannet 393,2 mm 4x806 A (3150 A) CG PAUWELS 500 MVA 500/150 kV YNyn0/d1 1718 A 3150 A 2000/1A 3150 A 3150 A 3150 A 3 PH 3150 A 2000/1A 3150 A 3150 A 3150 A 3150 A 3150 A 2000/1A 3150 A 500 kV/v3 100 V/v3 3 PH 500 kV/v3 100 V/v3 10kA IBT 2 66 kV/v3 100 V/v3 CG PAUWELS 500 MVA 500/150 kV YNyn0/d1 1718 A 2000/1A 2000/1A 2000/1A 2000/1A 2000/1A 2000/1A 500 kV/v3 100 V/v3 3150 A 3000/1A 3150 A 3150 A 3150 A 3 PH 3150 A 3000/1A 3150 A 3150 A 3150 A 3150 A 3150 A 3000/1A 3150 A 500 kV/v3 100 V/v3 3000/1A 3 PH 500 kV/v3 100 V/v3 20kA 1 PH 500 kV/v3 100 V/v3 7BB.AE 7BB.BE Alamat : Jl. Raya Kembangan, Pasar Minggu, Kembangan, Jakarta Barat 11610 Koordinat : Lintang -6.188128° Bujur 106.719739° No Telpon : 081362882538 2 1 3 4 DURIKOSAMBI 2 ACSR/AS 450 4 x 492,5 mm2 (3380A) LOLA DATA K. AGUNG SATRIA "
+    },
+    {
+      "id": "users_hafizna_fadhli_downloads_36_dfr_gangguan_uit_jbt_raw_data_upt_purwokerto_2024_11_november_06_17112024_13_54_reclose_success_fasa_r_sutt_150_kv_mrica_wnsbo_1_petir_analisa_gangguan_petir_t_66_sutt_150_kv_mrica_wnsbo_pdf",
+      "fileName": "ANALISA GANGGUAN PETIR T.66 SUTT 150 KV MRICA-WNSBO.pdf",
+      "fullPath": "C:\\Users\\hafizna.fadhli\\Downloads\\36. DFR GANGGUAN UIT JBT\\raw_data\\UPT PURWOKERTO\\2024\\11. NOVEMBER\\06. 17112024 13.54 RECLOSE SUCCESS FASA R SUTT 150 KV MRICA-WNSBO #1 PETIR\\ANALISA GANGGUAN PETIR T.66 SUTT 150 KV MRICA-WNSBO.pdf",
+      "stationFolder": "",
+      "localStationHint": "",
+      "documentType": "supporting_pdf",
+      "extractionStatus": "text_layer",
+      "extractionError": "",
+      "pageCount": 4,
+      "sizeBytes": 387126,
+      "lastModified": "2024-11-17T17:23:18.000Z",
+      "stationHints": [],
+      "bayHints": [],
+      "relayHints": [],
+      "functionHints": [
+        "AR"
+      ],
+      "endpointCandidates": [],
+      "textCharCount": 1593,
+      "textPreview": "⮚Besar sudut lindung (α) = tan-1 (0.38/3) = 8,96 ° 2,41 ⮚Standar sudut lindung kawat tanah < 30o (buku Sistem Proteksi Petir) ⮚Standar sudut lindung kawat tanah < 15o 0,38 (SPLN) Arus Maksimum sebelum SF : I = [h/{6.7 (1-sin α )}]^1.25 = 12,3 kA h= 42 m α= 8,96 ° I < 12,3 (SF) Analisis Sudut Lindung Kawat Tanah Tower α 1. Arus petir (i1) = 17 kA, •Radius bola gelinding (r1) = 6,7 x i1^0,8 = 6,7 x (21^0,8) = 64,63 m •Tinggi tower (h) = 42 m •Sudut lindung (α) = sin-1 (1-h/r) •Sudut lindung sambaran (α1) = sin-1 (1-39/76.5) = 20,496 ° 64,62996784 Analisa Bola Bergulir (1) Diketahui: i = 17 kA (data LDS) 🠀 i tower (it) = = 5,66667 kA di/dt (50% probabilit = 30 kA/μs 17 Z kawat tanah (Zkt) = 300 ohm 5,666667 5,666667 Z tower (Zt) = 200 ohm Z kawat phasa (Zkf) = 400 ohm 5,666667 R tower (Rt) = 1,96 ohm h = 42 m Tegangan tower (Vt) = L.di/dt + i.Rt = (h x 30) + (i(t)x Rt) = 1271,11 kV BIL ISOLATOR 10 KEPING = 945 kV Vt> BIL * Terjadi Back Flashover* Sambaran Petir Pada Tower Vt h Kawat Tanah ZKT = Kawat Phasa ZKF = RT = 1 Ltower = 1μH/m Zt = BIL Isolator = 17 Diketahui: 8,5 i = 17 kA (data LDS) 8,5 🠀 i kawat tanah (ikt) = 8,5 kA i tower (it) = 3,4 kA (system 2 GSW) di/dt = 30 kA/μs (50"
+    },
+    {
+      "id": "users_hafizna_fadhli_downloads_36_dfr_gangguan_uit_jbt_raw_data_upt_purwokerto_2024_11_november_06_17112024_13_54_reclose_success_fasa_r_sutt_150_kv_mrica_wnsbo_1_petir_ba_lds_reclose_sutt_mrica_wonosobo_1_17112024_13_54_pdf",
+      "fileName": "BA LDS Reclose SUTT Mrica - Wonosobo 1 17112024 13.54.pdf",
+      "fullPath": "C:\\Users\\hafizna.fadhli\\Downloads\\36. DFR GANGGUAN UIT JBT\\raw_data\\UPT PURWOKERTO\\2024\\11. NOVEMBER\\06. 17112024 13.54 RECLOSE SUCCESS FASA R SUTT 150 KV MRICA-WNSBO #1 PETIR\\BA LDS Reclose SUTT Mrica - Wonosobo 1 17112024 13.54.pdf",
+      "stationFolder": "",
+      "localStationHint": "",
+      "documentType": "supporting_pdf",
+      "extractionStatus": "text_layer",
+      "extractionError": "",
+      "pageCount": 1,
+      "sizeBytes": 457768,
+      "lastModified": "2024-11-17T17:49:22.000Z",
+      "stationHints": [],
+      "bayHints": [],
+      "relayHints": [],
+      "functionHints": [
+        "AR"
+      ],
+      "endpointCandidates": [],
+      "textCharCount": 360,
+      "textPreview": "LDS GANGGUAN RECLOSE PENGHANTAR 150 KV SUTT MRICA - WONOSOBO 1 TANGGAL 17 NOVEMBER 2024 JAM 13.54 WIB Terdapat sambaran petir di :  94 m dari T.66 sebesar -17 kA  199 m dari T.66 sebesar -22 kA  301 m dari T.66 sebesar -99 kA  240 m dari T.67 sebesar -38 kA  170 m dari T.67 sebesar -12 kA  149 m dari T.67 sebesar -23 kA  208 m dari T.73 sebesar -41 kA"
+    },
+    {
+      "id": "users_hafizna_fadhli_downloads_36_dfr_gangguan_uit_jbt_raw_data_upt_semarang_2025_dfr_gangguan_09_september_2025_dfr_smg_27092025_sayung_tambakorok_1_20250927_ba_sosialiasi_pasca_gangguan_trip_sutt_tbrok_sayung_1_t13_14_pdf",
+      "fileName": "20250927 BA Sosialiasi pasca gangguan Trip SUTT Tbrok-Sayung 1 T13-14.pdf",
+      "fullPath": "C:\\Users\\hafizna.fadhli\\Downloads\\36. DFR GANGGUAN UIT JBT\\raw_data\\UPT SEMARANG\\2025_DFR GANGGUAN\\09.SEPTEMBER_2025_DFR_SMG\\27092025 Sayung - Tambakorok#1\\20250927 BA Sosialiasi pasca gangguan Trip SUTT Tbrok-Sayung 1 T13-14.pdf",
+      "stationFolder": "",
+      "localStationHint": "",
+      "documentType": "supporting_pdf",
+      "extractionStatus": "scanned_needs_ocr",
+      "extractionError": "",
+      "pageCount": 3,
+      "sizeBytes": 1400386,
+      "lastModified": "2025-09-28T11:41:06.000Z",
+      "stationHints": [],
+      "bayHints": [],
+      "relayHints": [],
+      "functionHints": [],
+      "endpointCandidates": [],
+      "textCharCount": 26,
+      "textPreview": "LAMPIRAN Kondisi Konduktor"
+    },
+    {
+      "id": "users_hafizna_fadhli_downloads_a_novel_algorithm_design_for_locating_fault_distances_on_hv_1a47l3gf_pdf",
+      "fileName": "a-novel-algorithm-design-for-locating-fault-distances-on-hv-1a47l3gf.pdf",
+      "fullPath": "C:\\Users\\hafizna.fadhli\\Downloads\\a-novel-algorithm-design-for-locating-fault-distances-on-hv-1a47l3gf.pdf",
+      "stationFolder": "",
+      "localStationHint": "",
+      "documentType": "tap_setting",
+      "extractionStatus": "text_layer",
+      "extractionError": "",
+      "pageCount": 11,
+      "sizeBytes": 912159,
+      "lastModified": "2026-02-04T08:31:30.224Z",
+      "stationHints": [],
+      "bayHints": [],
+      "relayHints": [],
+      "functionHints": [
+        "DIST",
+        "DISTANCE",
+        "AR",
+        "SYNC",
+        "SYNCHRO",
+        "DEF"
+      ],
+      "endpointCandidates": [],
+      "textCharCount": 43639,
+      "textPreview": "www.astesj.com 79 A Novel Algorithm Design for Locating Fault Distances on HV Transmission Lines MK Ngwenyama1,*, PF Le Roux1, LJ Ngoma2 1Electrical Engineering Department, Tshwane University of Technology, Witbank, 1034, South Africa 2Electrical Engineering Department, Tshwane University of Technology, Pretoria, 0183, South Africa A R T I C L E I N F O A B S T R A C T Article history: Received: 25 November, 2021 Accepted: 26 January, 2022 Online: 21 February, 2022 The transmission network has been considered among the globe's prevalent complex systems, comprised of hundreds of electrical transmission lines and other equipment used to transmit electrical energy from one location to another. Over a decade, power engineers have worked tirelessly to ensure that the transmission network operates reliably, transmitting electrical energy from the power station to the consumers without interruption. With growing generation capacity and the recent introduction of renewable energy systems (RES) such as wind turbines and solar energy, the transmission lines are increasingly being forced to run near their design limitations and greater unpredictability on the network operational configuration"
+    },
+    {
+      "id": "users_hafizna_fadhli_downloads_blangko_har_pht_lcd_bay_daanmogot_1_4_10_23_ultg_dksbi_pdf",
+      "fileName": "Blangko HAR PHT - LCD BAY DAANMOGOT #1 (4_10_23)- ULTG DKSBI.pdf",
+      "fullPath": "C:\\Users\\hafizna.fadhli\\Downloads\\Blangko HAR PHT - LCD BAY DAANMOGOT #1 (4_10_23)- ULTG DKSBI.pdf",
+      "stationFolder": "",
+      "localStationHint": "",
+      "documentType": "tap_setting",
+      "extractionStatus": "text_layer",
+      "extractionError": "",
+      "pageCount": 17,
+      "sizeBytes": 1457186,
+      "lastModified": "2025-11-20T17:04:47.425Z",
+      "stationHints": [
+        "DURIKOSAMBI",
+        "DAAN MOGOT"
+      ],
+      "bayHints": [],
+      "relayHints": [
+        "P142",
+        "RED670"
+      ],
+      "functionHints": [
+        "LCD",
+        "DIST",
+        "DISTANCE",
+        "AR"
+      ],
+      "endpointCandidates": [],
+      "textCharCount": 15004,
+      "textPreview": "UNIT INDUK TRANSMISI JAWA BAGIAN BARAT UPT DURIKOSAMBI ULTG DURIKOSAMBI LOKASI : RATIO CT : 4000 / 5 PROTEKSI : TANGGAL : : 1. DATA RELE R-N 5 0,835 OK S-N 5 0,835 OK T-N 5 0,835 OK 2. PENGUJIAN ARUS KERJA DAN ARUS KEMBALI PICK UP DROP OFF RATIO KETERANGAN R-N 0,77 0,7 90,91% OK S-N 0,77 0,7 90,91% OK T-N 0,76 0,7 92,11% OK 3. PENGUJIAN KARAKTERISTIK WAKTU 120% 150% 175% 200% KETERANGAN R-N - - - - S-N - - - - T-N - - - - CATATAN : Pelaksana : 1. ARDI 2. NASRUL 3. KHANSA PHASA SETTING WAKTU INST SI INST INST 0,835 PHASA KARAKTERISTIK NO SERIE SI T1645095 HASIL PENGUJIAN LINE CURRENT DIFFERENTIAL GI DURIKOSAMBI BAY DAAN MOOGOT #1 04-Oct-23 MEREK / TYPE ABB/ RED 670 INST T1645095 SETTING RELE Inom ( A ) Iset ( A ) time KETERANGAN INST INST SI PHASA SETTING ARUS T1645095 0,835 0,835 HASIL UJI WAKTU INDIKATOR LED PU SPV HARPRO HASIL UJI ARUS INDIKATOR LED PU LED PU ( M. IHSAN ) UNIT INDUK TRANSMISI JAWA BAGIAN BARAT UPT DURIKOSAMBI ULTG DURIKOSAMBI LOKASI : : 4000 / 5 PROTEKSI : : 150KV/1V : : NO. SERIE : 1. DATA SETTING ph-ph : Ω : s ph-ph : deg ph-gnd : Ω : s ph-gnd : deg ph-ph : Ω : s skema : ph-gnd : Ω ph-ph : Ω ph-gnd : Ω 2. HASIL PENGUJIAN CATATAN : 1. ARDI 2. NASRUL 3. KHANSA TA"
+    },
+    {
+      "id": "users_hafizna_fadhli_downloads_blangko_har_pht_karet_1_gi_angke_24_09_2023_distance_ultg_dksbi_pdf",
+      "fileName": "Blangko HAR PHT KARET #1 GI ANGKE (24_09_2023 - Distance - ULTG DKSBI.pdf",
+      "fullPath": "C:\\Users\\hafizna.fadhli\\Downloads\\Blangko HAR PHT KARET #1 GI ANGKE (24_09_2023 - Distance - ULTG DKSBI.pdf",
+      "stationFolder": "",
+      "localStationHint": "",
+      "documentType": "tap_setting",
+      "extractionStatus": "text_layer",
+      "extractionError": "",
+      "pageCount": 4,
+      "sizeBytes": 888212,
+      "lastModified": "2025-11-20T17:04:14.792Z",
+      "stationHints": [
+        "DURIKOSAMBI",
+        "ANGKE"
+      ],
+      "bayHints": [],
+      "relayHints": [
+        "P443",
+        "P142"
+      ],
+      "functionHints": [
+        "DIST",
+        "DISTANCE",
+        "OCR",
+        "AR"
+      ],
+      "endpointCandidates": [],
+      "textCharCount": 4661,
+      "textPreview": "UNIT INDUK TRANSMISI JAWA BAGIAN BARAT UPT DURIKOSAMBI ULTG DURIKOSAMBI LOKASI : : 4000 / 5 PROTEKSI : : 150KV/100V : : 23-Sep-23 NO. SERIE : 1. DATA SETTING ph-ph : Ω : s ph-ph : deg ph-gnd : Ω : s ph-gnd : deg ph-ph : Ω : s skema : ph-gnd : Ω ph-ph : Ω ph-gnd : Ω 2. HASIL PENGUJIAN CATATAN : Pelaksana : 1 ZAKY 2 ARDI 3 NASRUL LED TRIP ZONE 1 LED TRIP ZONE 1 INDIKASI KETERANGAN LED TRIP ZONE 1 HASIL PENGUJIAN RELE DISTANCE GI ANGKE RATIO CT BAY KARET #1 RATIO PT MEREK / TYPE TANGGAL t1 0 MICOM ALSTOM/P443 34424435/04/18 Zone 1 78 78 t2 0,8 t3 1,6 PUTT 1,036 1,036 Zone 2 1,554 1,554 WAKTU SETTING AKTUAL SETTING 0,0658 0,0564 0,063 0,036 LED TRIP ZONE 1 R - S R - N S - N LED TRIP ZONE 2 0,0483 LED TRIP ZONE 1 0,0471 LED TRIP ZONE 1 0,8576 LED TRIP ZONE 2 0,831 LED TRIP ZONE 2 0,8689 LED TRIP ZONE 2 0,8469 LED TRIP ZONE 3 0,8457 LED TRIP ZONE 2 0,849 LED TRIP ZONE 2 1,664 ( M. IHSAN ) 1,658 LED TRIP ZONE 3 1,646 LED TRIP ZONE 3 SPV HARPRO 1,6 LED TRIP ZONE 3 1,6646 LED TRIP ZONE 3 1,675 LED TRIP ZONE 3 1,649 2,85 2,81 2,82 2,81 4. T - N R - S S - T R - T 2,826 R - S 1,036 S - T R - T R - N S - N T - N 0 0,8 1,05 1,04 1,05 1,02 1,03 1,03 1,57 1,56 1,57 1,54 1,55 1,54 2,85 2,85 Zone 3 "
+    },
+    {
+      "id": "users_hafizna_fadhli_downloads_distance_protection_training_module_pdf",
+      "fileName": "Distance_Protection_Training_Module.pdf",
+      "fullPath": "C:\\Users\\hafizna.fadhli\\Downloads\\Distance_Protection_Training_Module.pdf",
+      "stationFolder": "",
+      "localStationHint": "",
+      "documentType": "tap_setting",
+      "extractionStatus": "text_layer",
+      "extractionError": "",
+      "pageCount": 3,
+      "sizeBytes": 4445,
+      "lastModified": "2026-02-24T04:21:24.602Z",
+      "stationHints": [],
+      "bayHints": [],
+      "relayHints": [],
+      "functionHints": [
+        "DIST",
+        "DISTANCE",
+        "AR",
+        "DEF"
+      ],
+      "endpointCandidates": [],
+      "textCharCount": 1618,
+      "textPreview": "DISTANCE PROTECTION & IMPEDANCE LOCUS ANALYZER 1. Objective Build a system capable of reading COMTRADE files, computing phasors, calculating apparent impedance, plotting R-X locus, and overlaying protection zones. 2. Basic Principle Distance protection operates using apparent impedance: Zapp = V / I. Faults closer to relay produce smaller impedance. 3. COMTRADE Processing Parse CFG for scaling factors, CT/VT ratio, sampling rate. Parse DAT for raw samples. Apply scaling before phasor calculation. 4. Phasor Calculation Use 1-cycle DFT: X1 = (2/N) * sum(x(n) * e^(-j2πn/N)) Avoid instantaneous V/I computation. 5. Loop Impedance Equations Phase-Ground: Z_AG = V_A / (I_A + k0 * I0) I0 = (IA + IB + IC)/3 k0 = (Z0 - Z1) / (3Z1) Phase-Phase: Z_AB = (VA - VB) / (IA - IB) 6. R-X Plane Representation R = Real(Z) X = Imag(Z) Plot trajectory over time to observe fault movement. 7. Mho Characteristic Circle passing through origin. Center = (Reach/2 at line angle) Radius = Reach/2 Equation: (R-CR)^2 + (X-CX)^2 <= Radius^2 8. Quadrilateral Characteristic Defined by resistive and reactive limits. Constructed using intersection of boundary lines. 9. Directional Check Use real power P = Re(V * I*). Z"
+    },
+    {
+      "id": "users_hafizna_fadhli_downloads_evaluating_knowledge_distillation_for_handling_data_imbalanc_pdf",
+      "fileName": "Evaluating Knowledge Distillation for Handling Data Imbalanc.pdf",
+      "fullPath": "C:\\Users\\hafizna.fadhli\\Downloads\\Evaluating Knowledge Distillation for Handling Data Imbalanc.pdf",
+      "stationFolder": "",
+      "localStationHint": "",
+      "documentType": "tap_setting",
+      "extractionStatus": "text_layer",
+      "extractionError": "",
+      "pageCount": 6,
+      "sizeBytes": 798957,
+      "lastModified": "2026-04-23T10:07:59.062Z",
+      "stationHints": [],
+      "bayHints": [],
+      "relayHints": [],
+      "functionHints": [
+        "DIST",
+        "AR"
+      ],
+      "endpointCandidates": [],
+      "textCharCount": 35435,
+      "textPreview": "XXX-X-XXXX-XXXX-X/XX/$XX.00 ©20XX IEEE Evaluating Knowledge Distillation for Handling Data Imbalance in IndoBERT Sentiment Analysis for Indonesian Elections I Putu Janardana Wijaya Computer Science Department School of Computer Science Bina Nusantara University Jakarta, Indonesia i.wijaya005@binus.ac.id Hidayaturrahman Computer Science Department School of Computer Science Bina Nusantara University Jakarta, Indonesia hidayaturrahman@binus.ac.id Gabriel Sean Mintara Computer Science Department School of Computer Science Bina Nusantara University Jakarta, Indonesia gabriel.sean@binus.ac.id Ricky Pratama Liang Computer Science Department School of Computer Science Bina Nusantara University Jakarta, Indonesia ricky.pratama003@binus.ac.id Abstract— Sentiment analysis provides critical insight into public opinion in electoral contexts. In Indonesia, it can inform campaign strategies, policy evaluation, and public engagement. Despite its promise, Artificial Intelligence (AI) models often underperform on minority classes due to class imbalance. This study investigates the use of Knowledge Distillation (KD) as a solution to this problem by leveraging IndoBERT Base as the teacher model and I"
+    },
+    {
+      "id": "users_hafizna_fadhli_downloads_mapping_of_iec_61850_to_data_distribute_service_for_digital_substation_communication_pdf",
+      "fileName": "Mapping of IEC 61850 to Data Distribute Service for Digital Substation Communication.pdf",
+      "fullPath": "C:\\Users\\hafizna.fadhli\\Downloads\\Mapping of IEC 61850 to Data Distribute Service for Digital Substation Communication.pdf",
+      "stationFolder": "",
+      "localStationHint": "",
+      "documentType": "tap_setting",
+      "extractionStatus": "text_layer",
+      "extractionError": "",
+      "pageCount": 5,
+      "sizeBytes": 919851,
+      "lastModified": "2025-11-21T03:19:22.044Z",
+      "stationHints": [],
+      "bayHints": [],
+      "relayHints": [],
+      "functionHints": [
+        "DIST",
+        "AR",
+        "SYNC",
+        "SYNCHRO",
+        "DEF"
+      ],
+      "endpointCandidates": [],
+      "textCharCount": 26543,
+      "textPreview": "Mapping of IEC 61850 to Data Distribute Ser vice for Digital Substation Communication Y.B. Bi, L. Jiang, Member, X.J. Wang and L.Z. Cui Abstract-Digital substation is one key component of smart grid and requires real-time and reliable data communication platform. This paper investigates the feasibility mapping of IEC61850 by using Data Distribution Service, which is a real-time, reliable, and data-centric middleware standard proposed by Object Manage ment Group. The mapping is based on publish/subscribe mode which provides more flexibility than another message-based or client/server based mapping techniques such as MMS and CORBA-TAO. Moreover, middleware based implementation reduce the developing time and complexities and improve the code reliability. Several tests of QoS have been carried out to verify the mapping, based on tools provided by RTI-DDS. Index Terms--Substation communication, IEC 61850, Data Distribution Service, Publish/Subscribe, Middleware. I. INTRODUCTION Communication systems have been used for decades to en hance the performance of power systems. Electricity pow er operators are focused on increasing productivity and making electric power safer, more reliable an"
+    },
+    {
+      "id": "users_hafizna_fadhli_downloads_official_tap_setting_proteksi_sutt_durikosambi_daan_mogot_1_rev01_1_1_pdf",
+      "fileName": "official tap setting proteksi sutt durikosambi - daan mogot 1_rev01 (1) (1).pdf",
+      "fullPath": "C:\\Users\\hafizna.fadhli\\Downloads\\official tap setting proteksi sutt durikosambi - daan mogot 1_rev01 (1) (1).pdf",
+      "stationFolder": "",
+      "localStationHint": "",
+      "documentType": "tap_setting",
+      "extractionStatus": "scanned_needs_ocr",
+      "extractionError": "",
+      "pageCount": 10,
+      "sizeBytes": 2854990,
+      "lastModified": "2026-05-09T03:13:25.856Z",
+      "stationHints": [
+        "DURIKOSAMBI",
+        "DAAN MOGOT"
+      ],
+      "bayHints": [],
+      "relayHints": [],
+      "functionHints": [],
+      "endpointCandidates": [],
+      "textCharCount": 0,
+      "textPreview": ""
+    },
+    {
+      "id": "users_hafizna_fadhli_downloads_official_tap_setting_proteksi_sutt_durikosambi_daan_mogot_1_rev01_1_pdf",
+      "fileName": "official tap setting proteksi sutt durikosambi - daan mogot 1_rev01 (1).pdf",
+      "fullPath": "C:\\Users\\hafizna.fadhli\\Downloads\\official tap setting proteksi sutt durikosambi - daan mogot 1_rev01 (1).pdf",
+      "stationFolder": "",
+      "localStationHint": "",
+      "documentType": "tap_setting",
+      "extractionStatus": "scanned_needs_ocr",
+      "extractionError": "",
+      "pageCount": 10,
+      "sizeBytes": 2854990,
+      "lastModified": "2026-05-06T17:18:19.238Z",
+      "stationHints": [
+        "DURIKOSAMBI",
+        "DAAN MOGOT"
+      ],
+      "bayHints": [],
+      "relayHints": [],
+      "functionHints": [],
+      "endpointCandidates": [],
+      "textCharCount": 0,
+      "textPreview": ""
+    },
+    {
+      "id": "users_hafizna_fadhli_downloads_official_tap_setting_ugc_ohl_gis_pik_muarakarang_baru_1_2_lcd_dist_ar_sync_p545_ocr_7sj63_rev01_pdf",
+      "fileName": "official tap setting UGC OHL GIS PIK - Muarakarang baru 1,2_LCD_DIST_AR_SYNC-P545_OCR-7SJ63_rev01.pdf",
+      "fullPath": "C:\\Users\\hafizna.fadhli\\Downloads\\official tap setting UGC OHL GIS PIK - Muarakarang baru 1,2_LCD_DIST_AR_SYNC-P545_OCR-7SJ63_rev01.pdf",
+      "stationFolder": "",
+      "localStationHint": "",
+      "documentType": "tap_setting",
+      "extractionStatus": "scanned_needs_ocr",
+      "extractionError": "",
+      "pageCount": 6,
+      "sizeBytes": 2697171,
+      "lastModified": "2026-05-09T03:14:14.365Z",
+      "stationHints": [
+        "MUARAKARANG BARU",
+        "MUARAKARANG"
+      ],
+      "bayHints": [],
+      "relayHints": [
+        "P545",
+        "7SJ63"
+      ],
+      "functionHints": [
+        "LCD",
+        "DIST",
+        "OCR",
+        "AR",
+        "SYNC"
+      ],
+      "endpointCandidates": [],
+      "textCharCount": 0,
+      "textPreview": ""
+    },
+    {
+      "id": "users_hafizna_fadhli_downloads_onedrive_2026_04_01_ig_pln_2026_challenges_breakthrough_challenges_bc04_2026_grid_as_a_platform_unlocking_ev_as_distributed_energy_resources_pdf",
+      "fileName": "BC04-2026 Grid as a Platform Unlocking EV as Distributed Energy Resources.pdf",
+      "fullPath": "C:\\Users\\hafizna.fadhli\\Downloads\\OneDrive_2026-04-01\\IG PLN 2026\\Challenges\\Breakthrough Challenges\\BC04-2026 Grid as a Platform Unlocking EV as Distributed Energy Resources.pdf",
+      "stationFolder": "",
+      "localStationHint": "",
+      "documentType": "tap_setting",
+      "extractionStatus": "text_layer",
+      "extractionError": "",
+      "pageCount": 5,
+      "sizeBytes": 264657,
+      "lastModified": "2026-04-01T09:46:15.613Z",
+      "stationHints": [],
+      "bayHints": [],
+      "relayHints": [],
+      "functionHints": [
+        "DIST",
+        "AR"
+      ],
+      "endpointCandidates": [],
+      "textCharCount": 6376,
+      "textPreview": "INNOVATION GATEWAY XXIX - 2026 BC04-2026 - BREAKTHROUGH CHALLENGE Fokus: Operational + Lintas Bidang + Novelty 1. Judul Challenge “Grid as a Platform: Unlocking EV as Distributed Energy Resources” (Mengubah Kendaraan Listrik Menjadi Sumber Fleksibilitas Sistem Tenaga PLN) 2. Latar Belakang Pertumbuhan kendaraan listrik (Electric Vehicles/EV) di Indonesia diproyeksikan meningkat secara signifikan dalam dekade mendatang. Berbagai proyeksi menunjukkan bahwa jumlah kendaraan listrik di Indonesia dapat mencapai lebih dari 2 juta unit pada tahun 2035. Pada saat yang sama, setiap kendaraan listrik pada dasarnya memiliki komponen baterai berkapasitas besar yang mampu menyimpan energi listrik dalam jumlah signifikan. Jika dikombinasikan secara sistemik, kapasitas baterai kendaraan listrik secara agregat berpotensi menjadi salah satu sumber penyimpanan energi terbesar dalam sistem tenaga. Namun dalam praktik saat ini, kendaraan listrik masih beroperasi sebagai aset pasif dalam sistem kelistrikan. Energi hanya mengalir satu arah dari sistem tenaga menuju kendaraan listrik saat proses pengisian daya. Dengan pendekatan tersebut, potensi baterai kendaraan listrik sebagai sumber fleksibilitas sis"
+    },
+    {
+      "id": "users_hafizna_fadhli_downloads_rancang_bangun_sistem_kontrol_dan_monitoring_beban_3_phasa_pada_panel_distribusi_berbasis_internet_of_things_pdf",
+      "fileName": "Rancang+Bangun+Sistem+Kontrol+Dan+Monitoring+Beban+3+Phasa+Pada+Panel+Distribusi+Berbasis+Internet+Of+Things.pdf",
+      "fullPath": "C:\\Users\\hafizna.fadhli\\Downloads\\Rancang+Bangun+Sistem+Kontrol+Dan+Monitoring+Beban+3+Phasa+Pada+Panel+Distribusi+Berbasis+Internet+Of+Things.pdf",
+      "stationFolder": "",
+      "localStationHint": "",
+      "documentType": "tap_setting",
+      "extractionStatus": "text_layer",
+      "extractionError": "",
+      "pageCount": 12,
+      "sizeBytes": 656326,
+      "lastModified": "2026-02-25T07:00:56.287Z",
+      "stationHints": [],
+      "bayHints": [],
+      "relayHints": [],
+      "functionHints": [
+        "LCD",
+        "DIST",
+        "AR"
+      ],
+      "endpointCandidates": [],
+      "textCharCount": 24976,
+      "textPreview": "Jurnal Elementer, Vol. 10, No. 1, Mei 2024 23 Dokumen diterima pada Hari Bulan, Tahun Dipublikasikan pada Hari Bulan, Tahun Jurnal Politeknik Caltex Riau https://jurnal.pcr.ac.id/index.php/elementer | ISSN : 2460 – 5263 (online) | ISSN : 2443 – 4167 (print) Rancang Bangun Sistem Kontrol Dan Monitoring Beban 1 dan 3 Phasa Pada Panel Distribusi Berbasis Internet Of Things Muzni Sahar1, Yoga Pangestu Hidayah2, Arif Gunawan3 dan Hendri Novia Syamsir4 1Politeknik Caltex Riau, email: muzni@pcr.ac.id 2Politeknik Caltex Riau, email: yoga.pangestu@alumni.pcr.ac.id 3Politeknik Caltex Riau, email: agun@pcr.ac.id 4Politeknik Caltex Riau, email: hendri@pcr.ac.id Abstrak Panel distribusi adalah tempat menyalurkan dan mendistribusikan energi listrik dari panel daya ke panel beban (konsumen) baik untuk instalasi tenaga maupun untuk instalasi penerangan. Permasalahan utama disetiap gangguan atau perbaikan pada penggunaan listrik maka dibutuhkan orang datang ke area untuk mengkontrol dan monitoring panel secara manual. Pada penelitian ini berfokus kepada perancangan dan pembuatan alat kontrol dan monitoring pada beban 3 dan 1 phasa, dengan metode menggunakan NodeMCU esp 32/8266 dengan sensor pzem004"
+    },
+    {
+      "id": "users_hafizna_fadhli_downloads_sensor_technologies_for_transmission_and_distribution_system_a_review_of_the_latest_developments_pdf",
+      "fileName": "Sensor Technologies for Transmission and Distribution System; A Review of the Latest Developments.pdf",
+      "fullPath": "C:\\Users\\hafizna.fadhli\\Downloads\\Sensor Technologies for Transmission and Distribution System; A Review of the Latest Developments.pdf",
+      "stationFolder": "",
+      "localStationHint": "",
+      "documentType": "tap_setting",
+      "extractionStatus": "text_layer",
+      "extractionError": "",
+      "pageCount": 38,
+      "sizeBytes": 2995928,
+      "lastModified": "2025-12-01T05:57:15.627Z",
+      "stationHints": [],
+      "bayHints": [],
+      "relayHints": [],
+      "functionHints": [
+        "DIST",
+        "DISTANCE",
+        "AR",
+        "SYNC",
+        "SYNCHRO",
+        "DEF"
+      ],
+      "endpointCandidates": [],
+      "textCharCount": 170803,
+      "textPreview": "HAL Id: hal-04590818 https://hal.science/hal-04590818v1 Submitted on 28 May 2024 HAL is a multi-disciplinary open access archive for the deposit and dissemination of sci- entific research documents, whether they are pub- lished or not. The documents may come from teaching and research institutions in France or abroad, or from public or private research centers. L’archive ouverte pluridisciplinaire HAL, est destinée au dépôt et à la diffusion de documents scientifiques de niveau recherche, publiés ou non, émanant des établissements d’enseignement et de recherche français ou étrangers, des laboratoires publics ou privés. Sensor Technologies for Transmission and Distribution Systems: A Review of the Latest Developments Akhyurna Swain, Elmouatamid Abdellatif, Ahmed Mousa, Philip W T Pong To cite this version: Akhyurna Swain, Elmouatamid Abdellatif, Ahmed Mousa, Philip W T Pong. Sensor Technologies for Transmission and Distribution Systems: A Review of the Latest Developments. Energies, 2022, 15 (19), pp.7339. ￿10.3390/en15197339￿. ￿hal-04590818￿ Citation: Swain, A.; Abdellatif, E.; Mousa, A.; Pong, P.W.T. Sensor Technologies for Transmission and Distribution Systems: A Review of the La"
+    }
+  ]
+}
