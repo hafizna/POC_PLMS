@@ -647,6 +647,12 @@ npm run index:mathcad
 npm run index:crosscheck
 ```
 
+Bundled reference data:
+
+- `data/template-setting/` berisi template Mathcad `.xmcd` dan workbook crosscheck Excel yang dipakai sebagai benchmark POC.
+- `npm run index:mathcad` membaca semua `.xmcd` di folder itu dan memperbarui `src/domain/generated/mathcad-template-registry.json`.
+- `npm run index:crosscheck` membaca workbook crosscheck di folder itu dan memperbarui `src/domain/generated/crosscheck-workbook-registry.json`.
+
 ## Suggested PPT Outline
 
 1. Problem statement: why protection setting lifecycle is hard today.

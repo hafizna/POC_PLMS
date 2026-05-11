@@ -4,25 +4,67 @@ import crypto from "node:crypto";
 
 const ROOT = process.cwd();
 const OUTPUT = path.join(ROOT, "src", "domain", "generated", "mathcad-template-registry.json");
+const REPO_SOURCE_FOLDER = path.join(ROOT, "data", "template-setting");
+const LEGACY_SOURCE_FOLDER = "C:\\Users\\hafizna.fadhli\\Downloads\\Template Setting";
+const SOURCE_FOLDER = fs.existsSync(REPO_SOURCE_FOLDER) ? REPO_SOURCE_FOLDER : LEGACY_SOURCE_FOLDER;
 
-const SOURCES = [
-  {
-    id: "mathcad_abb_rel670_distance",
-    templateId: "distance-line-150kv",
-    vendor: "ABB",
-    relayFamily: "REL670",
-    functionGroup: "DIST",
-    filePath: "C:\\Users\\hafizna.fadhli\\Downloads\\Template Setting\\MathCAD ABB REL670 Distance.xmcd",
-  },
-  {
-    id: "mathcad_micom_p545_distance",
-    templateId: "distance-line-150kv",
-    vendor: "MiCOM",
-    relayFamily: "P545",
-    functionGroup: "DIST",
-    filePath: "C:\\Users\\hafizna.fadhli\\Downloads\\Template Setting\\Tap Setting MiCom P545 GI Ciledug Bay Alam Sutera #1.xmcd",
-  },
-];
+function slug(value) {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_|_$/g, "")
+    .slice(0, 80);
+}
+
+function inferVendor(fileName) {
+  const name = fileName.toLowerCase();
+  if (/abb|rel670|red670/.test(name)) return "ABB";
+  if (/micom|p54|p44|p14|alstom|schneider/.test(name)) return "MiCOM";
+  if (/7sl|siemens/.test(name)) return "Siemens";
+  if (/ge|d60|l90/.test(name)) return "GE";
+  if (/pcs|nr/.test(name)) return "NR";
+  if (/grz|toshiba/.test(name)) return "Toshiba";
+  return "Unknown";
+}
+
+function inferRelayFamily(fileName) {
+  const match = fileName.match(/(REL670|RED670|7SL87|P545|P543|P442|P443|P141|D60|L90|PCS931|GRZ100)/i);
+  return match ? match[1].toUpperCase() : "Unknown";
+}
+
+function inferFunctionGroup(fileName) {
+  const name = fileName.toLowerCase();
+  const functions = [];
+  if (/lcd|diff|differential|7sl/.test(name)) functions.push("LCD");
+  if (/dist|distance|p44|p54|rel670|red670|d60|l90|pcs931|grz/.test(name)) functions.push("DIST");
+  if (/ocr|gfr|overcurrent|ground/.test(name)) functions.push("OCR/GFR");
+  return functions.length > 0 ? Array.from(new Set(functions)).join("+") : "UNKNOWN";
+}
+
+function inferTemplateId(functionGroup) {
+  if (functionGroup.includes("LCD")) return "line-differential-lcd-150kv";
+  if (functionGroup.includes("DIST")) return "distance-line-150kv";
+  if (functionGroup.includes("OCR")) return "ocr-gfr-backup-150kv";
+  return "distance-line-150kv";
+}
+
+function discoverSources() {
+  return fs
+    .readdirSync(SOURCE_FOLDER, { withFileTypes: true })
+    .filter((entry) => entry.isFile() && entry.name.toLowerCase().endsWith(".xmcd"))
+    .map((entry) => {
+      const functionGroup = inferFunctionGroup(entry.name);
+      return {
+        id: `mathcad_${slug(path.basename(entry.name, ".xmcd"))}`,
+        templateId: inferTemplateId(functionGroup),
+        vendor: inferVendor(entry.name),
+        relayFamily: inferRelayFamily(entry.name),
+        functionGroup,
+        filePath: path.join(SOURCE_FOLDER, entry.name),
+      };
+    })
+    .sort((a, b) => a.filePath.localeCompare(b.filePath));
+}
 
 function decodeXml(value) {
   return value
@@ -115,7 +157,7 @@ function summarize(source) {
     relayFamily: source.relayFamily,
     functionGroup: source.functionGroup,
     fileName: path.basename(source.filePath),
-    fullPath: source.filePath,
+    fullPath: path.relative(ROOT, source.filePath) || source.filePath,
     fileSizeBytes: fs.statSync(source.filePath).size,
     sha256Prefix: hash,
     generator: firstMatch(xml, /<generator>([\s\S]*?)<\/generator>/),
@@ -132,10 +174,10 @@ function summarize(source) {
   };
 }
 
-const artifacts = SOURCES.map(summarize);
+const artifacts = discoverSources().map(summarize);
 const registry = {
   generatedAt: new Date().toISOString(),
-  sourceFolder: "C:\\Users\\hafizna.fadhli\\Downloads\\Template Setting",
+  sourceFolder: path.relative(ROOT, SOURCE_FOLDER) || SOURCE_FOLDER,
   summary: {
     totalArtifacts: artifacts.length,
     byVendor: artifacts.reduce((acc, item) => {

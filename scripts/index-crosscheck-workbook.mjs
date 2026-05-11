@@ -4,8 +4,15 @@ import crypto from "node:crypto";
 import XLSX from "xlsx";
 
 const ROOT = process.cwd();
-const INPUT =
+const REPO_INPUT = path.join(
+  ROOT,
+  "data",
+  "template-setting",
+  "Aplikasi Crosscheck Setting Relay [Digsilent_ 9 Maret 2021, IHS 1-2021].xlsx"
+);
+const LEGACY_INPUT =
   "C:\\Users\\hafizna.fadhli\\Downloads\\Aplikasi Crosscheck Setting Relay [Digsilent_ 9 Maret 2021, IHS 1-2021].xlsx";
+const INPUT = fs.existsSync(REPO_INPUT) ? REPO_INPUT : LEGACY_INPUT;
 const OUTPUT = path.join(ROOT, "src", "domain", "generated", "crosscheck-workbook-registry.json");
 
 const wb = XLSX.readFile(INPUT, { cellFormula: true, cellDates: true });
@@ -229,7 +236,7 @@ const faultRecords = extractFaultDb();
 
 const registry = {
   generatedAt: new Date().toISOString(),
-  sourceWorkbook: INPUT,
+  sourceWorkbook: path.relative(ROOT, INPUT) || INPUT,
   fileName: path.basename(INPUT),
   fileSizeBytes: file.length,
   sha256Prefix: crypto.createHash("sha256").update(file).digest("hex").slice(0, 16),

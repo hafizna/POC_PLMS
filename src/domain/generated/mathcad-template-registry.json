@@ -1,25 +1,1483 @@
 {
-  "generatedAt": "2026-05-11T03:10:35.570Z",
-  "sourceFolder": "C:\\Users\\hafizna.fadhli\\Downloads\\Template Setting",
+  "generatedAt": "2026-05-11T05:36:41.416Z",
+  "sourceFolder": "data\\template-setting",
   "summary": {
-    "totalArtifacts": 2,
+    "totalArtifacts": 12,
     "byVendor": {
-      "ABB": 1,
-      "MiCOM": 1
+      "Siemens": 1,
+      "GE": 4,
+      "Unknown": 1,
+      "MiCOM": 3,
+      "ABB": 2,
+      "Toshiba": 1
     },
     "byTemplateId": {
-      "distance-line-150kv": 2
+      "line-differential-lcd-150kv": 2,
+      "distance-line-150kv": 10
     }
   },
   "artifacts": [
     {
-      "id": "mathcad_abb_rel670_distance",
+      "id": "mathcad_7sl87_lcd_gi_tangerang_bay_cengkareng_1_2",
+      "templateId": "line-differential-lcd-150kv",
+      "vendor": "Siemens",
+      "relayFamily": "7SL87",
+      "functionGroup": "LCD",
+      "fileName": "7SL87 - LCD GI Tangerang bay Cengkareng 1,2.xmcd",
+      "fullPath": "data\\template-setting\\7SL87 - LCD GI Tangerang bay Cengkareng 1,2.xmcd",
+      "fileSizeBytes": 1120099,
+      "sha256Prefix": "ed7a1eefb8d57e09",
+      "generator": "Mathcad Professional 14.0",
+      "author": "",
+      "revisedBy": "USER",
+      "revision": "2",
+      "documentId": "6D016838-0CB7-4D98-8C85-A672E98C2107",
+      "textPreview": [
+        "PERHITUNGAN SETELAN RELAI JARAK SUTT 150 KV GI TANGERANG LAMA - CENGKARENG",
+        "1. Data SUTT 150 kV",
+        "1.1 CENGKARENG - TANGERANG LAMA 1,2",
+        "Jenis penghantar",
+        "OHL-150kV-ACCC-LISBON-1x310mm (1250 A)",
+        "/km",
+        "Imp. urutan positif",
+        "Imp. urutan nol",
+        "1 .2 CENGKARENG - CENGKARENG BARU 1,2",
+        "CAB-150kV-CU 2x2000mm (3168A)",
+        "1 .3 CENGKARENG - DURIKOSAMBI 1,2",
+        "OHL-150kV-ACSR 1x520 mm (1610A)",
+        "1 .4 DURIKOSAMBI - LMK",
+        "OHL-150kV-DRAKE 1X468.45mm (780A)",
+        "2 . Impedansi Trafo 150/20 KV GI CENGKARENG",
+        "2.1 GI CENGKARENG",
+        "asea",
+        "unindo"
+      ],
+      "variableCandidates": [
+        {
+          "name": "j",
+          "value": -1
+        },
+        {
+          "name": "a",
+          "value": -0.5
+        },
+        {
+          "name": "j",
+          "value": 3
+        },
+        {
+          "name": "k",
+          "value": 2
+        },
+        {
+          "name": "pi",
+          "value": 360
+        },
+        {
+          "name": "L1",
+          "value": 9.23
+        },
+        {
+          "name": "CCC",
+          "value": 1250,
+          "unit": "A"
+        },
+        {
+          "name": "ZL11",
+          "value": 4.500985627615355
+        },
+        {
+          "name": "thetaph1",
+          "value": -1
+        },
+        {
+          "name": "thetaph1",
+          "value": 81.2717035864177
+        },
+        {
+          "name": "R10",
+          "value": 0.15
+        },
+        {
+          "name": "R10",
+          "value": 0.22399999999999998
+        },
+        {
+          "name": "X10",
+          "value": 3
+        },
+        {
+          "name": "X11",
+          "value": 1.446
+        },
+        {
+          "name": "XL10",
+          "value": 3
+        },
+        {
+          "name": "RL10",
+          "value": 0.15
+        },
+        {
+          "name": "ZL10",
+          "value": 13.505770494377579
+        },
+        {
+          "name": "L2",
+          "value": 0.397
+        },
+        {
+          "name": "R21",
+          "value": 0.00655
+        },
+        {
+          "name": "X21",
+          "value": 0.312
+        },
+        {
+          "name": "ZL21",
+          "value": 0.12389129233373306
+        },
+        {
+          "name": "thetaph2",
+          "value": -1
+        },
+        {
+          "name": "thetaph2",
+          "value": 88.79733257429895
+        },
+        {
+          "name": "R20",
+          "value": 0.15
+        },
+        {
+          "name": "R20",
+          "value": 0.15655
+        },
+        {
+          "name": "X20",
+          "value": 3
+        },
+        {
+          "name": "X20",
+          "value": 0.9359999999999999
+        },
+        {
+          "name": "XL20",
+          "value": 3
+        },
+        {
+          "name": "RL20",
+          "value": 0.15
+        },
+        {
+          "name": "ZL20",
+          "value": 0.3767536071083096
+        },
+        {
+          "name": "L3",
+          "value": 10.32
+        },
+        {
+          "name": "R31",
+          "value": 0.0456
+        },
+        {
+          "name": "X31",
+          "value": 0.46
+        },
+        {
+          "name": "ZL31",
+          "value": 0.470592
+        },
+        {
+          "name": "ZL31",
+          "value": 4.770467971851819
+        },
+        {
+          "name": "thetaph3",
+          "value": -1
+        },
+        {
+          "name": "thetaph3",
+          "value": 84.33874022340437
+        },
+        {
+          "name": "XL30",
+          "value": 3
+        },
+        {
+          "name": "RL30",
+          "value": 0.15
+        },
+        {
+          "name": "ZL30",
+          "value": 14.383945363580331
+        }
+      ],
+      "keywords": [
+        "distance",
+        "line-impedance",
+        "ct-vt",
+        "short-circuit",
+        "coverage"
+      ],
+      "extractionStatus": "indexed_xml_preview",
+      "note": "XMCD is indexed as benchmark artifact. PLMS does not execute Mathcad equations yet; use this as formula/reference source for template parity review."
+    },
+    {
+      "id": "mathcad_d_ge_d60_gi_durikosambi_muarakarang_lama_1",
+      "templateId": "distance-line-150kv",
+      "vendor": "GE",
+      "relayFamily": "D60",
+      "functionGroup": "DIST",
+      "fileName": "D_GE_D60_GI Durikosambi_Muarakarang Lama 1.xmcd",
+      "fullPath": "data\\template-setting\\D_GE_D60_GI Durikosambi_Muarakarang Lama 1.xmcd",
+      "fileSizeBytes": 1417480,
+      "sha256Prefix": "8feda612993c04b0",
+      "generator": "Mathcad Professional 14.0",
+      "author": "ENPRO P3B",
+      "revisedBy": "USER",
+      "revision": "15",
+      "documentId": "266EBDD6-8698-4A8D-97CA-9D841D61512E",
+      "textPreview": [
+        "PERHITUNGAN SETELAN RELAI JARAK SUTT 150 KV DURIKOSAMBI - MUARAKARANG LAMA 1",
+        "GE - D60",
+        "1. Data SUTT 150 kV",
+        "1.1 Durikosambi - Muarakarang Lama",
+        "OHL-150kV-DRAKE 2X468.5mm (1560A)",
+        "/km",
+        "Imp. urutan positif",
+        "Imp. urutan nol",
+        "1 .2 Muarakarang Lama - Muarakarang Baru",
+        "Jenis penghantar",
+        "IMPEDANSI URUTAN POSITIP",
+        "IMPEDANSI URUTAN NOL",
+        "1 .3 Muarakarang Lama - UGC Angke",
+        "CAB-150 KV 2XSK2Y 2x1200 mm (1752 A)",
+        "1 .4 Angke - Ketapang",
+        "CAB-150kV-CU 240mm (550A)",
+        "2.1 . Impedansi Trafo di GI Muarakarang Lama (Asumsi trafo PT)",
+        "Trafo-1 150/20 KV, 60 MVA, 12,5%"
+      ],
+      "variableCandidates": [
+        {
+          "name": "k",
+          "value": 2
+        },
+        {
+          "name": "pi",
+          "value": 360
+        },
+        {
+          "name": "j",
+          "value": -1
+        },
+        {
+          "name": "a",
+          "value": -0.5
+        },
+        {
+          "name": "j",
+          "value": 3
+        },
+        {
+          "name": "L1",
+          "value": 12.9
+        },
+        {
+          "name": "ccc",
+          "value": 1560,
+          "unit": "A"
+        },
+        {
+          "name": "A",
+          "value": 0.0411,
+          "unit": "A"
+        },
+        {
+          "name": "XL11",
+          "value": 0.2812
+        },
+        {
+          "name": "RL11",
+          "value": 0.0411
+        },
+        {
+          "name": "ZL11",
+          "value": 0.5301899999999999
+        },
+        {
+          "name": "thetaph1",
+          "value": -1
+        },
+        {
+          "name": "thetaph1",
+          "value": 81.68456733085324
+        },
+        {
+          "name": "RL10",
+          "value": 0.15
+        },
+        {
+          "name": "RL10",
+          "value": 0.1911
+        },
+        {
+          "name": "XL10",
+          "value": 3
+        },
+        {
+          "name": "XL10",
+          "value": 0.8436
+        },
+        {
+          "name": "ZL10",
+          "value": 2.4651899999999998
+        },
+        {
+          "name": "ZL10",
+          "value": 11.15816571348983
+        },
+        {
+          "name": "thetaN1",
+          "value": -1
+        },
+        {
+          "name": "thetaN1",
+          "value": 77.2362511666195
+        },
+        {
+          "name": "L2",
+          "value": 0.7
+        },
+        {
+          "name": "RL21",
+          "value": 0.0411
+        },
+        {
+          "name": "XL21",
+          "value": 0.2812
+        },
+        {
+          "name": "ZL21",
+          "value": 0.028769999999999997
+        },
+        {
+          "name": "ZL21",
+          "value": 0.19893139143936028
+        },
+        {
+          "name": "thetaph2",
+          "value": -1
+        },
+        {
+          "name": "thetaph2",
+          "value": 81.68456733085324
+        },
+        {
+          "name": "RL20",
+          "value": 0.15
+        },
+        {
+          "name": "XL20",
+          "value": 3
+        },
+        {
+          "name": "ZL20",
+          "value": 0.13376999999999997
+        },
+        {
+          "name": "ZL20",
+          "value": 0.6054818604219286
+        },
+        {
+          "name": "thetaN2",
+          "value": -1
+        },
+        {
+          "name": "thetaN2",
+          "value": 77.2362511666195
+        },
+        {
+          "name": "RL31",
+          "value": 0.0752
+        },
+        {
+          "name": "XL31",
+          "value": 0.468
+        },
+        {
+          "name": "L3",
+          "value": 3.6
+        },
+        {
+          "name": "ZL31",
+          "value": 0.27072
+        },
+        {
+          "name": "ZL31",
+          "value": 1.7064115442647474
+        },
+        {
+          "name": "thetaph3",
+          "value": -1
+        }
+      ],
+      "keywords": [
+        "distance",
+        "line-impedance",
+        "ct-vt",
+        "short-circuit",
+        "coverage"
+      ],
+      "extractionStatus": "indexed_xml_preview",
+      "note": "XMCD is indexed as benchmark artifact. PLMS does not execute Mathcad equations yet; use this as formula/reference source for template parity review."
+    },
+    {
+      "id": "mathcad_d_lontar_tangerang_baru_443",
+      "templateId": "distance-line-150kv",
+      "vendor": "GE",
+      "relayFamily": "Unknown",
+      "functionGroup": "UNKNOWN",
+      "fileName": "D_Lontar_Tangerang Baru_443.xmcd",
+      "fullPath": "data\\template-setting\\D_Lontar_Tangerang Baru_443.xmcd",
+      "fileSizeBytes": 1474850,
+      "sha256Prefix": "4ede39570ce4fbaa",
+      "generator": "Mathcad Professional 14.0",
+      "author": "User",
+      "revisedBy": "USER",
+      "revision": "23",
+      "documentId": "B2D2E304-A5FB-49D5-AE48-E056F9F5101B",
+      "textPreview": [
+        "PERHITUNGAN SETELAN RELAI JARAK SUTT 150 KV LONTAR - TANGERANG BARU",
+        "1. Data SKTT",
+        "1.1 GI LONTAR - TANGERANG BARU 2",
+        "OHL-150kV-TACSR 2X410/60mm2 (2730A)",
+        "Imp. urutan positif",
+        "Imp. urutan nol",
+        "Imp. mutual",
+        "1.2 TANGERANG BARU - CENGKARENG BARU 2",
+        "OHL-150kV-ACCC-DUBLIN2x520mm (3746 A)",
+        "CAB-150kV-CU 2x2000mm (3168A)",
+        "1.3 TANGERANG BARU - CENGKARENG BARU 2",
+        "OHL-150kV-TACSR 2X410mm (2730A)",
+        "1.4 CENGKARENG BARU - CENGKARENG 2",
+        "Jenis penghantar",
+        "panjang (km)",
+        "2 . Impedansi Trafo di GI SPONG",
+        "TD1, TD2, TD4, KTT",
+        "trafo 150/20 kV, 30 MVA, 12.5 %"
+      ],
+      "variableCandidates": [
+        {
+          "name": "j",
+          "value": -1
+        },
+        {
+          "name": "a",
+          "value": -0.5
+        },
+        {
+          "name": "j",
+          "value": 3
+        },
+        {
+          "name": "k",
+          "value": 2
+        },
+        {
+          "name": "pi",
+          "value": 360
+        },
+        {
+          "name": "L1",
+          "value": 21.23
+        },
+        {
+          "name": "L11a",
+          "value": 0.76428
+        },
+        {
+          "name": "L11a",
+          "value": 5.986859999999999
+        },
+        {
+          "name": "ZL11",
+          "value": 0.76428
+        },
+        {
+          "name": "ZL11",
+          "value": 6.035446675930456
+        },
+        {
+          "name": "thetaph1",
+          "value": -1
+        },
+        {
+          "name": "thetaph1",
+          "value": 82.72499504211075
+        },
+        {
+          "name": "R10a",
+          "value": 0.15
+        },
+        {
+          "name": "R11a",
+          "value": 0.186
+        },
+        {
+          "name": "X10a",
+          "value": 3
+        },
+        {
+          "name": "X11a",
+          "value": 0.8459999999999999
+        },
+        {
+          "name": "ZL10",
+          "value": 3.94878
+        },
+        {
+          "name": "ZL10",
+          "value": 18.3895431543255
+        },
+        {
+          "name": "thetaN1",
+          "value": -1
+        },
+        {
+          "name": "thetaN1",
+          "value": 77.60033357369024
+        },
+        {
+          "name": "ZM10",
+          "value": 0.0493
+        },
+        {
+          "name": "j",
+          "value": 0.2962
+        },
+        {
+          "name": "ZM10",
+          "value": 0.30027475751384763
+        },
+        {
+          "name": "ZLM10",
+          "value": 6.374833102018986
+        },
+        {
+          "name": "thetaM10",
+          "value": -1
+        },
+        {
+          "name": "thetaM10",
+          "value": 80.55022545769508
+        },
+        {
+          "name": "R21a",
+          "value": 0.03037
+        },
+        {
+          "name": "X21a",
+          "value": 0.64236
+        },
+        {
+          "name": "L21a",
+          "value": 6.3
+        },
+        {
+          "name": "R21b",
+          "value": 0.00655
+        },
+        {
+          "name": "X21b",
+          "value": 0.312
+        },
+        {
+          "name": "L21b",
+          "value": 0.232
+        },
+        {
+          "name": "R21c",
+          "value": 0
+        },
+        {
+          "name": "X21c",
+          "value": 0
+        },
+        {
+          "name": "L21c",
+          "value": 0
+        },
+        {
+          "name": "L21",
+          "value": 6.532
+        },
+        {
+          "name": "RL20a",
+          "value": 0.15
+        },
+        {
+          "name": "RL20a",
+          "value": 1.136331
+        },
+        {
+          "name": "XL20a",
+          "value": 3
+        },
+        {
+          "name": "XL20a",
+          "value": 12.140604
+        }
+      ],
+      "keywords": [
+        "distance",
+        "line-impedance",
+        "ct-vt",
+        "short-circuit",
+        "coverage"
+      ],
+      "extractionStatus": "indexed_xml_preview",
+      "note": "XMCD is indexed as benchmark artifact. PLMS does not execute Mathcad equations yet; use this as formula/reference source for template parity review."
+    },
+    {
+      "id": "mathcad_dist_l90_npsms_pskms_1_2",
+      "templateId": "distance-line-150kv",
+      "vendor": "GE",
+      "relayFamily": "L90",
+      "functionGroup": "DIST",
+      "fileName": "Dist_L90_NPSMS_PSKMS 1,2.xmcd",
+      "fullPath": "data\\template-setting\\Dist_L90_NPSMS_PSKMS 1,2.xmcd",
+      "fileSizeBytes": 2134536,
+      "sha256Prefix": "38933a16f9a13edf",
+      "generator": "Mathcad Professional 14.0",
+      "author": "ENPRO P3B",
+      "revisedBy": "Amdi",
+      "revision": "3",
+      "documentId": "98679279-5BEC-4A21-96AC-B2C755E2E59C",
+      "textPreview": [
+        "PERHITUNGAN SETELAN RELAI JARAK SUTT 150 KV Pasar Kemis Baru - Pasar Kemis",
+        "1. Data SUTT 150 kV",
+        "1.1 Pasar Kemis Baru - Pasar Kemis",
+        "Jenis penghantar",
+        "OHL-150kV-ZEBRA 2x484.5mm 1620A",
+        "Imp. urutan nol",
+        "deg",
+        "Imp. urutan positif",
+        "Imp. mutual",
+        "1.2 Pasar Kemis - Cikupa",
+        "1 .3 Pasar Kemis - Cikupa",
+        "1 .4 Cikupa - Jatake",
+        "OHL-150kV-ZEBRA 2x468.5mm (1560A)",
+        "/km",
+        "2.1 . Impedansi Trafo di GI Sepatan",
+        "Trafo-1,2,3,4 60 MVA 150/20 kV 12.5%",
+        "Dipilih",
+        "3. PERHITUNGAN SETELAN RELE JARAK"
+      ],
+      "variableCandidates": [
+        {
+          "name": "k",
+          "value": 2
+        },
+        {
+          "name": "pi",
+          "value": 360
+        },
+        {
+          "name": "j",
+          "value": -1
+        },
+        {
+          "name": "a",
+          "value": -0.5
+        },
+        {
+          "name": "j",
+          "value": 3
+        },
+        {
+          "name": "Vn",
+          "value": 150000
+        },
+        {
+          "name": "R11a",
+          "value": 0.0387
+        },
+        {
+          "name": "X11a",
+          "value": 0.2807
+        },
+        {
+          "name": "L11a",
+          "value": 3.5
+        },
+        {
+          "name": "Iccc",
+          "value": 1620
+        },
+        {
+          "name": "R11b",
+          "value": 0
+        },
+        {
+          "name": "X11b",
+          "value": 0
+        },
+        {
+          "name": "L11b",
+          "value": 0
+        },
+        {
+          "name": "Iccc",
+          "value": 9999
+        },
+        {
+          "name": "R11c",
+          "value": 0
+        },
+        {
+          "name": "X11c",
+          "value": 0
+        },
+        {
+          "name": "L11c",
+          "value": 0
+        },
+        {
+          "name": "L11",
+          "value": 3.5
+        },
+        {
+          "name": "RL10a",
+          "value": 0.66045
+        },
+        {
+          "name": "XL10a",
+          "value": 2.94735
+        },
+        {
+          "name": "RL10b",
+          "value": 0.15
+        },
+        {
+          "name": "RL10b",
+          "value": 0
+        },
+        {
+          "name": "XL10b",
+          "value": 3
+        },
+        {
+          "name": "XL10b",
+          "value": 0
+        },
+        {
+          "name": "RL10c",
+          "value": 0.15
+        },
+        {
+          "name": "RL10c",
+          "value": 0
+        },
+        {
+          "name": "XL10c",
+          "value": 3
+        },
+        {
+          "name": "XL10c",
+          "value": 0
+        },
+        {
+          "name": "RL10",
+          "value": 0.66045
+        },
+        {
+          "name": "XL10",
+          "value": 2.94735
+        },
+        {
+          "name": "R10",
+          "value": 0.1887
+        },
+        {
+          "name": "X10",
+          "value": 0.8421000000000001
+        },
+        {
+          "name": "ZL10",
+          "value": 0.66045
+        },
+        {
+          "name": "ZL10",
+          "value": 3.0204413957234792
+        },
+        {
+          "name": "thetaph10",
+          "value": -1
+        },
+        {
+          "name": "thetaph10",
+          "value": 77.36965393188805
+        },
+        {
+          "name": "RL11a",
+          "value": 0.13545
+        },
+        {
+          "name": "XL11a",
+          "value": 0.98245
+        },
+        {
+          "name": "RL11b",
+          "value": 0
+        },
+        {
+          "name": "XL11b",
+          "value": 0
+        }
+      ],
+      "keywords": [
+        "distance",
+        "line-impedance",
+        "ct-vt",
+        "short-circuit",
+        "coverage"
+      ],
+      "extractionStatus": "indexed_xml_preview",
+      "note": "XMCD is indexed as benchmark artifact. PLMS does not execute Mathcad equations yet; use this as formula/reference source for template parity review."
+    },
+    {
+      "id": "mathcad_gi_tangerang_lama_bay_jatake_ii_2_2000_5_pcs931",
+      "templateId": "distance-line-150kv",
+      "vendor": "GE",
+      "relayFamily": "PCS931",
+      "functionGroup": "DIST",
+      "fileName": "GI Tangerang Lama bay Jatake II-2_2000-5_PCS931.xmcd",
+      "fullPath": "data\\template-setting\\GI Tangerang Lama bay Jatake II-2_2000-5_PCS931.xmcd",
+      "fileSizeBytes": 1293658,
+      "sha256Prefix": "5ee2581f9e77d977",
+      "generator": "Mathcad Professional 14.0",
+      "author": "Eka Annise Ambarani",
+      "revisedBy": "Windows User",
+      "revision": "33",
+      "documentId": "8CE2C55E-CC65-434E-A719-A886F1C7CDED",
+      "textPreview": [
+        "PERHITUNGAN SETELAN RELAI JARAK SUTT 150 KV GI Tangerang Lama bay Jatake II-2_2000-5PCS9611",
+        "I hubung singkat 1 fasa ke tanah",
+        "150 kV system parameter",
+        "1. Data SUTT 150 kV",
+        "1.1 NJTKE-TGRNG-2 (ex. JTAKE-TGRNG -2)",
+        "Jenis penghantar : OHL-150kV-ZEBRA 2X484.5mm (1620A)",
+        "Data parameter penghantar dari Digsilent:",
+        "Imp. urutan positif",
+        "Imp. urutan nol",
+        "Imp. mutual",
+        "1.2 JATAKE-NJTKE -1 (ex. JTAKE-TGRNG -1)",
+        "1.3 JATAKE-NJTKE -1 (ex. JTAKE-TGRNG -1)",
+        "1.4 JTAKE-MAXIM-1",
+        "CAB-150kV-CU 240mm (550A)",
+        "2 . Impedansi Trafo GI JATAKE",
+        "Trafo",
+        "SUTT JATAKE DUA - JATAKE LAMA",
+        "I. Distance relay NARI PCS-931"
+      ],
+      "variableCandidates": [
+        {
+          "name": "MVAb",
+          "value": 100
+        },
+        {
+          "name": "kVb",
+          "value": 150
+        },
+        {
+          "name": "Ib",
+          "value": 1000
+        },
+        {
+          "name": "kVb",
+          "value": 384.9001794597505
+        },
+        {
+          "name": "Zb",
+          "value": 2
+        },
+        {
+          "name": "MVAb",
+          "value": 225
+        },
+        {
+          "name": "Ihs0",
+          "value": 23126
+        },
+        {
+          "name": "X1",
+          "value": 0.01679
+        },
+        {
+          "name": "X0",
+          "value": 0.0312
+        },
+        {
+          "name": "j",
+          "value": -1
+        },
+        {
+          "name": "a",
+          "value": -0.5
+        },
+        {
+          "name": "j",
+          "value": 3
+        },
+        {
+          "name": "k",
+          "value": 2
+        },
+        {
+          "name": "pi",
+          "value": 360
+        },
+        {
+          "name": "L1",
+          "value": 6.87
+        },
+        {
+          "name": "ccc",
+          "value": 1620
+        },
+        {
+          "name": "RL11",
+          "value": 0.0387
+        },
+        {
+          "name": "XL11",
+          "value": 0.2807
+        },
+        {
+          "name": "ZL11",
+          "value": 0.26586899999999997
+        },
+        {
+          "name": "ZL11",
+          "value": 1.946650352899051
+        },
+        {
+          "name": "thetaph1",
+          "value": -1
+        },
+        {
+          "name": "thetaph1",
+          "value": 82.1501402898678
+        },
+        {
+          "name": "R11pu",
+          "value": 2
+        },
+        {
+          "name": "R11pu",
+          "value": 0.0011816399999999999
+        },
+        {
+          "name": "X11pu",
+          "value": 2
+        },
+        {
+          "name": "X11pu",
+          "value": 0.008570706666666667
+        },
+        {
+          "name": "Z11pu",
+          "value": 0.0011816399999999999
+        },
+        {
+          "name": "Z11pu",
+          "value": 0.008651779346218006
+        },
+        {
+          "name": "RL10",
+          "value": 0.15
+        },
+        {
+          "name": "RL10",
+          "value": 0.18869999999999998
+        },
+        {
+          "name": "XL10",
+          "value": 3
+        },
+        {
+          "name": "XL10",
+          "value": 0.8421000000000001
+        },
+        {
+          "name": "ZL10",
+          "value": 1.2963689999999999
+        },
+        {
+          "name": "ZL10",
+          "value": 5.92869496817723
+        },
+        {
+          "name": "thetaN1",
+          "value": -1
+        },
+        {
+          "name": "thetaN1",
+          "value": 77.36965393188805
+        },
+        {
+          "name": "R10pu",
+          "value": 2
+        },
+        {
+          "name": "R10pu",
+          "value": 0.005761639999999999
+        },
+        {
+          "name": "X10pu",
+          "value": 2
+        },
+        {
+          "name": "X10pu",
+          "value": 0.025712120000000005
+        }
+      ],
+      "keywords": [
+        "distance",
+        "line-impedance",
+        "ct-vt",
+        "short-circuit",
+        "coverage"
+      ],
+      "extractionStatus": "indexed_xml_preview",
+      "note": "XMCD is indexed as benchmark artifact. PLMS does not execute Mathcad equations yet; use this as formula/reference source for template parity review."
+    },
+    {
+      "id": "mathcad_gitet_kembangan_bay_gandul",
+      "templateId": "distance-line-150kv",
+      "vendor": "Unknown",
+      "relayFamily": "Unknown",
+      "functionGroup": "UNKNOWN",
+      "fileName": "GITET KEMBANGAN Bay  GANDUL.xmcd",
+      "fullPath": "data\\template-setting\\GITET KEMBANGAN Bay  GANDUL.xmcd",
+      "fileSizeBytes": 1125941,
+      "sha256Prefix": "cfd374a2f19a6c8e",
+      "generator": "Mathcad Professional 14.0",
+      "author": "",
+      "revisedBy": "asus",
+      "revision": "19",
+      "documentId": "C6612034-043F-4681-9816-0567C1CA2305",
+      "textPreview": [
+        "PERHITUNGAN SETELAN RELAI JARAK SUTT 500 KV GITET KEMBANGAN - GANDUL",
+        "KEMBANGAN",
+        "GANDUL",
+        "BALARAJA",
+        "8.4 Ohm",
+        "19 OHM",
+        "SURALAYA",
+        "1.6 OHM",
+        "17 OHM",
+        "DEPOK",
+        "1. Data SUTT 500 kV",
+        "1.1 GNDUL-KMBGN-2",
+        "Jenis penghantar",
+        "OHL-500kV-ACSR-GANNET 4X392.8mm (2400A)",
+        "/km",
+        "Imp. urutan positif",
+        "Imp. urutan nol",
+        "Imp. mutual"
+      ],
+      "variableCandidates": [
+        {
+          "name": "j",
+          "value": -1
+        },
+        {
+          "name": "a",
+          "value": -0.5
+        },
+        {
+          "name": "j",
+          "value": 3
+        },
+        {
+          "name": "k",
+          "value": 2
+        },
+        {
+          "name": "pi",
+          "value": 360
+        },
+        {
+          "name": "L1",
+          "value": 30.143
+        },
+        {
+          "name": "KM",
+          "value": 0.0251
+        },
+        {
+          "name": "X11",
+          "value": 0.2808
+        },
+        {
+          "name": "CCC",
+          "value": 2400,
+          "unit": "A"
+        },
+        {
+          "name": "ZL11",
+          "value": 8.497901921998976
+        },
+        {
+          "name": "thetaph1",
+          "value": -1
+        },
+        {
+          "name": "thetaph1",
+          "value": 84.89205105604546
+        },
+        {
+          "name": "R10",
+          "value": 0.15
+        },
+        {
+          "name": "R10",
+          "value": 0.1751
+        },
+        {
+          "name": "X10",
+          "value": 3
+        },
+        {
+          "name": "X11",
+          "value": 0.8424
+        },
+        {
+          "name": "XL10",
+          "value": 3
+        },
+        {
+          "name": "RL10",
+          "value": 0.15
+        },
+        {
+          "name": "ZL10",
+          "value": 25.93520553640743
+        },
+        {
+          "name": "L2",
+          "value": 5.923
+        },
+        {
+          "name": "R21",
+          "value": 0.0293
+        },
+        {
+          "name": "X21",
+          "value": 0.2815
+        },
+        {
+          "name": "ZL21",
+          "value": 1.6763318506571006
+        },
+        {
+          "name": "thetaph2",
+          "value": -1
+        },
+        {
+          "name": "thetaph2",
+          "value": 84.05775131490509
+        },
+        {
+          "name": "R20",
+          "value": 0.15
+        },
+        {
+          "name": "R20",
+          "value": 0.1793
+        },
+        {
+          "name": "X20",
+          "value": 3
+        },
+        {
+          "name": "X20",
+          "value": 0.8444999999999999
+        },
+        {
+          "name": "XL20",
+          "value": 3
+        },
+        {
+          "name": "RL20",
+          "value": 0.15
+        },
+        {
+          "name": "ZL20",
+          "value": 5.113469461954325
+        },
+        {
+          "name": "L3",
+          "value": 46.2
+        },
+        {
+          "name": "R31",
+          "value": 0.1172
+        },
+        {
+          "name": "X31",
+          "value": 0.4003
+        },
+        {
+          "name": "ZL31",
+          "value": 5.41464
+        },
+        {
+          "name": "ZL31",
+          "value": 19.270214945070023
+        },
+        {
+          "name": "thetaph3",
+          "value": -1
+        },
+        {
+          "name": "thetaph3",
+          "value": 73.68100279623185
+        },
+        {
+          "name": "XL30",
+          "value": 3
+        }
+      ],
+      "keywords": [
+        "distance",
+        "line-impedance",
+        "ct-vt",
+        "short-circuit",
+        "coverage"
+      ],
+      "extractionStatus": "indexed_xml_preview",
+      "note": "XMCD is indexed as benchmark artifact. PLMS does not execute Mathcad equations yet; use this as formula/reference source for template parity review."
+    },
+    {
+      "id": "mathcad_lcd_p543_p141_cengkareng_cengkareng_baru",
+      "templateId": "line-differential-lcd-150kv",
+      "vendor": "MiCOM",
+      "relayFamily": "P543",
+      "functionGroup": "LCD+DIST",
+      "fileName": "LCD_P543_P141_Cengkareng-Cengkareng Baru.xmcd",
+      "fullPath": "data\\template-setting\\LCD_P543_P141_Cengkareng-Cengkareng Baru.xmcd",
+      "fileSizeBytes": 2066860,
+      "sha256Prefix": "6e11e619402332f7",
+      "generator": "Mathcad Professional 14.0",
+      "author": "User",
+      "revisedBy": "USER",
+      "revision": "8",
+      "documentId": "08EF5387-79A2-4690-8B84-68EA8300FC42",
+      "textPreview": [
+        "PERHITUNGAN SETELAN RELAI JARAK SUTT 150 KV GI CENGKARENG BAY CENGKARENG BARU",
+        "CENGKARENG",
+        "CENGKARENG BARU",
+        "TANGERANG BARU",
+        "L1; 0.397 KM, 0.123 OHM",
+        "L3; 6.3 KM, 4.05 OHM",
+        "LONTAR",
+        "L4; 21.23 KM, 6.03 OHM",
+        "60 MVA 12.5% 150kV",
+        "L2; 6.3 KM, 4.05 OHM",
+        "1. Data Impedansi",
+        "1.1 CENGKARENG - CENGKARENG BARU",
+        "CAB-150kV-CU 2x2000mm (3168A)",
+        "Imp. urutan nol",
+        "Imp. urutan positif",
+        "Imp. mutual",
+        "1.2 CENGKARENG BARU - TANGERANG BARU",
+        "OHL-150kV-ACCC-DUBLIN2x520mm 3746A"
+      ],
+      "variableCandidates": [
+        {
+          "name": "j",
+          "value": -1
+        },
+        {
+          "name": "a",
+          "value": -0.5
+        },
+        {
+          "name": "j",
+          "value": 3
+        },
+        {
+          "name": "k",
+          "value": 2
+        },
+        {
+          "name": "pi",
+          "value": 360
+        },
+        {
+          "name": "R11b",
+          "value": 0
+        },
+        {
+          "name": "X11b",
+          "value": 0
+        },
+        {
+          "name": "Iccc",
+          "value": 9999
+        },
+        {
+          "name": "L11b",
+          "value": 0
+        },
+        {
+          "name": "L11c",
+          "value": 0
+        },
+        {
+          "name": "R11c",
+          "value": 0
+        },
+        {
+          "name": "X11c",
+          "value": 0
+        },
+        {
+          "name": "L11",
+          "value": 0.397
+        },
+        {
+          "name": "Iccc",
+          "value": 3168
+        },
+        {
+          "name": "RL10a",
+          "value": 0.06215035
+        },
+        {
+          "name": "XL10a",
+          "value": 0.371592
+        },
+        {
+          "name": "RL10b",
+          "value": 0.15
+        },
+        {
+          "name": "RL10b",
+          "value": 0
+        },
+        {
+          "name": "XL10b",
+          "value": 3
+        },
+        {
+          "name": "XL10b",
+          "value": 0
+        },
+        {
+          "name": "RL10c",
+          "value": 0.15
+        },
+        {
+          "name": "RL10c",
+          "value": 0
+        },
+        {
+          "name": "XL10c",
+          "value": 3
+        },
+        {
+          "name": "XL10c",
+          "value": 0
+        },
+        {
+          "name": "RL10",
+          "value": 0.06215035
+        },
+        {
+          "name": "XL10",
+          "value": 0.371592
+        },
+        {
+          "name": "R10",
+          "value": 0.15655
+        },
+        {
+          "name": "X10",
+          "value": 0.9359999999999999
+        },
+        {
+          "name": "ZL10",
+          "value": 0.06215035
+        },
+        {
+          "name": "ZL10",
+          "value": 0.3767536071083096
+        },
+        {
+          "name": "thetaN1",
+          "value": -1
+        },
+        {
+          "name": "thetaN1",
+          "value": 80.50492345432534
+        },
+        {
+          "name": "RL11a",
+          "value": 0.0026003500000000004
+        },
+        {
+          "name": "XL11a",
+          "value": 0.123864
+        },
+        {
+          "name": "RL11b",
+          "value": 0
+        },
+        {
+          "name": "XL11b",
+          "value": 0
+        },
+        {
+          "name": "RL11c",
+          "value": 0
+        },
+        {
+          "name": "XL11c",
+          "value": 0
+        },
+        {
+          "name": "RL11",
+          "value": 0.0026003500000000004
+        },
+        {
+          "name": "XL11",
+          "value": 0.123864
+        }
+      ],
+      "keywords": [
+        "distance",
+        "line-impedance",
+        "ct-vt",
+        "short-circuit",
+        "coverage"
+      ],
+      "extractionStatus": "indexed_xml_preview",
+      "note": "XMCD is indexed as benchmark artifact. PLMS does not execute Mathcad equations yet; use this as formula/reference source for template parity review."
+    },
+    {
+      "id": "mathcad_mathcad_abb_rel670_distance",
       "templateId": "distance-line-150kv",
       "vendor": "ABB",
       "relayFamily": "REL670",
       "functionGroup": "DIST",
       "fileName": "MathCAD ABB REL670 Distance.xmcd",
-      "fullPath": "C:\\Users\\hafizna.fadhli\\Downloads\\Template Setting\\MathCAD ABB REL670 Distance.xmcd",
+      "fullPath": "data\\template-setting\\MathCAD ABB REL670 Distance.xmcd",
       "fileSizeBytes": 1914117,
       "sha256Prefix": "4edc4cc18b85df73",
       "generator": "Mathcad Professional 14.0",
@@ -225,13 +1683,638 @@
       "note": "XMCD is indexed as benchmark artifact. PLMS does not execute Mathcad equations yet; use this as formula/reference source for template parity review."
     },
     {
-      "id": "mathcad_micom_p545_distance",
+      "id": "mathcad_p442_distance_tangerang_lama_jatake_1_2",
+      "templateId": "distance-line-150kv",
+      "vendor": "MiCOM",
+      "relayFamily": "P442",
+      "functionGroup": "DIST",
+      "fileName": "P442_Distance Tangerang Lama - Jatake 1,2.xmcd",
+      "fullPath": "data\\template-setting\\P442_Distance Tangerang Lama - Jatake 1,2.xmcd",
+      "fileSizeBytes": 1882477,
+      "sha256Prefix": "838707c5eee2d24a",
+      "generator": "Mathcad Professional 14.0",
+      "author": "User",
+      "revisedBy": "user",
+      "revision": "3",
+      "documentId": "D634C217-AA1E-4253-B0D7-0B9841D2B521",
+      "textPreview": [
+        "PERHITUNGAN SETELAN RELAI JARAK 150 KV GI TANGERANG LAMA - JATAKE #1,2",
+        "TANGERANG LAMA",
+        "JATAKE",
+        "CIKUPA",
+        "L1; 10.3 KM; 2.91 OHM",
+        "L3; 7.2 KM; 2.04 OHM",
+        "PASAR KEMIS",
+        "L4; 5.7 KM; 1.61 OHM",
+        "MAXIMANGANDO",
+        "60 MVA 12.5% 150kV",
+        "L2; 1.1 KM; 0.17 OHM",
+        "1. Data Impedansi",
+        "1.1 TANGERANG LAMA - JATAKE -1,2",
+        "OHL-150kV-ZEBRA 2X484.5mm (1620A)",
+        "b dan c dikosongkan karena ada hanya untuk mengakomodir apabila ada beda jenis penghantar pada satu ruas. kalau sama dikosongkan dan Iccc dibuat tinggi",
+        "Imp. urutan nol",
+        "Imp. urutan positif",
+        "Imp. mutual"
+      ],
+      "variableCandidates": [
+        {
+          "name": "j",
+          "value": -1
+        },
+        {
+          "name": "a",
+          "value": -0.5
+        },
+        {
+          "name": "j",
+          "value": 3
+        },
+        {
+          "name": "k",
+          "value": 2
+        },
+        {
+          "name": "pi",
+          "value": 360
+        },
+        {
+          "name": "R11a",
+          "value": 0.0387
+        },
+        {
+          "name": "X11a",
+          "value": 0.2807
+        },
+        {
+          "name": "L11a",
+          "value": 10.3
+        },
+        {
+          "name": "Iccc",
+          "value": 1620
+        },
+        {
+          "name": "R11b",
+          "value": 0
+        },
+        {
+          "name": "X11b",
+          "value": 0
+        },
+        {
+          "name": "L11b",
+          "value": 0
+        },
+        {
+          "name": "Iccc",
+          "value": 9999
+        },
+        {
+          "name": "R11c",
+          "value": 0
+        },
+        {
+          "name": "X11c",
+          "value": 0
+        },
+        {
+          "name": "L11c",
+          "value": 0
+        },
+        {
+          "name": "L11",
+          "value": 10.3
+        },
+        {
+          "name": "RL10a",
+          "value": 0.15
+        },
+        {
+          "name": "RL10a",
+          "value": 1.9436099999999998
+        },
+        {
+          "name": "XL10a",
+          "value": 3
+        },
+        {
+          "name": "XL10a",
+          "value": 8.673630000000001
+        },
+        {
+          "name": "RL10b",
+          "value": 0.15
+        },
+        {
+          "name": "RL10b",
+          "value": 0
+        },
+        {
+          "name": "XL10b",
+          "value": 3
+        },
+        {
+          "name": "XL10b",
+          "value": 0
+        },
+        {
+          "name": "RL10c",
+          "value": 0.15
+        },
+        {
+          "name": "RL10c",
+          "value": 0
+        },
+        {
+          "name": "XL10c",
+          "value": 3
+        },
+        {
+          "name": "XL10c",
+          "value": 0
+        },
+        {
+          "name": "RL10",
+          "value": 1.9436099999999998
+        },
+        {
+          "name": "XL10",
+          "value": 8.673630000000001
+        },
+        {
+          "name": "R10",
+          "value": 0.18869999999999998
+        },
+        {
+          "name": "X10",
+          "value": 0.8421000000000001
+        },
+        {
+          "name": "ZL10",
+          "value": 1.9436099999999998
+        },
+        {
+          "name": "RL11a",
+          "value": 0.39861
+        },
+        {
+          "name": "XL11a",
+          "value": 2.89121
+        },
+        {
+          "name": "RL11b",
+          "value": 0
+        },
+        {
+          "name": "XL11b",
+          "value": 0
+        },
+        {
+          "name": "RL11c",
+          "value": 0
+        },
+        {
+          "name": "XL11c",
+          "value": 0
+        }
+      ],
+      "keywords": [
+        "distance",
+        "line-impedance",
+        "ct-vt",
+        "short-circuit",
+        "coverage"
+      ],
+      "extractionStatus": "indexed_xml_preview",
+      "note": "XMCD is indexed as benchmark artifact. PLMS does not execute Mathcad equations yet; use this as formula/reference source for template parity review."
+    },
+    {
+      "id": "mathcad_rev_01_distance_red670_smrcn_alsut",
+      "templateId": "distance-line-150kv",
+      "vendor": "ABB",
+      "relayFamily": "RED670",
+      "functionGroup": "DIST",
+      "fileName": "Rev.01 DISTANCE_RED670_SMRCN-ALSUT.xmcd",
+      "fullPath": "data\\template-setting\\Rev.01 DISTANCE_RED670_SMRCN-ALSUT.xmcd",
+      "fileSizeBytes": 1923118,
+      "sha256Prefix": "d2b9f2e0960f2a5d",
+      "generator": "Mathcad Professional 14.0",
+      "author": "sidik",
+      "revisedBy": "Amdi",
+      "revision": "3",
+      "documentId": "905C1513-E5A9-40C8-88E0-5D9C5CD00B40",
+      "textPreview": [
+        "PERHITUNGAN SETELAN RELAI JARAK SKTT 150 KV SMRCN-ALSUT",
+        "1. Data SKTT 150 kV",
+        "1.1 SUMMARECON- ALSUT",
+        "Jenis penghantar",
+        "2x1000mm N2XCK2Y CU (1886 A)",
+        "/km",
+        "OHL NIHIL",
+        "Imp. urutan positif",
+        "Imp. urutan nol",
+        "Impedansi mutual LSI - MILLENIUM : (asumsi)",
+        "1.2 ALSUT-CILEDUG",
+        "1.3 ALSUT-CIKUPA",
+        "4x428.9mm ZEBRA (3000 A)",
+        "1.4 CIKUPA-SUVARNA",
+        "Zebra 4x428.9mm (3000 A)",
+        "Berdasarkan data ABB",
+        "1.5 Impedansi Trafo",
+        "1.5.1 GI ALSUT"
+      ],
+      "variableCandidates": [
+        {
+          "name": "j",
+          "value": -1
+        },
+        {
+          "name": "Vn",
+          "value": 150000
+        },
+        {
+          "name": "k",
+          "value": 2
+        },
+        {
+          "name": "pi",
+          "value": 360
+        },
+        {
+          "name": "R11b",
+          "value": 0.014
+        },
+        {
+          "name": "X11b",
+          "value": 0.089
+        },
+        {
+          "name": "L11b",
+          "value": 6.8,
+          "unit": "km"
+        },
+        {
+          "name": "R11a",
+          "value": 0
+        },
+        {
+          "name": "X11a",
+          "value": 0
+        },
+        {
+          "name": "L11a",
+          "value": 0,
+          "unit": "km"
+        },
+        {
+          "name": "L1",
+          "value": 6.8,
+          "unit": "km"
+        },
+        {
+          "name": "RL11",
+          "value": 0.09519999999999999
+        },
+        {
+          "name": "L1",
+          "value": 0.013999999999999999
+        },
+        {
+          "name": "XL11",
+          "value": 0.6052
+        },
+        {
+          "name": "L1",
+          "value": 0.089
+        },
+        {
+          "name": "ZL11",
+          "value": 0.09519999999999999
+        },
+        {
+          "name": "ZL11",
+          "value": 0.612641885606918
+        },
+        {
+          "name": "thetaph11",
+          "value": -1
+        },
+        {
+          "name": "thetaph11",
+          "value": 81.06043499684847
+        },
+        {
+          "name": "XL11",
+          "value": 0.6052000000000001
+        },
+        {
+          "name": "R10a",
+          "value": 0
+        },
+        {
+          "name": "X10a",
+          "value": 3
+        },
+        {
+          "name": "R10b",
+          "value": 0.15
+        },
+        {
+          "name": "R11b",
+          "value": 0.164
+        },
+        {
+          "name": "X10b",
+          "value": 3
+        },
+        {
+          "name": "X11b",
+          "value": 0.267
+        },
+        {
+          "name": "RL10",
+          "value": 1.1152
+        },
+        {
+          "name": "XL10",
+          "value": 1.8156
+        },
+        {
+          "name": "ZL10",
+          "value": 1.1152
+        },
+        {
+          "name": "ZL10",
+          "value": 2.130745034019791
+        },
+        {
+          "name": "thetaph10",
+          "value": -1
+        },
+        {
+          "name": "thetaph10",
+          "value": 58.44041392866704
+        },
+        {
+          "name": "XL10",
+          "value": 1.8156000000000003
+        },
+        {
+          "name": "Rm1",
+          "value": 0.228
+        },
+        {
+          "name": "Xm1",
+          "value": 0.62
+        },
+        {
+          "name": "L1",
+          "value": 1.5504
+        },
+        {
+          "name": "XmP1",
+          "value": 4.216
+        },
+        {
+          "name": "R21a",
+          "value": 0.014
+        },
+        {
+          "name": "X21a",
+          "value": 0.089
+        },
+        {
+          "name": "L21a",
+          "value": 3.25,
+          "unit": "km"
+        }
+      ],
+      "keywords": [
+        "distance",
+        "line-impedance",
+        "ct-vt",
+        "short-circuit",
+        "coverage"
+      ],
+      "extractionStatus": "indexed_xml_preview",
+      "note": "XMCD is indexed as benchmark artifact. PLMS does not execute Mathcad equations yet; use this as formula/reference source for template parity review."
+    },
+    {
+      "id": "mathcad_rev01_d_balaraja_bay_suvarna_grz100",
+      "templateId": "distance-line-150kv",
+      "vendor": "Toshiba",
+      "relayFamily": "GRZ100",
+      "functionGroup": "DIST",
+      "fileName": "Rev01.D_Balaraja bay Suvarna_GRZ100.xmcd",
+      "fullPath": "data\\template-setting\\Rev01.D_Balaraja bay Suvarna_GRZ100.xmcd",
+      "fileSizeBytes": 1045857,
+      "sha256Prefix": "720537dc4e164c72",
+      "generator": "Mathcad Professional 14.0",
+      "author": "",
+      "revisedBy": "Idham",
+      "revision": "11",
+      "documentId": "AE8F0545-AAD7-4721-988E-DE6A5E99A4B8",
+      "textPreview": [
+        "PERHITUNGAN SETELAN RELAI JARAK SUTT 150 KV BALARAJA - SUVARNA SUTERA",
+        "1. Data SUTT 150 kV",
+        "1.1 Balaraja - Suvarna",
+        "Jenis penghantar OHL-150kV-TACSR 2X410/60mm2 (2730A)",
+        "Imp. urutan positif",
+        "Imp. urutan nol",
+        "1.2 Suvarna - Cikupa",
+        "1.3 Suvarna - Cikupa",
+        "1.4 Cikupa - Pasar Kemis",
+        "Jenis penghantar OHL-150kV-ZEBRA 2X484.5mm (1620A)",
+        "2 . Impedansi Trafo",
+        "2.1 GI Suvarna Trafo 150/20 kV 60 MVA 12.5%",
+        "Trafo 1",
+        "SUTT BALARAJA - SUVARNA",
+        "Distance relay TOSHIBA- GRZ 100 (Pola POTT)",
+        "3.1.1 Ratio CT & PT",
+        "3.1.2 Jangkauan induktif",
+        "ZONE-1"
+      ],
+      "variableCandidates": [
+        {
+          "name": "j",
+          "value": -1
+        },
+        {
+          "name": "a",
+          "value": -0.5
+        },
+        {
+          "name": "j",
+          "value": 3
+        },
+        {
+          "name": "k",
+          "value": 2
+        },
+        {
+          "name": "pi",
+          "value": 360
+        },
+        {
+          "name": "L1",
+          "value": 5.4
+        },
+        {
+          "name": "RL11",
+          "value": 0.036
+        },
+        {
+          "name": "XL11",
+          "value": 0.282
+        },
+        {
+          "name": "ZL11",
+          "value": 0.1944
+        },
+        {
+          "name": "ZL11",
+          "value": 1.5351583631664845
+        },
+        {
+          "name": "thetaph1",
+          "value": -1
+        },
+        {
+          "name": "thetaph1",
+          "value": 82.72499504211075
+        },
+        {
+          "name": "RL10",
+          "value": 0.15
+        },
+        {
+          "name": "RL10",
+          "value": 0.186
+        },
+        {
+          "name": "XL10",
+          "value": 3
+        },
+        {
+          "name": "XL10",
+          "value": 0.8459999999999999
+        },
+        {
+          "name": "ZL10",
+          "value": 1.0044
+        },
+        {
+          "name": "ZL10",
+          "value": 4.677509799027684
+        },
+        {
+          "name": "thetaN1",
+          "value": -1
+        },
+        {
+          "name": "thetaN1",
+          "value": 77.60033357369024
+        },
+        {
+          "name": "L2",
+          "value": 5.9
+        },
+        {
+          "name": "RL21",
+          "value": 0.036
+        },
+        {
+          "name": "XL21",
+          "value": 0.282
+        },
+        {
+          "name": "ZL21",
+          "value": 0.2124
+        },
+        {
+          "name": "ZL21",
+          "value": 1.6773026560522701
+        },
+        {
+          "name": "thetaph2",
+          "value": -1
+        },
+        {
+          "name": "thetaph2",
+          "value": 82.72499504211075
+        },
+        {
+          "name": "RL20",
+          "value": 0.15
+        },
+        {
+          "name": "XL20",
+          "value": 3
+        },
+        {
+          "name": "ZL20",
+          "value": 1.0974000000000002
+        },
+        {
+          "name": "ZL20",
+          "value": 5.110612558196913
+        },
+        {
+          "name": "thetaN2",
+          "value": -1
+        },
+        {
+          "name": "thetaN2",
+          "value": 77.60033357369024
+        },
+        {
+          "name": "L3",
+          "value": 5.9
+        },
+        {
+          "name": "RL31",
+          "value": 0.036
+        },
+        {
+          "name": "XL31",
+          "value": 0.282
+        },
+        {
+          "name": "ZL31",
+          "value": 0.2124
+        },
+        {
+          "name": "ZL31",
+          "value": 1.6773026560522701
+        },
+        {
+          "name": "thetaph3",
+          "value": -1
+        },
+        {
+          "name": "thetaph3",
+          "value": 82.72499504211075
+        }
+      ],
+      "keywords": [
+        "distance",
+        "line-impedance",
+        "ct-vt",
+        "short-circuit",
+        "coverage"
+      ],
+      "extractionStatus": "indexed_xml_preview",
+      "note": "XMCD is indexed as benchmark artifact. PLMS does not execute Mathcad equations yet; use this as formula/reference source for template parity review."
+    },
+    {
+      "id": "mathcad_tap_setting_micom_p545_gi_ciledug_bay_alam_sutera_1",
       "templateId": "distance-line-150kv",
       "vendor": "MiCOM",
       "relayFamily": "P545",
       "functionGroup": "DIST",
       "fileName": "Tap Setting MiCom P545 GI Ciledug Bay Alam Sutera #1.xmcd",
-      "fullPath": "C:\\Users\\hafizna.fadhli\\Downloads\\Template Setting\\Tap Setting MiCom P545 GI Ciledug Bay Alam Sutera #1.xmcd",
+      "fullPath": "data\\template-setting\\Tap Setting MiCom P545 GI Ciledug Bay Alam Sutera #1.xmcd",
       "fileSizeBytes": 2042192,
       "sha256Prefix": "9d2cacf7d47079b7",
       "generator": "Mathcad Professional 14.0",
