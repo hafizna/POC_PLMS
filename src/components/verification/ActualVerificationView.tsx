@@ -15,7 +15,13 @@ import {
   Upload,
   XCircle,
 } from "lucide-react";
-import { extractPdfText, extractTapFields, type OcrProgress } from "../../lib/ocr";
+import {
+  extractPdfText,
+  extractTapDocumentIdentity,
+  extractTapFields,
+  type OcrProgress,
+  type TapDocumentIdentity,
+} from "../../lib/ocr";
 import {
   compareReferenceToActual,
   demoActualText,
@@ -48,6 +54,9 @@ export function ActualVerificationView() {
     useState<ValueBasis>("secondary");
   const [profile, setProfile] =
     useState<ToleranceProfile>("engineering");
+  const [referenceBasis, setReferenceBasis] = useState<
+    "database" | "calculated"
+  >(reference?.databaseBaseline ? "database" : "calculated");
   const [editorText, setEditorText] = useState(
     importedDraft?.normalizedText ?? ""
   );
@@ -62,6 +71,18 @@ export function ActualVerificationView() {
   >([]);
   const [busyLabel, setBusyLabel] = useState("");
   const [activeGroup, setActiveGroup] = useState("ALL");
+  const [pdfSummary, setPdfSummary] = useState<{
+    method: string;
+    pageCount: number;
+    averageConfidence?: number;
+    fieldCount: number;
+  } | null>(null);
+  const [pdfIdentity, setPdfIdentity] =
+    useState<TapDocumentIdentity | null>(null);
+  const activeReferenceResult =
+    referenceBasis === "database" && reference?.databaseBaseline
+      ? reference.databaseBaseline.result
+      : reference?.result;
 
   const parsed = useMemo(() => {
     if (!reference || !parsedText.trim()) return null;
@@ -82,8 +103,8 @@ export function ActualVerificationView() {
   }, [parsed, manualParameters]);
 
   const report = useMemo(() => {
-    if (!reference || !parsed) return null;
-    return compareReferenceToActual(reference.result, actualParameters, {
+    if (!reference || !activeReferenceResult || !parsed) return null;
+    return compareReferenceToActual(activeReferenceResult, actualParameters, {
       kind: reference.kind,
       profile,
       currentBasis,
@@ -91,6 +112,7 @@ export function ActualVerificationView() {
     });
   }, [
     reference,
+    activeReferenceResult,
     parsed,
     actualParameters,
     profile,
@@ -101,12 +123,16 @@ export function ActualVerificationView() {
   const definitions = useMemo(
     () =>
       reference
-        ? parameterDefinitions(reference.result, reference.kind, {
+        ? parameterDefinitions(
+            activeReferenceResult ?? reference.result,
+            reference.kind,
+            {
             currentBasis,
             impedanceBasis,
-          })
+            }
+          )
         : [],
-    [reference, currentBasis, impedanceBasis]
+    [reference, activeReferenceResult, currentBasis, impedanceBasis]
   );
 
   const manuallyMappedSourceKeys = new Set(
@@ -128,6 +154,15 @@ export function ActualVerificationView() {
     activeGroup === "ALL"
       ? report?.rows ?? []
       : report?.rows.filter((row) => row.group === activeGroup) ?? [];
+  const relayIdentityMismatch =
+    pdfIdentity &&
+    reference?.databaseBaseline &&
+    pdfIdentity.relayModels.length > 0 &&
+    !pdfIdentity.relayModels.some((model) =>
+      normalizeRelayLabel(reference.databaseBaseline?.relayLabel ?? "").includes(
+        normalizeRelayLabel(model)
+      )
+    );
 
   if (!reference) {
     return (
@@ -173,7 +208,10 @@ export function ActualVerificationView() {
   };
 
   const loadDemo = () => {
-    const demo = demoActualText(reference.kind, reference.result);
+    const demo = demoActualText(
+      reference.kind,
+      activeReferenceResult ?? reference.result
+    );
     setEditorText(demo);
     setParsedText(demo);
     setFileName("demo-actual-setting.csv");
@@ -186,6 +224,8 @@ export function ActualVerificationView() {
     setFileName(file.name);
     setManualParameters([]);
     setBusyLabel("");
+    setPdfSummary(null);
+    setPdfIdentity(null);
     try {
       if (file.type === "application/pdf" || /\.pdf$/i.test(file.name)) {
         setSourceKind("tap-pdf");
@@ -196,13 +236,36 @@ export function ActualVerificationView() {
           { maxPages: 12 }
         );
         const fields = extractTapFields(extracted.fullText);
+        setPdfIdentity(extractTapDocumentIdentity(extracted.fullText));
         const fieldLines = fields
           .map(
             (field) =>
               `${field.field}=${field.value}${field.unit ? ` ${field.unit}` : ""}`
           )
           .join("\n");
-        const combined = `${extracted.fullText}\n${fieldLines}`;
+        const combined = [
+          "# NORMALIZED CANDIDATES",
+          fieldLines || "# Tidak ada kandidat setting yang ditemukan",
+          "",
+          "# RAW DOCUMENT EXTRACTION",
+          extracted.fullText,
+        ].join("\n");
+        const confidences = extracted.pages
+          .map((page) => page.confidence)
+          .filter((value): value is number => typeof value === "number");
+        setPdfSummary({
+          method:
+            extracted.method === "ocr"
+              ? "Scanned PDF · dual-pass OCR"
+              : "PDF text layer",
+          pageCount: extracted.pageCount,
+          averageConfidence:
+            confidences.length > 0
+              ? confidences.reduce((sum, value) => sum + value, 0) /
+                confidences.length
+              : undefined,
+          fieldCount: fields.length,
+        });
         setEditorText(combined);
         setParsedText(combined);
       } else {
@@ -243,8 +306,10 @@ export function ActualVerificationView() {
       reference: {
         kind: reference.kind,
         context: reference.contextLabel,
-        ruleId: reference.result.ruleId,
-        ruleVersion: reference.result.ruleVersion,
+        basis: referenceBasis,
+        ruleId: (activeReferenceResult ?? reference.result).ruleId,
+        ruleVersion: (activeReferenceResult ?? reference.result).ruleVersion,
+        databaseSource: reference.databaseBaseline?.sourceRef,
         stagedAt: reference.stagedAt,
       },
       source: {
@@ -296,7 +361,8 @@ export function ActualVerificationView() {
                 {reference.contextLabel}
               </div>
               <div className="mt-0.5 text-[10px] text-slate-400">
-                {reference.result.ruleId} · {reference.result.ruleVersion}
+                {(activeReferenceResult ?? reference.result).ruleId} ·{" "}
+                {(activeReferenceResult ?? reference.result).ruleVersion}
               </div>
             </div>
           </div>
@@ -332,12 +398,31 @@ export function ActualVerificationView() {
           >
             <div className="rounded-xl border border-blue-200 bg-blue-50 p-3">
               <div className="text-xs font-semibold text-blue-900">
-                {reference.contextLabel}
+                {referenceBasis === "database" &&
+                reference.databaseBaseline
+                  ? reference.databaseBaseline.label
+                  : reference.contextLabel}
               </div>
               <div className="mt-1 text-[11px] text-blue-700">
-                {reference.result.metrics.length} calculated metrics · staged{" "}
+                {(activeReferenceResult ?? reference.result).metrics.length}{" "}
+                comparable metrics · staged{" "}
                 {formatDate(reference.stagedAt)}
               </div>
+              {referenceBasis === "database" &&
+                reference.databaseBaseline && (
+                  <div className="mt-2 rounded-lg border border-blue-200 bg-white/70 px-2.5 py-2 text-[10px] leading-4 text-blue-900">
+                    <div className="font-semibold">
+                      {reference.databaseBaseline.relayLabel}
+                    </div>
+                    <div>
+                      {reference.databaseBaseline.sourceRef} ·{" "}
+                      {reference.databaseBaseline.source ===
+                      "setting-db-issued"
+                        ? "issued/TAP setting"
+                        : "installed setting"}
+                    </div>
+                  </div>
+                )}
               <button
                 type="button"
                 onClick={() => setTab("reference-setting")}
@@ -347,8 +432,46 @@ export function ActualVerificationView() {
                 Ubah reference di 1A
               </button>
             </div>
+            {reference.databaseBaseline && (
+              <div className="mt-3">
+                <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+                  Comparison reference
+                </div>
+                <div className="grid grid-cols-2 rounded-lg bg-slate-100 p-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setReferenceBasis("database");
+                      setManualParameters([]);
+                    }}
+                    className={`rounded-md px-3 py-2 text-[11px] font-semibold ${
+                      referenceBasis === "database"
+                        ? "bg-white text-blue-700 shadow-sm"
+                        : "text-slate-500"
+                    }`}
+                  >
+                    Setting database
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setReferenceBasis("calculated");
+                      setManualParameters([]);
+                    }}
+                    className={`rounded-md px-3 py-2 text-[11px] font-semibold ${
+                      referenceBasis === "calculated"
+                        ? "bg-white text-blue-700 shadow-sm"
+                        : "text-slate-500"
+                    }`}
+                  >
+                    Engineering calculation
+                  </button>
+                </div>
+              </div>
+            )}
             <div className="mt-3 grid grid-cols-2 gap-3">
-              {reference.kind !== "transformer" && (
+              {reference.kind !== "transformer" &&
+                referenceBasis !== "database" && (
                 <SelectField
                   label={
                     reference.kind === "distance"
@@ -430,6 +553,99 @@ export function ActualVerificationView() {
                 }}
               />
             </label>
+
+            {pdfSummary && (
+              <div className="mt-3 grid grid-cols-2 gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3 text-[10px] sm:grid-cols-4">
+                <div>
+                  <div className="uppercase tracking-wide text-slate-400">
+                    Extraction
+                  </div>
+                  <div className="mt-0.5 font-semibold text-slate-700">
+                    {pdfSummary.method}
+                  </div>
+                </div>
+                <div>
+                  <div className="uppercase tracking-wide text-slate-400">
+                    Pages
+                  </div>
+                  <div className="mt-0.5 font-semibold text-slate-700">
+                    {pdfSummary.pageCount}
+                  </div>
+                </div>
+                <div>
+                  <div className="uppercase tracking-wide text-slate-400">
+                    OCR confidence
+                  </div>
+                  <div className="mt-0.5 font-semibold text-slate-700">
+                    {pdfSummary.averageConfidence === undefined
+                      ? "text layer"
+                      : `${pdfSummary.averageConfidence.toFixed(0)}%`}
+                  </div>
+                </div>
+                <div>
+                  <div className="uppercase tracking-wide text-slate-400">
+                    Setting fields
+                  </div>
+                  <div
+                    className={`mt-0.5 font-semibold ${
+                      pdfSummary.fieldCount > 0
+                        ? "text-emerald-700"
+                        : "text-amber-700"
+                    }`}
+                  >
+                    {pdfSummary.fieldCount} detected
+                  </div>
+                </div>
+              </div>
+            )}
+            {pdfIdentity &&
+              (pdfIdentity.documentNumber ||
+                pdfIdentity.station ||
+                pdfIdentity.bayDirection ||
+                pdfIdentity.relayModels.length > 0) && (
+                <div className="mt-2 rounded-xl border border-slate-200 bg-white p-3 text-[10px]">
+                  <div className="font-semibold uppercase tracking-[0.12em] text-slate-500">
+                    Document identity review
+                  </div>
+                  <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                    <div>
+                      <span className="text-slate-400">Object</span>
+                      <div className="font-semibold text-slate-800">
+                        {pdfIdentity.station || "GI belum terdeteksi"}
+                        {pdfIdentity.bayDirection
+                          ? ` -> ${pdfIdentity.bayDirection}`
+                          : ""}
+                      </div>
+                    </div>
+                    <div>
+                      <span className="text-slate-400">Relay / function</span>
+                      <div className="font-semibold text-slate-800">
+                        {pdfIdentity.relayModels.join(", ") ||
+                          "Model belum terdeteksi"}
+                        {pdfIdentity.functions.length > 0
+                          ? ` · ${pdfIdentity.functions.join(" + ")}`
+                          : ""}
+                      </div>
+                    </div>
+                    {pdfIdentity.documentNumber && (
+                      <div className="sm:col-span-2">
+                        <span className="text-slate-400">Document</span>
+                        <div className="font-mono font-semibold text-slate-800">
+                          {pdfIdentity.documentNumber}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  {relayIdentityMismatch && (
+                    <div className="mt-2 flex gap-2 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-2 text-amber-800">
+                      <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                      Model relay pada dokumen berbeda dari record database
+                      terpilih. Kemungkinan dokumen historis sebelum penggantian
+                      relay; review identitas aset sebelum memutuskan compliance.
+                    </div>
+                  )}
+                </div>
+              )}
 
             <textarea
               value={editorText}
@@ -571,7 +787,11 @@ export function ActualVerificationView() {
               {report && (
                 <Panel
                   title="4. Verification result"
-                  subtitle="Reference calculation vs normalized actual"
+                  subtitle={
+                    referenceBasis === "database"
+                      ? "Setting database vs normalized actual document"
+                      : "Engineering calculation vs normalized actual document"
+                  }
                   right={
                     <button
                       type="button"
@@ -999,4 +1219,8 @@ function displayValue(value: number | string | null) {
 function formatSigned(value: number) {
   const rounded = Math.abs(value) < 1e-9 ? 0 : value;
   return `${rounded > 0 ? "+" : ""}${rounded.toFixed(4)}`;
+}
+
+function normalizeRelayLabel(value: string) {
+  return value.toUpperCase().replace(/[^A-Z0-9]+/g, "");
 }

@@ -35,6 +35,9 @@ export type OcrGfrBayType = "LINE" | "KOPEL";
 export type OcrGfrReferenceInput = {
   substation: string;
   bayType: OcrGfrBayType;
+  bayName?: string;
+  circuit?: string;
+  databaseRecordId?: string;
   cccOrTsaA: number;
   ctPrimaryA: number;
   ctSecondaryA: number;

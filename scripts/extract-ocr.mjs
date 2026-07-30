@@ -6,11 +6,13 @@ import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
 const XLSX = require("xlsx");
 
-const DEFAULT_INPUT = path.join(
-  process.env.USERPROFILE ?? "",
-  "Downloads",
-  "Data Setting Penghantar UPT DKSBI.xlsx"
-);
+const downloadDir = path.join(process.env.USERPROFILE ?? "", "Downloads");
+const DEFAULT_INPUT =
+  [
+    path.join(downloadDir, "Data Setting Penghantar UPT DKSBI (1).xlsx"),
+    path.join(downloadDir, "Data Setting Penghantar UPT DKSBI.xlsx"),
+  ].find((candidate) => fs.existsSync(candidate)) ??
+  path.join(downloadDir, "Data Setting Penghantar UPT DKSBI.xlsx");
 
 const inputPath = process.argv[2] ? path.resolve(process.argv[2]) : DEFAULT_INPUT;
 const outputPath = path.resolve(
@@ -31,17 +33,19 @@ const workbook = XLSX.readFile(inputPath, {
   cellText: true,
 });
 
-const sheet = workbook.Sheets["OCR"];
+const consolidatedSheet = workbook.Sheets["OCR_PHT"];
+const sheet = consolidatedSheet ?? workbook.Sheets["OCR"];
 if (!sheet) {
-  console.error("Sheet OCR not found");
+  console.error("Sheet OCR_PHT/OCR not found");
   process.exit(1);
 }
+const consolidated = Boolean(consolidatedSheet);
 
 const rows = XLSX.utils.sheet_to_json(sheet, {
   header: 1,
   raw: false,
   defval: "",
-  blankrows: false,
+  blankrows: true,
 });
 
 function clean(value) {
@@ -53,6 +57,10 @@ function parseNumber(value) {
   if (!text || /^disable|blok|-$/i.test(text)) return null;
   const n = Number(text);
   return Number.isFinite(n) ? n : null;
+}
+
+function positiveSetting(value) {
+  return typeof value === "number" && value > 0;
 }
 
 function parseDate(value) {
@@ -94,16 +102,55 @@ function settingBlock(row, offset) {
 }
 
 function makeRecord(row, rowNumber) {
-  const ultg = clean(row[5]);
-  const substation = clean(row[6]);
-  const bay = clean(row[7]);
-  const circuit = clean(row[8]);
+  const columns = consolidated
+    ? {
+        ultg: 2,
+        substation: 3,
+        bay: 4,
+        circuit: 5,
+        ctRatio: 6,
+        make: 9,
+        model: 10,
+        serial: 11,
+        relayType: 12,
+        operationYear: 13,
+        tapOffset: 15,
+        tapDocument: 22,
+        tapDate: 23,
+        actualOffset: 25,
+        actualDate: 32,
+        actualFile: 33,
+      }
+    : {
+        ultg: 5,
+        substation: 6,
+        bay: 7,
+        circuit: 8,
+        ctRatio: 9,
+        make: 10,
+        model: 11,
+        serial: 12,
+        relayType: 13,
+        operationYear: 14,
+        tapOffset: 15,
+        tapDocument: 22,
+        tapDate: 23,
+        actualOffset: 24,
+        actualDate: 31,
+        actualFile: null,
+      };
+  const ultg = clean(row[columns.ultg]);
+  const substation = clean(row[columns.substation]);
+  const bay = clean(row[columns.bay]);
+  const circuit = clean(row[columns.circuit]);
 
   if (!substation || !bay) return null;
 
-  const tap = settingBlock(row, 15);
-  const actual = settingBlock(row, 24);
-  const calculation = settingBlock(row, 32);
+  const tap = settingBlock(row, columns.tapOffset);
+  const actual = settingBlock(row, columns.actualOffset);
+  const calculation = consolidated
+    ? settingBlock([], 0)
+    : settingBlock(row, 32);
   const hasAnySetting =
     tap.ocPickupA !== null ||
     tap.gfPickupA !== null ||
@@ -120,39 +167,42 @@ function makeRecord(row, rowNumber) {
     substation,
     bay,
     circuit,
-    ctRatio: normalizeRatio(row[9]),
+    ctRatio: normalizeRatio(row[columns.ctRatio]),
     relay: {
-      make: clean(row[10]),
-      model: clean(row[11]),
-      serial: clean(row[12]),
-      relayType: clean(row[13]),
-      operationYear: parseNumber(row[14]),
+      make: clean(row[columns.make]),
+      model: clean(row[columns.model]),
+      serial: clean(row[columns.serial]),
+      relayType: clean(row[columns.relayType]),
+      operationYear: parseNumber(row[columns.operationYear]),
     },
     tap: {
       ...tap,
-      document: clean(row[22]),
-      date: parseDate(row[23]),
+      document: clean(row[columns.tapDocument]),
+      date: parseDate(row[columns.tapDate]),
     },
     actual: {
       ...actual,
-      date: parseDate(row[31]),
+      date: parseDate(row[columns.actualDate]),
+      file:
+        columns.actualFile === null ? "" : clean(row[columns.actualFile]),
     },
     calculation,
-    notes: clean(row[39]),
+    notes: consolidated ? "" : clean(row[39]),
     dataQuality: {
-      hasCt: Boolean(normalizeRatio(row[9])),
-      hasRelay: Boolean(clean(row[10]) || clean(row[11])),
-      hasTap: tap.ocPickupA !== null || tap.gfPickupA !== null,
-      hasActual: actual.ocPickupA !== null || actual.gfPickupA !== null,
+      hasCt: Boolean(normalizeRatio(row[columns.ctRatio])),
+      hasRelay: Boolean(clean(row[columns.make]) || clean(row[columns.model])),
+      hasTap: positiveSetting(tap.ocPickupA) || positiveSetting(tap.gfPickupA),
+      hasActual:
+        positiveSetting(actual.ocPickupA) || positiveSetting(actual.gfPickupA),
       hasCalculation:
         calculation.ocPickupA !== null || calculation.gfPickupA !== null,
-      hasTapDocument: Boolean(clean(row[22])),
+      hasTapDocument: Boolean(clean(row[columns.tapDocument])),
     },
   };
 }
 
 const records = [];
-for (let i = 9; i < rows.length; i += 1) {
+for (let i = consolidated ? 10 : 9; i < rows.length; i += 1) {
   const record = makeRecord(rows[i], i + 1);
   if (record) records.push(record);
 }
@@ -160,7 +210,7 @@ for (let i = 9; i < rows.length; i += 1) {
 const summary = {
   generatedAt: new Date().toISOString(),
   inputFile: path.basename(inputPath),
-  sheetName: "OCR",
+  sheetName: consolidated ? "OCR_PHT" : "OCR",
   recordCount: records.length,
   withTap: records.filter((r) => r.dataQuality.hasTap).length,
   withActual: records.filter((r) => r.dataQuality.hasActual).length,

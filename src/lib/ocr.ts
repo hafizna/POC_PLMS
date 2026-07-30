@@ -94,24 +94,47 @@ export async function extractPdfText(
   });
 
   try {
+    await worker.setParameters({
+      preserve_interword_spaces: "1",
+      tessedit_pageseg_mode: "11",
+    } as never);
     const ocrPages: PageExtraction[] = [];
     for (let i = 1; i <= lastPage; i++) {
       onProgress?.({ phase: "ocr-rendering", pageNumber: i, pageCount: lastPage });
       const page = await pdf.getPage(i);
-      const viewport = page.getViewport({ scale: 2.0 }); // 2x for better OCR quality
+      const viewport = page.getViewport({ scale: 3.0 });
       const canvas = document.createElement("canvas");
       canvas.width = viewport.width;
       canvas.height = viewport.height;
       const ctx = canvas.getContext("2d");
       if (!ctx) throw new Error("Failed to acquire canvas 2D context");
       await page.render({ canvasContext: ctx, viewport, canvas } as any).promise;
+      const ocrCanvas = prepareOcrCanvas(canvas);
 
       onProgress?.({ phase: "ocr-recognizing", pageNumber: i, pageCount: lastPage });
-      const result = await worker.recognize(canvas);
+      const sparseResult = await worker.recognize(ocrCanvas);
+      let tableText = "";
+      let tableConfidence: number | undefined;
+      if (lastPage <= 6) {
+        await worker.setParameters({
+          preserve_interword_spaces: "1",
+          tessedit_pageseg_mode: "6",
+        } as never);
+        const tableResult = await worker.recognize(ocrCanvas);
+        tableText = tableResult.data.text;
+        tableConfidence = tableResult.data.confidence;
+        await worker.setParameters({
+          preserve_interword_spaces: "1",
+          tessedit_pageseg_mode: "11",
+        } as never);
+      }
       ocrPages.push({
         pageNumber: i,
-        text: result.data.text.replace(/\s+/g, " ").trim(),
-        confidence: result.data.confidence,
+        text: combineOcrPasses(sparseResult.data.text, tableText),
+        confidence:
+          tableConfidence === undefined
+            ? sparseResult.data.confidence
+            : (sparseResult.data.confidence + tableConfidence) / 2,
       });
     }
     onProgress?.({ phase: "done", pageCount: lastPage });
@@ -127,6 +150,62 @@ export async function extractPdfText(
   }
 }
 
+function prepareOcrCanvas(source: HTMLCanvasElement) {
+  const cropX = Math.round(source.width * 0.12);
+  const cropY = Math.round(source.height * 0.06);
+  const cropWidth = Math.round(source.width * 0.82);
+  const cropHeight = Math.round(source.height * 0.86);
+  const canvas = document.createElement("canvas");
+  canvas.width = cropWidth;
+  canvas.height = cropHeight;
+  const context = canvas.getContext("2d");
+  if (!context) throw new Error("Failed to prepare OCR canvas");
+  context.drawImage(
+    source,
+    cropX,
+    cropY,
+    cropWidth,
+    cropHeight,
+    0,
+    0,
+    cropWidth,
+    cropHeight
+  );
+
+  const image = context.getImageData(0, 0, cropWidth, cropHeight);
+  const contrast = 1.35;
+  const intercept = 128 * (1 - contrast);
+  for (let index = 0; index < image.data.length; index += 4) {
+    const gray =
+      image.data[index] * 0.299 +
+      image.data[index + 1] * 0.587 +
+      image.data[index + 2] * 0.114;
+    const adjusted = Math.max(0, Math.min(255, gray * contrast + intercept));
+    image.data[index] = adjusted;
+    image.data[index + 1] = adjusted;
+    image.data[index + 2] = adjusted;
+  }
+  context.putImageData(image, 0, 0);
+  return canvas;
+}
+
+function combineOcrPasses(sparseText: string, tableText: string) {
+  const sparse = normalizeOcrText(sparseText);
+  const table = normalizeOcrText(tableText);
+  if (!table || table === sparse) return sparse;
+  return `${sparse}\n\n[table-pass]\n${table}`;
+}
+
+function normalizeOcrText(text: string) {
+  return text
+    .replace(/\r\n?/g, "\n")
+    .split("\n")
+    .map((line) => line.replace(/[ \t]+/g, " ").trim())
+    .filter((line, index, lines) => line || Boolean(lines[index - 1]))
+    .join("\n")
+    .trim();
+}
+
 // =============================================================================
 // Field extraction heuristics for TAP setting documents
 // =============================================================================
@@ -140,6 +219,66 @@ export type ExtractedField = {
   unit?: string;
   context?: string;
 };
+
+export type TapDocumentIdentity = {
+  documentNumber?: string;
+  station?: string;
+  bayDirection?: string;
+  relayModels: string[];
+  functions: string[];
+};
+
+export function extractTapDocumentIdentity(
+  text: string
+): TapDocumentIdentity {
+  const lines = text
+    .replace(/\r\n?/g, "\n")
+    .split("\n")
+    .map((line) => line.replace(/\s+/g, " ").trim())
+    .filter(Boolean);
+  const documentMatch = text.match(
+    /\bTJBB[I/]?0?1\/0?4\/20\d{2}\/\d+\b/i
+  );
+  const stationLine = lines.find((line) =>
+    /(?:DAFTAR SETELAN|LOKASI).*\bGI(?:S)?\s*150\s*kV\s+[A-Z]/i.test(line)
+  );
+  const stationMatch =
+    stationLine?.match(
+      /\bGI(?:S)?\s*150\s*kV\s+([A-Z][A-Z0-9 ]{1,40})$/i
+    ) ??
+    lines
+      .find((line) => /^LOKASI\b/i.test(line))
+      ?.match(/\bGI(?:S)?\s+([A-Z][A-Z0-9 ]{1,40})$/i);
+  const directionLine = lines.find((line) =>
+    /Penghantar\s*150\s*kV\s*arah\s+/i.test(line)
+  );
+  const directionMatch = directionLine?.match(
+    /arah\s+([A-Z][A-Z0-9 ]{1,40})$/i
+  );
+  const relayModels = uniqueStrings(
+    Array.from(text.matchAll(/\b(?:MiCOM|MICOM)\s+P\d{3}\b/gi)).map(
+      (match) => match[0].replace(/\s+/g, " ").toUpperCase()
+    )
+  );
+  const functions = [
+    /DISTANCE/i.test(text) ? "DIST" : "",
+    /\bOCR\b|OVERCURRENT/i.test(text) ? "OCR" : "",
+    /\bGFR\b|EARTH\s*FAULT/i.test(text) ? "GFR" : "",
+  ].filter(Boolean);
+
+  return {
+    documentNumber: documentMatch
+      ? documentMatch[0]
+          .toUpperCase()
+          .replace(/^TJBBI/, "TJBB/")
+          .replace(/^TJBB\/?01/, "TJBB/01")
+      : undefined,
+    station: stationMatch?.[1].trim().toUpperCase(),
+    bayDirection: directionMatch?.[1].trim().toUpperCase(),
+    relayModels,
+    functions,
+  };
+}
 
 // Map an extracted field to the protection function it belongs to. Used by
 // the "Promote to line" flow to bucket Z1/Z2/Z3 → DIST, I>/TMS → OCR, etc.
@@ -196,7 +335,7 @@ export function extractTapFields(text: string): ExtractedField[] {
   // Time delays
   for (const zone of ["t1", "t2", "t3", "tZ1", "tZ2", "tZ3"]) {
     const re = new RegExp(
-      `${zone}\\s*(?:(?:Ph|Gnd|Ground)[.\\s-]*)?(?:delay|time)?[\\s:=]*(\\d+(?:[.,]\\d+)?)\\s*s\\b`,
+      `${zone}\\s*(?:(?:Ph|Gnd|Ground)[.\\s-]*)?(?:dela(?:y)?|time)?[\\s:=]*(\\d+(?:[.,]\\d+)?)\\s*s\\b`,
       "i"
     );
     const m = norm.match(re);
@@ -206,34 +345,86 @@ export function extractTapFields(text: string): ExtractedField[] {
   }
 
   // OCR pickup / TMS / curve
-  const ocPickup =
+  const nominalCurrent = numericCapture(
+    norm.match(/\bIn\s*[=:]\s*(\d+(?:[.,]\d+)?)\s*A\b/i)?.[1]
+  );
+  const micomOc = norm.match(
+    /(?:I|1)\s*>\s*1\s*Current\s*Set[\s\S]{0,80}?(\d+(?:[.,]\d+)?)\s*x\s*In[\s\S]{0,40}?(\d+(?:[.,]\d+)?)\s*A\b/i
+  );
+  const genericOc =
     norm.match(
       /Ip\s*>\s*Pickup[\s:=]*(?:\d+(?:[.,]\d+)?\s*x\s*In\s*)?(\d+(?:[.,]\d+)?)\s*A\s*\((?:sekunder|secondary)\)/i
     ) ??
     norm.match(/(?:I|Ip)\s*>[\s:=]*(\d+(?:[.,]\d+)?)\s*A?\b/i);
-  if (ocPickup) out.push({ field: "OC pickup (I>)", value: ocPickup[1].replace(",", "."), unit: "A" });
+  const ocPickupA =
+    numericCapture(micomOc?.[2]) ?? numericCapture(genericOc?.[1]);
+  if (ocPickupA !== null) {
+    out.push({
+      field: "OC pickup (I>)",
+      value: String(ocPickupA),
+      unit: "A",
+    });
+  }
+  const ocPu =
+    nominalCurrent && ocPickupA !== null
+      ? ocPickupA / nominalCurrent
+      : numericCapture(micomOc?.[1]);
+  if (ocPu !== null) {
+    out.push({ field: "OC pickup pu", value: formatExtractedNumber(ocPu), unit: "pu" });
+  }
 
-  const tms =
+  const ocTms =
+    norm.match(
+      /(?:I|1)\s*>\s*1\s*(?:TMS|Time\s*Dial)[\s:=]*(\d+(?:[.,]\d+)?|\d{3})\b/i
+    ) ??
     norm.match(/Ip\s*Time\s*Dial[\s:=]*(\d+(?:[.,]\d+)?)\b/i) ??
-    norm.match(/TMS[\s:=]*(\d+(?:[.,]\d+)?)\b/i);
-  if (tms) out.push({ field: "OC TMS", value: tms[1].replace(",", ".") });
+    norm.match(/\bOC(?:R)?\s*TMS[\s:=]*(\d+(?:[.,]\d+)?)\b/i);
+  if (ocTms) {
+    out.push({ field: "OC TMS", value: normalizeTmsToken(ocTms[1]) });
+  }
 
   const curve = norm.match(/(?:curve|characteristic)[\s:=]*(IEC\s*(?:SI|VI|EI)|ANSI\s*\w+|DT)\b/i);
-  if (curve) out.push({ field: "OC curve", value: curve[1].toUpperCase().replace(/\s+/g, " ") });
+  if (curve) {
+    out.push({ field: "OC curve", value: curve[1].toUpperCase().replace(/\s+/g, " ") });
+  } else if (/(?:I|1)\s*>\s*1\s*Function[\s\S]{0,40}?IEC[\s\S]{0,20}?Std[.\s]*Inv/i.test(norm)) {
+    out.push({ field: "OC curve", value: "SI" });
+  }
 
   // Ground fault
+  const micomGf = norm.match(
+    /IN?\s*1\s*>\s*1\s*Current[\s\S]{0,80}?(\d+(?:[.,]\d+)?)\s*x\s*In[\s\S]{0,40}?(\d+(?:[.,]\d+)?)\s*A\b/i
+  );
   const gfPickup =
     norm.match(
       /IEp?\s*>\s*Pickup[\s:=]*(?:\d+(?:[.,]\d+)?\s*x\s*In\s*)?(\d+(?:[.,]\d+)?)\s*A\s*\((?:sekunder|secondary)\)/i
     ) ??
     norm.match(/IEp?\s*>[\s:=]*(\d+(?:[.,]\d+)?)\s*A?\b/i);
-  if (gfPickup) out.push({ field: "GF pickup (Ie>)", value: gfPickup[1].replace(",", "."), unit: "A" });
+  const gfPickupA =
+    numericCapture(micomGf?.[2]) ?? numericCapture(gfPickup?.[1]);
+  if (gfPickupA !== null) {
+    out.push({
+      field: "GF pickup (Ie>)",
+      value: String(gfPickupA),
+      unit: "A",
+    });
+  }
+  const gfPu =
+    nominalCurrent && gfPickupA !== null
+      ? gfPickupA / nominalCurrent
+      : numericCapture(micomGf?.[1]);
+  if (gfPu !== null) {
+    out.push({ field: "GF pickup pu", value: formatExtractedNumber(gfPu), unit: "pu" });
+  }
 
-  const gfTms = norm.match(
-    /IEp?\s*Time\s*Dial[\s:=]*(\d+(?:[.,]\d+)?)\b/i
-  );
-  if (gfTms)
-    out.push({ field: "GF TMS", value: gfTms[1].replace(",", ".") });
+  const gfTms =
+    norm.match(
+      /IN?\s*1\s*>\s*1\s*(?:TMS|Time\s*Dial)[\s:=]*(\d+(?:[.,]\d+)?|\d{3})\b/i
+    ) ??
+    norm.match(/IEp?\s*Time\s*Dial[\s:=]*(\d+(?:[.,]\d+)?)\b/i) ??
+    norm.match(/\bGF(?:R)?\s*TMS[\s:=]*(\d+(?:[.,]\d+)?)\b/i);
+  if (gfTms) {
+    out.push({ field: "GF TMS", value: normalizeTmsToken(gfTms[1]) });
+  }
 
   // CT/VT ratio
   const ctRatio = norm.match(/CT(?:\s*ratio)?[\s:=]*(\d{2,5})\s*[\/:]\s*(\d{1,2})\b/i);
@@ -250,7 +441,39 @@ export function extractTapFields(text: string): ExtractedField[] {
   const tapDoc = norm.match(/(TJBB|TJBT|TJBP|TJBA)\/[\w./-]+/i);
   if (tapDoc) out.push({ field: "TAP document", value: tapDoc[0] });
 
-  return out;
+  return dedupeExtractedFields(out);
+}
+
+function numericCapture(value: string | undefined) {
+  if (!value) return null;
+  const parsed = Number(value.replace(",", "."));
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function normalizeTmsToken(value: string) {
+  const normalized = value.replace(",", ".");
+  if (/^0\d{2,3}$/.test(normalized)) {
+    return `0.${normalized.slice(1)}`;
+  }
+  return normalized;
+}
+
+function formatExtractedNumber(value: number) {
+  return Number(value.toFixed(6)).toString();
+}
+
+function dedupeExtractedFields(fields: ExtractedField[]) {
+  const seen = new Set<string>();
+  return fields.filter((field) => {
+    const key = field.field.toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function uniqueStrings(values: string[]) {
+  return Array.from(new Set(values.filter(Boolean)));
 }
 
 // =============================================================================

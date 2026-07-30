@@ -1,5 +1,18 @@
 # Implementasi L1-L5 Corridor Selector & TAP Production
 
+## Update 2026-07-30 - Cek Setting: Bay Context & Scanned TAP OCR
+
+- OCR/GFR penghantar sekarang wajib memilih bay setting dari database UPT, bukan hanya memilih GI dan jenis bay.
+- Registry OCR dan LCD/DIST diregenerasi dari `Data Setting Penghantar UPT DKSBI (1).xlsx`: 183 record OCR/GFR dan 184 record LCD/DIST.
+- Cek Setting dapat memilih baseline `Setting database` atau `Engineering calculation`; baseline database menyimpan row sumber, relay, dan status issued/installed.
+- PDF scan memakai OCR 3x dengan crop, contrast normalization, sparse-text pass, dan table pass. Line break dipertahankan untuk semantic parsing.
+- Heuristik MiCOM membaca distance reach/timer serta format P142 `I>1 Current Set`, `I>1 TMS`, `IN1>1 Current`, dan `IN1>1 TMS`.
+- `Bay Angke arah Ancol.PDF` tervalidasi terhadap database:
+  - OCR/GFR database: `5.150 A / 0.420` dan `0.850 A / 0.685`.
+  - Distance database: `Z1 0.263`, `Z2 0.403`, `Z3 0.951 ohm`; timer `0 / 0.4 / 1.6 s`.
+- Document identity review menampilkan nomor dokumen, GI/bay, model relay, fungsi proteksi, dan warning bila model PDF berbeda dari aset database terpilih.
+- Regression: `npm run test:verification`, `npm run test:reference`, `npm run test:relay-catalog`, dan `npm run build`.
+
 ## Update 2026-07-30 — MVP 2B.1 P545 Input Contract
 
 - Menambahkan `plms.p545-input-contract.v1` untuk pilot Ciledug → Alam Sutera #1.

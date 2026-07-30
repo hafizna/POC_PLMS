@@ -40,6 +40,13 @@ import {
   resolveFaultScenario,
   selectFaultRecordsForScenario,
 } from "../../domain/engineering-data";
+import { OCR_REGISTRY, type OcrRecord } from "../../domain/ocr-import";
+import { LCD_DIST_REGISTRY } from "../../domain/lcd-dist-import";
+import {
+  buildDistanceDatabaseBaseline,
+  buildOcrDatabaseBaseline,
+  normalizeObjectName,
+} from "../../domain/setting-database-reference";
 
 type ReferenceKind = "ocr-gfr" | "transformer" | "distance";
 
@@ -75,22 +82,37 @@ const legacyDistance = registry.legacyCases.distance as LegacyDistanceCase;
 const stationOptions = uniqueSorted(
   faultRecords.map((record) => record.substation)
 );
+const ocrStationOptions = uniqueSorted([
+  ...stationOptions,
+  ...OCR_REGISTRY.records.map((record) =>
+    normalizeObjectName(record.substation)
+  ),
+]);
 const lineStationOptions = uniqueSorted(
   lineRecords.flatMap((line) => [line.fromSubstation, line.toSubstation])
 );
 
-const initialOcrInput: OcrGfrReferenceInput = {
-  substation: legacyOcr.substation ?? "PLTGU CILEGON BARU",
-  bayType: legacyOcr.bay === "KOPEL" ? "KOPEL" : "LINE",
-  cccOrTsaA: legacyOcr.cccOrTsaA ?? 3412,
-  ctPrimaryA: legacyOcr.ctPrimaryA ?? 4000,
-  ctSecondaryA: legacyOcr.ctSecondaryA ?? 1,
-  hasBusProtection: (legacyOcr.buspro ?? "ADA") === "ADA",
-  operatingTimeS: legacyOcr.operatingTimeS ?? 1,
-  voltageKv: legacyOcr.voltageKv ?? 150,
-  fault3phA: legacyOcr.fault3phA ?? 34_950,
-  fault1phA: legacyOcr.fault1phA ?? 35_520,
-};
+const initialOcrRecord =
+  OCR_REGISTRY.records.find(
+    (record) =>
+      /ANGKE/i.test(record.substation) && /ANCOL#?1/i.test(record.bay)
+  ) ?? OCR_REGISTRY.records[0];
+const initialOcrInput: OcrGfrReferenceInput = initialOcrRecord
+  ? ocrInputFromRecord(initialOcrRecord)
+  : {
+      substation: legacyOcr.substation ?? "PLTGU CILEGON BARU",
+      bayType: legacyOcr.bay === "KOPEL" ? "KOPEL" : "LINE",
+      bayName: "",
+      circuit: "",
+      cccOrTsaA: legacyOcr.cccOrTsaA ?? 3412,
+      ctPrimaryA: legacyOcr.ctPrimaryA ?? 4000,
+      ctSecondaryA: legacyOcr.ctSecondaryA ?? 1,
+      hasBusProtection: (legacyOcr.buspro ?? "ADA") === "ADA",
+      operatingTimeS: legacyOcr.operatingTimeS ?? 1,
+      voltageKv: legacyOcr.voltageKv ?? 150,
+      fault3phA: legacyOcr.fault3phA ?? 34_950,
+      fault1phA: legacyOcr.fault1phA ?? 35_520,
+    };
 
 const telukNaga = findFaultRecord(faultRecords, "TELUK NAGA");
 const initialTransformerInput = transformerInputFromFault(
@@ -176,14 +198,19 @@ export function ReferenceSettingView() {
 
   const verificationContext =
     kind === "ocr-gfr"
-      ? `${ocrInput.substation} · ${ocrInput.bayType}`
+      ? ocrInput.bayType === "LINE"
+        ? `${ocrInput.substation} -> ${ocrInput.bayName || "bay belum dipilih"}${
+            ocrInput.circuit ? ` · ${ocrInput.circuit}` : ""
+          }`
+        : `${ocrInput.substation} · KOPEL`
       : kind === "transformer"
         ? `${transformerInput.substation} · ${transformerInput.bayName}`
-        : `${distanceBase.localSubstation} → ${remoteSubstation || "GI lawan"} · ${
+        : `${distanceBase.localSubstation} -> ${remoteSubstation || "GI lawan"} · ${
             l1?.name || "L1 belum dipilih"
           }`;
 
   const handleOcrStation = (substation: string) => {
+    const databaseRecord = ocrRecordsForStation(substation)[0];
     const selection = selectFaultRecordsForScenario({
       snapshots: sourceSnapshots,
       scenarios: studyScenarios,
@@ -195,13 +222,23 @@ export function ReferenceSettingView() {
       selection.status === "ready"
         ? findFaultRecord(selection.records, substation)
         : undefined;
-    setOcrInput((current) => ({
-      ...current,
-      substation,
-      voltageKv: fault?.voltageKv ?? current.voltageKv,
-      fault3phA: (fault?.fault3phKa ?? 0) * 1000 || current.fault3phA,
-      fault1phA: (fault?.fault1phKa ?? 0) * 1000 || current.fault1phA,
-    }));
+    setOcrInput((current) => {
+      const next = databaseRecord
+        ? ocrInputFromRecord(databaseRecord, current)
+        : { ...current, substation, bayName: "", databaseRecordId: undefined };
+      return {
+        ...next,
+        voltageKv: fault?.voltageKv ?? next.voltageKv,
+        fault3phA: (fault?.fault3phKa ?? 0) * 1000 || next.fault3phA,
+        fault1phA: (fault?.fault1phKa ?? 0) * 1000 || next.fault1phA,
+      };
+    });
+  };
+
+  const handleOcrBay = (recordId: string) => {
+    const record = OCR_REGISTRY.records.find((item) => item.id === recordId);
+    if (!record) return;
+    setOcrInput((current) => ocrInputFromRecord(record, current));
   };
 
   const handleTransformerStation = (substation: string) => {
@@ -413,6 +450,7 @@ export function ReferenceSettingView() {
                 input={ocrInput}
                 onChange={setOcrInput}
                 onStation={handleOcrStation}
+                onBay={handleOcrBay}
               />
             ) : kind === "transformer" ? (
               <TransformerForm
@@ -445,13 +483,28 @@ export function ReferenceSettingView() {
             </div>
             <button
               type="button"
-              onClick={() =>
+              onClick={() => {
+                const distanceRecord =
+                  kind === "distance"
+                    ? findDistanceRecordForLine(
+                        distanceBase.localSubstation,
+                        l1
+                      )
+                    : undefined;
                 stageReferenceForVerification({
                   kind,
                   contextLabel: verificationContext,
                   result,
-                })
-              }
+                  databaseBaseline:
+                    kind === "ocr-gfr" &&
+                    ocrInput.bayType === "LINE" &&
+                    ocrInput.databaseRecordId
+                      ? buildOcrDatabaseBaseline(ocrInput.databaseRecordId)
+                      : kind === "distance" && distanceRecord
+                        ? buildDistanceDatabaseBaseline(distanceRecord.id)
+                        : undefined,
+                });
+              }}
               className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-blue-700"
             >
               Bandingkan actual
@@ -544,18 +597,27 @@ function OcrGfrForm({
   input,
   onChange,
   onStation,
+  onBay,
 }: {
   input: OcrGfrReferenceInput;
   onChange: (value: OcrGfrReferenceInput) => void;
   onStation: (value: string) => void;
+  onBay: (recordId: string) => void;
 }) {
+  const bayRecords = ocrRecordsForStation(input.substation);
+  const bayLabels = Object.fromEntries(
+    bayRecords.map((record) => [
+      record.id,
+      `${record.bay} · CT ${record.ctRatio} · ${record.relay.make} ${record.relay.model}`,
+    ])
+  );
   return (
     <div className="space-y-5">
       <FormSection title="Object" icon={<Zap className="h-4 w-4" />}>
         <SelectField
           label="Gardu induk"
           value={input.substation}
-          options={stationOptions}
+          options={ocrStationOptions}
           onChange={onStation}
         />
         <SegmentedField
@@ -565,8 +627,31 @@ function OcrGfrForm({
             { value: "LINE", label: "Penghantar" },
             { value: "KOPEL", label: "Kopel" },
           ]}
-          onChange={(bayType) => onChange({ ...input, bayType: bayType as "LINE" | "KOPEL" })}
+          onChange={(bayType) => {
+            if (bayType === "LINE" && !input.databaseRecordId && bayRecords[0]) {
+              onBay(bayRecords[0].id);
+              return;
+            }
+            onChange({ ...input, bayType: bayType as "LINE" | "KOPEL" });
+          }}
         />
+        {input.bayType === "LINE" && (
+          <SelectField
+            label="Bay penghantar"
+            value={input.databaseRecordId ?? ""}
+            options={
+              bayRecords.length > 0
+                ? bayRecords.map((record) => record.id)
+                : [""]
+            }
+            labels={
+              bayRecords.length > 0
+                ? bayLabels
+                : { "": "Belum ada bay setting pada database" }
+            }
+            onChange={onBay}
+          />
+        )}
       </FormSection>
       <FormSection title="Primary data" icon={<Activity className="h-4 w-4" />}>
         <FieldGrid>
@@ -1442,6 +1527,118 @@ function transformerInputFromFault(
     ohlR1Ohm: 0.0411,
     ohlX1Ohm: 0.2812,
   };
+}
+
+function ocrRecordsForStation(substation: string) {
+  const station = normalizeObjectName(substation);
+  return OCR_REGISTRY.records
+    .filter(
+      (record) => normalizeObjectName(record.substation) === station
+    )
+    .sort((a, b) =>
+      `${a.bay} ${a.circuit}`.localeCompare(`${b.bay} ${b.circuit}`)
+    );
+}
+
+function ocrInputFromRecord(
+  record: OcrRecord,
+  previous?: OcrGfrReferenceInput
+): OcrGfrReferenceInput {
+  const substation = normalizeObjectName(record.substation);
+  const fault = findFaultRecord(faultRecords, substation);
+  const line = findLineForOcrRecord(record);
+  const [ctPrimaryA, ctSecondaryA] = parseRatio(record.ctRatio);
+  return {
+    substation,
+    bayType: "LINE",
+    bayName: record.bay,
+    circuit: record.circuit,
+    databaseRecordId: record.id,
+    cccOrTsaA:
+      lineAmpacityA(line) ??
+      previous?.cccOrTsaA ??
+      legacyOcr.cccOrTsaA ??
+      0,
+    ctPrimaryA:
+      ctPrimaryA || previous?.ctPrimaryA || legacyOcr.ctPrimaryA || 0,
+    ctSecondaryA:
+      ctSecondaryA || previous?.ctSecondaryA || legacyOcr.ctSecondaryA || 1,
+    hasBusProtection: previous?.hasBusProtection ?? true,
+    operatingTimeS:
+      previous?.operatingTimeS ?? legacyOcr.operatingTimeS ?? 1,
+    voltageKv:
+      fault?.voltageKv ??
+      previous?.voltageKv ??
+      legacyOcr.voltageKv ??
+      150,
+    fault3phA:
+      (fault?.fault3phKa ?? 0) * 1000 ||
+      previous?.fault3phA ||
+      legacyOcr.fault3phA ||
+      0,
+    fault1phA:
+      (fault?.fault1phKa ?? 0) * 1000 ||
+      previous?.fault1phA ||
+      legacyOcr.fault1phA ||
+      0,
+  };
+}
+
+function findLineForOcrRecord(record: OcrRecord) {
+  const local = normalizeObjectName(record.substation);
+  const bay = normalizeObjectName(record.bay);
+  const remote = bay.replace(/\s+\d+$/, "");
+  const circuit = record.circuit.replace(/\D/g, "");
+  return (
+    lineRecords.find((line) => {
+      const from = normalizeObjectName(line.fromSubstation);
+      const to = normalizeObjectName(line.toSubstation);
+      const endpoints =
+        (from === local && to === remote) ||
+        (to === local && from === remote);
+      return endpoints && (!circuit || lineCircuit(line.name) === circuit);
+    }) ?? null
+  );
+}
+
+function findDistanceRecordForLine(
+  localSubstation: string,
+  line: CrosscheckLineRecord | null
+) {
+  if (!line) return undefined;
+  const local = normalizeObjectName(localSubstation);
+  const remote = normalizeObjectName(
+    oppositeStation(line, localSubstation)
+  );
+  const circuit = lineCircuit(line.name);
+  return LCD_DIST_REGISTRY.records.find((record) => {
+    const recordStation = normalizeObjectName(record.substation);
+    const recordBay = normalizeObjectName(record.bay);
+    const recordCircuit = record.circuit.replace(/\D/g, "");
+    return (
+      recordStation === local &&
+      recordBay.includes(remote) &&
+      (!circuit || !recordCircuit || circuit === recordCircuit)
+    );
+  });
+}
+
+function lineAmpacityA(line: CrosscheckLineRecord | null) {
+  if (!line) return null;
+  const labeled = line.type.match(/\((\d+(?:[.,]\d+)?)\s*A\)/i);
+  if (labeled) return Number(labeled[1].replace(",", "."));
+  return typeof line.currentRatingKa === "number"
+    ? line.currentRatingKa * 1000
+    : null;
+}
+
+function lineCircuit(name: string) {
+  return name.match(/(?:-|#|\s)(\d+)\s*$/)?.[1] ?? "";
+}
+
+function parseRatio(value: string): [number, number] {
+  const match = value.match(/(\d+(?:\.\d+)?)\s*[/:-]\s*(\d+(?:\.\d+)?)/);
+  return match ? [Number(match[1]), Number(match[2])] : [0, 0];
 }
 
 function findLine(name: string) {

@@ -1,7 +1,16 @@
 import assert from "node:assert/strict";
 import { CROSSCHECK_WORKBOOK_REGISTRY } from "../src/domain/crosscheck-workbook-registry";
 import { calculateOcrGfrReference } from "../src/domain/reference-setting";
-import { extractTapFields } from "../src/lib/ocr";
+import {
+  extractTapDocumentIdentity,
+  extractTapFields,
+} from "../src/lib/ocr";
+import {
+  buildDistanceDatabaseBaseline,
+  buildOcrDatabaseBaseline,
+} from "../src/domain/setting-database-reference";
+import { OCR_REGISTRY } from "../src/domain/ocr-import";
+import { LCD_DIST_REGISTRY } from "../src/domain/lcd-dist-import";
 import {
   compareReferenceToActual,
   demoActualText,
@@ -161,6 +170,140 @@ assert.deepEqual(
   ]
 );
 
+const angkeAncolOcrText = `
+OCR/GFR (CT 2000/5), In=5 A
+35.23 I>1 Function IEC Std.Inv
+35.27 I>1 Current Set 1.028 x In 5.14 A
+352A I>1 TMS 042
+38.25 IN1>1 Function IEC Std.Inv
+38.29 IN1>1 Current 0471xIn 0.855 A
+38.20 IN1>1 TMS 0.684
+`;
+const angkeAncolFields = extractTapFields(angkeAncolOcrText);
+assert.deepEqual(
+  angkeAncolFields.map((field) => [field.field, field.value]),
+  [
+    ["OC pickup (I>)", "5.14"],
+    ["OC pickup pu", "1.028"],
+    ["OC TMS", "0.42"],
+    ["OC curve", "SI"],
+    ["GF pickup (Ie>)", "0.855"],
+    ["GF pickup pu", "0.171"],
+    ["GF TMS", "0.684"],
+    ["CT ratio", "2000/5"],
+  ]
+);
+const angkeAncolIdentity = extractTapDocumentIdentity(`
+TJBBI01/04/2019/45
+DAFTAR SETELAN RELAI PROTEKSI GI 150kV ANGKE
+Proteksi Utama : Penghantar 150 KV arah Ancol
+ALSTHOM / MICOM P443
+Proteksi Cadangan : Penghantar 150 KV arah Ancol
+MICOM P142
+`);
+assert.equal(angkeAncolIdentity.documentNumber, "TJBB/01/04/2019/45");
+assert.equal(angkeAncolIdentity.station, "ANGKE");
+assert.equal(angkeAncolIdentity.bayDirection, "ANCOL");
+assert.deepEqual(angkeAncolIdentity.relayModels, [
+  "MICOM P443",
+  "MICOM P142",
+]);
+
+const angkeAncolParsed = parseActualSettingText(
+  angkeAncolFields
+    .map(
+      (field) =>
+        `${field.field}=${field.value}${field.unit ? ` ${field.unit}` : ""}`
+    )
+    .join("\n"),
+  {
+    referenceKind: "ocr-gfr",
+    currentBasis: "secondary",
+    impedanceBasis: "secondary",
+  }
+);
+assert.deepEqual(
+  angkeAncolParsed.parameters.map((parameter) => parameter.id).sort(),
+  [
+    "gfr-delay",
+    "gfr-pu",
+    "gfr-secondary",
+    "ocr-delay",
+    "ocr-pu",
+    "ocr-secondary",
+  ]
+);
+
+const ocrRecord = OCR_REGISTRY.records.find(
+  (record) =>
+    /ANGKE/i.test(record.substation) && /ANCOL#?1/i.test(record.bay)
+);
+assert.ok(ocrRecord);
+const ocrDatabase = buildOcrDatabaseBaseline(ocrRecord.id);
+assert.ok(ocrDatabase);
+assert.equal(ocrDatabase.source, "setting-db-actual");
+const databaseComparison = compareReferenceToActual(
+  ocrDatabase.result,
+  angkeAncolParsed.parameters,
+  {
+    kind: "ocr-gfr",
+    profile: "engineering",
+    currentBasis: "secondary",
+    impedanceBasis: "secondary",
+  }
+);
+assert.equal(databaseComparison.summary.mismatch, 0);
+assert.equal(databaseComparison.summary["missing-actual"], 0);
+assert.equal(databaseComparison.coveragePercent, 100);
+
+const distanceRecord = LCD_DIST_REGISTRY.records.find(
+  (record) =>
+    /ANGKE/i.test(record.substation) && /ANCOL#?1/i.test(record.bay)
+);
+assert.ok(distanceRecord);
+const distanceDatabase = buildDistanceDatabaseBaseline(distanceRecord.id);
+assert.ok(distanceDatabase);
+assert.equal(distanceDatabase.source, "setting-db-issued");
+assert.deepEqual(
+  distanceDatabase.result.metrics.map((metric) => metric.value),
+  [0.263, 0, 0.403, 0.4, 0.951, 1.6]
+);
+
+const angkeAncolDistanceFields = extractTapFields(`
+Z1 Ph. Reach 0.263 Ohm
+Z2 Ph. Reach 0.403 Ohm
+Z3 Ph. Reach 0.951 Ohm
+tZ1 Ph. Delay 0 s
+tZ2 Ph. Delay 0.400 s
+tZ3 Ph. Delay 1.600 s
+`);
+const angkeAncolDistanceParsed = parseActualSettingText(
+  angkeAncolDistanceFields
+    .map(
+      (field) =>
+        `${field.field}=${field.value}${field.unit ? ` ${field.unit}` : ""}`
+    )
+    .join("\n"),
+  {
+    referenceKind: "distance",
+    currentBasis: "secondary",
+    impedanceBasis: "secondary",
+  }
+);
+const distanceComparison = compareReferenceToActual(
+  distanceDatabase.result,
+  angkeAncolDistanceParsed.parameters,
+  {
+    kind: "distance",
+    profile: "engineering",
+    currentBasis: "secondary",
+    impedanceBasis: "secondary",
+  }
+);
+assert.equal(distanceComparison.summary.mismatch, 0);
+assert.equal(distanceComparison.summary["missing-actual"], 0);
+assert.equal(distanceComparison.coveragePercent, 100);
+
 console.log(
-  "Setting-verification regression passed: alias normalization, basis selection, tolerance profiles, manual mapping, and decision logic."
+  "Setting-verification regression passed: bay database baselines, scanned MiCOM OCR, alias normalization, tolerance profiles, and decision logic."
 );

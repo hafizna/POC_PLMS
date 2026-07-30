@@ -13,6 +13,14 @@ export type VerificationReferenceDraft = {
   kind: ReferenceKind;
   contextLabel: string;
   result: ReferenceResult;
+  databaseBaseline?: {
+    recordId: string;
+    label: string;
+    source: "setting-db-issued" | "setting-db-actual";
+    sourceRef: string;
+    relayLabel: string;
+    result: ReferenceResult;
+  };
   stagedAt: string;
 };
 
@@ -169,6 +177,7 @@ export function parseActualSettingText(
 
     const pair = parsePair(trimmed);
     if (!pair) return;
+    if (isDocumentMetadata(pair.name)) return;
 
     const mapped = mapParameterName(pair.name, options);
     if (!mapped) {
@@ -459,6 +468,15 @@ function mapParameterName(
 
   if (options.referenceKind === "ocr-gfr") {
     const basis = options.currentBasis;
+    if (/(oc|ocr|51p|i >|i>|ip >|ip>)/.test(raw) && /\bpu\b/.test(raw)) {
+      return { id: "ocr-pu", confidence: "high" };
+    }
+    if (
+      /(gf|gfr|earth|51n|51g|ie >|ie>|iep >|iep>)/.test(raw) &&
+      /\bpu\b/.test(raw)
+    ) {
+      return { id: "gfr-pu", confidence: "high" };
+    }
     if (/(oc|ocr|51p|i >|i>|ip >|ip>)/.test(raw) && /(pickup|start|setting|i >|i>|ip >|ip>)/.test(raw)) {
       return { id: `ocr-${basis}`, confidence: "high" };
     }
@@ -618,6 +636,12 @@ function looksLikeSetting(name: string, value: string) {
     /pickup|reach|delay|timer|tms|curve|setting|zone|ocr|gfr|diff|ref|sbef|k0|i>|ie>/i.test(
       name
     ) || /[-+]?\d+(?:[.,]\d+)?\s*(A|ohm|Ω|pu|s|ms)\b/i.test(value)
+  );
+}
+
+function isDocumentMetadata(name: string) {
+  return /^(?:ct|vt|pt)\s*ratio$|^(?:tap\s*)?document$|^relay(?:\s*(?:model|type))?$|^(?:substation|station|bay|circuit|doc(?:ument)?\s*(?:no|number)?)$/i.test(
+    name.trim()
   );
 }
 

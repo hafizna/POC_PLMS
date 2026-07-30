@@ -61,30 +61,30 @@ console.log("\n=== Scenario B: with decisions + 1 PDF TAP promotion ===");
 // find for the DKS-DM-PIK-MKB neighborhood.
 const fakeDecisions: Record<string, CandidateDecision> = {
   // Approve LCD+DIST for DM→DKS line
-  "lcd:gis_150kv_daan_mogot_pht_150kv_durikosambi_1_1_33": {
+  "lcd:gis_150kv_daan_mogot_pht_150kv_durikosambi_1_1_37": {
     status: "approved",
     decidedAt: "2026-05-14T10:00:00Z",
     note: "Verified against TAP PDF TJBB/01/04/2019/155",
   },
   // Approve LCD+DIST for DM→PIK line
-  "lcd:gis_150kv_daan_mogot_pht_150kv_pantai_indah_kapuk_1_1_35": {
+  "lcd:gis_150kv_daan_mogot_pht_150kv_pantai_indah_kapuk_1_1_39": {
     status: "approved",
     decidedAt: "2026-05-14T10:05:00Z",
     note: "Verified against screening Excel",
   },
   // Reviewed (not yet approved) LCD+DIST for GRB→DKS
-  "lcd:gis_150kv_grogol_baru_pht_150kv_durikosambi_1_1_41": {
+  "lcd:gis_150kv_grogol_baru_pht_150kv_durikosambi_1_1_45": {
     status: "reviewed",
     decidedAt: "2026-05-14T11:00:00Z",
   },
   // Approve OCR for one bay (assuming this record matches; if not, will just
   // be ignored by the builder since it requires matchedLineId)
-  "ocr:gis_150kv_daan_mogot_pht_150kv_durikosambi_1_1_33": {
+  "ocr:gis_150kv_daan_mogot_pht_150kv_durikosambi_1_1_37": {
     status: "approved",
     decidedAt: "2026-05-14T10:10:00Z",
   },
   // Reject one ambiguous candidate
-  "lcd:gis_150kv_muarakarang_baru_pht_150kv_pantai_indah_kapuk_1_1_51": {
+  "lcd:gis_150kv_muarakarang_baru_pht_150kv_pantai_indah_kapuk_1_1_55": {
     status: "rejected",
     decidedAt: "2026-05-14T11:30:00Z",
     note: "Likely refers to a different bay",
