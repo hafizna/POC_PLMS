@@ -7,6 +7,11 @@ import { useProsetStore } from "./store/useProsetStore";
 const HomeView = lazy(() =>
   import("./components/home/HomeView").then((m) => ({ default: m.HomeView }))
 );
+const CaseWorkQueueView = lazy(() =>
+  import("./components/cases/CaseWorkQueueView").then((m) => ({
+    default: m.CaseWorkQueueView,
+  }))
+);
 const ReferenceSettingView = lazy(() =>
   import("./components/reference/ReferenceSettingView").then((m) => ({
     default: m.ReferenceSettingView,
@@ -61,7 +66,9 @@ export function App() {
   return (
     <AppShell>
       <Suspense fallback={<LoadingFallback />}>
-        {tab === "reference-setting" ? (
+        {tab === "cases" ? (
+          <CaseWorkQueueView />
+        ) : tab === "reference-setting" ? (
           <ReferenceSettingView />
         ) : tab === "home" ? (
           <HomeView />

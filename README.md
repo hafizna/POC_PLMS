@@ -12,6 +12,8 @@ Tujuan produk ini bukan sekadar membuat spreadsheet digital. PLMS dirancang seba
 
 > **Klarifikasi hitung setting baru:** menu target `Calculate / Revise Setting` membuat Setting Change Case dan terlebih dahulu meminta alasan serta change items. Rekonduktoring, penggantian CT/VT/relay, sisipan GI, atau pekerjaan sisi remote menghasilkan proposed data/network revision di dalam case; perhitungan memakai revision calon tersebut tanpa menimpa database aktif. Aktivasi data baru dilakukan terkontrol saat effective date/energization/commissioning.
 
+> **Boundary implementasi saat ini — Sprint 4.1:** workflow aktif mencakup intake/scoping, immutable `Case Baseline`, append-only `Proposed Data Revision`, versioned `Case Impact Assessment`, dan requirement-driven `Study Scenario Package`. Case membedakan audit PDF TAP dari actual relay readback, owner UPT/UIT dengan maker–checker–approver serta notifikasi, permanent post-commission dari temporary/emergency intent, dan approval dari activation. Setting/technical revision baru aktif saat commissioning; koreksi administratif murni aktif pada approved effective date. Calculation dan handler operasional tahap lanjut masih dikunci; tool POC lama tetap berlabel `not case-gated`.
+
 ## Executive Summary
 
 Masalah utama di proses setting proteksi saat ini:
@@ -59,7 +61,7 @@ Pitch product:
 | **MVP 2B — Calculation Engine and Mathcad Parity** | Hitung recommended setting secara native dengan formula trace dan parity terhadap XMCD. | **2B.1 implemented.** Input contract P545 Ciledug–Alam Sutera sudah typed/unit-aware, scenario-gated, menampilkan provenance, conflict, missing data, dan justified override. Formula parity 2B.2 belum dipindahkan/disetujui engineer. |
 | **MVP 2C — Canonical Setting Package and TAP Composer** | Satukan calculated setting, policy, override, provenance, approval state, dan hasilkan draft TAP resmi. | **Not implemented.** Calculation snapshot/printable report ada, tetapi canonical schema dan TAP composer multi-page belum ada. |
 | **MVP 2D — Relay Capability Profiles and Multi-vendor Conversion** | Konversi engineering intent ke proposed target settings lintas brand/model disertai capability-gap report. | **Seed data available.** Relay Catalog, manual references, actual/TAP records, dan 12 XMCD tersedia; capability profiles dan conversion rules belum ada. |
-| **MVP 3 — Closed-loop Lifecycle and Governance** | PLMS -> DIgSILENT study -> PLMS impact/recalculation -> review/approve/issue/field verification. | **Concept/foundation only.** Audit events dan lifecycle status ada; shared backend, role gate, current-study integration, immutable issue, serta impact orchestration belum ada. |
+| **MVP 3 — Closed-loop Lifecycle and Governance** | PLMS -> DIgSILENT study -> PLMS impact/recalculation -> review/approve/issue/field verification. | **Case-local foundation implemented through Sprint 4.1.** Immutable baseline/proposal/impact/scenario package, authority profile, audit, dan activation contract tersedia di local state. Shared backend, identity enforcement, executable approval/commissioning, Calculation Run, issue, serta field verification belum ada. |
 | **Deferred — Native Vendor-file Export** | Menghasilkan `.set` atau project/import format vendor. | **Explicitly deferred.** Bukan acceptance criterion MVP 2/awal MVP 3. |
 
 ### Implementasi yang sudah masuk
@@ -76,6 +78,7 @@ Pitch product:
 - **Immutable Engineering Change Set:** transaksi sisipan GI otomatis merekam affected before/after topology, ordered operations, baseline scenario/snapshot, referential validation, dan deterministic fingerprint. Undo/Reset working graph tidak menghapus recorded history.
 - **Data Readiness + DIgSILENT staging preview:** required-field matrix memeriksa baseline, topology, length, R1/X1/R0/X0, legacy X alias, serta konsistensi jumlah dua segmen terhadap line lama. Change set tanpa blocker dapat diekspor sebagai neutral JSON, CSV, dan DGS-like preview dengan validation report.
 - **P545 Input Contract:** pilot Ciledug–Alam Sutera #1 mengikat input line, CT, CCC/rating, fault level, relay identity, dan adjacent-network gaps ke unit serta provenance yang eksplisit. Fault input diblokir tanpa `StudyScenario`; konflik P543/P545 dan 26,24/33,22 kA tidak dipilih diam-diam; override mencatat actor, timestamp, dan alasan.
+- **Setting Case Sprint 1–4.1:** intake dan P1–P5 routing berbasis alasan, baseline scope/evidence immutable, proposed technical revision append-only, impact/readiness lintas endpoint, multi-condition Study Scenario Package, authority/notification profile, commissioning activation contract, dan temporary restoration obligation. Package blocked tetap direkam; hanya package lengkap dan compatible yang membuka Calculation.
 - **Study dan UX:** Study dipisahkan per subject line; Working Network dan Data Mapping Inbox dipindah ke grup `Network & Mapping` karena keduanya bekerja pada level ULTG, bukan level Study.
 - **Verification:** regression scripts tersedia untuk Reference Engine, Crosscheck, Vendor Import, Relay Catalog, Graph Builder, bridge export, dan build aplikasi.
 

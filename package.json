@@ -26,6 +26,7 @@
     "test:relay-catalog": "tsx scripts/test-relay-catalog.ts",
     "test:engineering-data": "tsx scripts/test-engineering-data.ts",
     "test:engineering-change": "tsx scripts/test-engineering-change.ts",
+    "test:setting-case": "tsx scripts/test-setting-case.ts",
     "test:p545-input-contract": "tsx scripts/test-p545-input-contract.ts"
   },
   "dependencies": {

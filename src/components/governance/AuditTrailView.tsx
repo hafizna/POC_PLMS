@@ -26,6 +26,16 @@ const actionClass: Record<AuditEvent["action"], string> = {
   calculation_snapshot_remove: "bg-slate-50 text-slate-600 border-slate-200",
   reference_verification_staged: "bg-indigo-50 text-indigo-700 border-indigo-200",
   vendor_import_staged: "bg-blue-50 text-blue-700 border-blue-200",
+  setting_case_created: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  setting_case_baseline_frozen: "bg-indigo-50 text-indigo-700 border-indigo-200",
+  setting_case_proposed_revision_saved: "bg-cyan-50 text-cyan-700 border-cyan-200",
+  setting_case_impact_assessed: "bg-orange-50 text-orange-700 border-orange-200",
+  setting_case_study_bound: "bg-cyan-50 text-cyan-700 border-cyan-200",
+  setting_case_study_package_bound:
+    "bg-teal-50 text-teal-700 border-teal-200",
+  setting_case_stage_changed: "bg-violet-50 text-violet-700 border-violet-200",
+  setting_case_updated: "bg-amber-50 text-amber-700 border-amber-200",
+  setting_case_linked: "bg-cyan-50 text-cyan-700 border-cyan-200",
 };
 
 export function AuditTrailView() {

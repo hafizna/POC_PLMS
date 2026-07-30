@@ -36,6 +36,38 @@ import {
   type EngineeringChangeBaseline,
   type EngineeringChangeSet,
 } from "../domain/engineering-change";
+import {
+  applicableStages,
+  createSettingCaseObject,
+  isStageImplemented,
+  isTerminalState,
+  nextStageOf,
+  stageGate,
+  STAGE_LABEL,
+  type CreateSettingCaseInput,
+  type SettingCase,
+  type SettingCaseStage,
+  type SettingCaseStatus,
+  type SettingCaseType,
+} from "../domain/setting-case";
+import {
+  buildCaseBaseline,
+  type BuildCaseBaselineResult,
+} from "../domain/case-baseline";
+import {
+  buildProposedDataRevision,
+  type ProposedDataRevisionDraft,
+} from "../domain/case-proposed-revision";
+import {
+  buildCaseImpactAssessment,
+  type CaseImpactAssessmentInput,
+} from "../domain/case-impact-readiness";
+import { buildCaseStudyPackageBinding } from "../domain/case-study-package";
+import {
+  assessCrosscheckEvidence,
+  buildCaseFlowProfile,
+  validateCaseFlowProfile,
+} from "../domain/case-flow-hardening";
 
 export type NetworkGraphOverride = {
   substations: UnifiedSubstation[];
@@ -64,6 +96,7 @@ const EMPTY_OVERRIDE: NetworkGraphOverride = {
 };
 
 export type Tab =
+  | "cases"
   | "reference-setting"
   | "home"
   | "master-data"
@@ -175,7 +208,16 @@ export type AuditEvent = {
     | "calculation_snapshot_add"
     | "calculation_snapshot_remove"
     | "reference_verification_staged"
-    | "vendor_import_staged";
+    | "vendor_import_staged"
+    | "setting_case_created"
+    | "setting_case_baseline_frozen"
+    | "setting_case_proposed_revision_saved"
+    | "setting_case_impact_assessed"
+    | "setting_case_study_bound"
+    | "setting_case_study_package_bound"
+    | "setting_case_stage_changed"
+    | "setting_case_updated"
+    | "setting_case_linked";
   scope?: string;
   targetId?: string;
   summary: string;
@@ -295,6 +337,13 @@ type State = {
   studyScenarios: StudyScenario[];
   engineeringChangeSets: EngineeringChangeSet[];
 
+  // Setting Case lifecycle (BUSINESS_PROCESS_BLUEPRINT.md §2, §5.1)
+  settingCases: SettingCase[];
+  activeSettingCaseId: string | null;
+  // Transient UI request: sidebar "Primary Actions" open the case wizard on
+  // the cases tab with a preselected case type. Not persisted.
+  caseWizardRequest: { caseType: SettingCaseType } | null;
+
   // UI state
   currentTab: Tab;
   currentPersona: Persona;
@@ -340,6 +389,53 @@ type State = {
   setActiveNetworkCase: (id: string) => void;
   setActiveNetworkLine: (id: string | null) => void;
   selectLine: (lineId: string) => void;
+  // Setting Case actions
+  openCaseWizard: (caseType: SettingCaseType) => void;
+  clearCaseWizardRequest: () => void;
+  createSettingCase: (input: CreateSettingCaseInput) => string;
+  setActiveSettingCase: (id: string | null) => void;
+  updateSettingCaseDetails: (
+    id: string,
+    patch: Partial<
+      Pick<
+        SettingCase,
+        | "title"
+        | "description"
+        | "urgency"
+        | "plannedEffectiveDate"
+        | "owningUnit"
+        | "remoteUnit"
+        | "protectedScope"
+      >
+    >
+  ) => void;
+  freezeSettingCaseBaseline: (id: string) => BuildCaseBaselineResult;
+  saveSettingCaseProposedRevision: (
+    id: string,
+    draft: ProposedDataRevisionDraft
+  ) => string | null;
+  saveSettingCaseImpactAssessment: (
+    id: string,
+    input: CaseImpactAssessmentInput
+  ) => string | null;
+  saveSettingCaseStudyPackageBinding: (
+    id: string,
+    scenarioIds: string[]
+  ) => string | null;
+  advanceSettingCaseStage: (id: string, note?: string) => void;
+  setSettingCaseStage: (id: string, stage: SettingCaseStatus, note?: string) => void;
+  linkToSettingCase: (
+    id: string,
+    link:
+      | { kind: "source"; refId: string }
+      | { kind: "calculation"; refId: string }
+      | { kind: "changeSet"; refId: string }
+      | { kind: "study"; refId: string }
+  ) => void;
+  unlinkFromSettingCase: (
+    id: string,
+    link: { kind: "source" | "calculation" | "changeSet"; refId: string }
+  ) => void;
   createStudy: (
     name: string,
     description: string,
@@ -440,7 +536,11 @@ export const useProsetStore = create<State>()(
       studyScenarios: cloneDefaultStudyScenarios(),
       engineeringChangeSets: [],
 
-      currentTab: "reference-setting",
+      settingCases: [],
+      activeSettingCaseId: null,
+      caseWizardRequest: null,
+
+      currentTab: "cases",
       currentPersona: "Engineer",
       activeCorridorId: CORRIDORS.length > 0 ? CORRIDORS[0].id : "unknown",
       selectedRelayId: TOPOLOGY.relays.length > 0 ? TOPOLOGY.relays[0].id : "unknown",
@@ -553,6 +653,528 @@ export const useProsetStore = create<State>()(
           targetId: lineId,
           summary: `Selected line ${line.circuit}`,
           detail: `${line.fromNodeId} -> ${line.toNodeId}`,
+        });
+      },
+
+      openCaseWizard: (caseType) =>
+        set({ caseWizardRequest: { caseType }, currentTab: "cases" }),
+
+      clearCaseWizardRequest: () => set({ caseWizardRequest: null }),
+
+      createSettingCase: (input) => {
+        const now = new Date().toISOString();
+        const id = `case_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+        const settingCase = createSettingCaseObject(input, get().currentPersona, now, id);
+        set({
+          settingCases: [settingCase, ...get().settingCases],
+          activeSettingCaseId: id,
+          caseWizardRequest: null,
+        });
+        appendAuditEvent(get, set, {
+          action: "setting_case_created",
+          scope: id,
+          summary: `Created ${settingCase.caseType} case: ${settingCase.title}`,
+          detail: [
+            `primaryReason=${settingCase.primaryReason}`,
+            `changeItems=${settingCase.changeItems.map((item) => item.kind).join(",") || "-"}`,
+            settingCase.protectedScope.subjectLabel
+              ? `subject=${settingCase.protectedScope.subjectLabel}`
+              : "",
+          ]
+            .filter(Boolean)
+            .join(" | "),
+        });
+        return id;
+      },
+
+      setActiveSettingCase: (id) => set({ activeSettingCaseId: id }),
+
+      updateSettingCaseDetails: (id, patch) => {
+        const existing = get().settingCases.find((item) => item.id === id);
+        if (!existing || existing.baseline) return;
+        const updatedAt = new Date().toISOString();
+        set({
+          settingCases: get().settingCases.map((item) =>
+            item.id === id ? { ...item, ...patch, updatedAt } : item
+          ),
+        });
+        appendAuditEvent(get, set, {
+          action: "setting_case_updated",
+          scope: id,
+          summary: `Updated case: ${patch.title ?? existing.title}`,
+          detail: Object.keys(patch).join(", "),
+        });
+      },
+
+      freezeSettingCaseBaseline: (id) => {
+        const state = get();
+        const settingCase = state.settingCases.find((item) => item.id === id);
+        if (!settingCase) {
+          return { ok: false, errors: ["Setting Case tidak ditemukan."] };
+        }
+        if (settingCase.baseline) {
+          return { ok: true, baseline: settingCase.baseline, errors: [] };
+        }
+        if (settingCase.stage !== "scoping") {
+          return {
+            ok: false,
+            errors: ["Baseline hanya dapat dibekukan dari stage Scoping."],
+          };
+        }
+        const linkedEvidence = settingCase.links.sourceIntakeIds
+          .map((sourceId) =>
+            state.sourceIntakeRecords.find((item) => item.id === sourceId)
+          )
+          .filter((item): item is SourceIntakeRecord => Boolean(item));
+        const crosscheckEvidence = assessCrosscheckEvidence(
+          settingCase,
+          linkedEvidence
+        );
+        const flowErrors = validateCaseFlowProfile(settingCase.flowProfile);
+        if (flowErrors.length > 0 || crosscheckEvidence.blockers.length > 0) {
+          return {
+            ok: false,
+            errors: [...flowErrors, ...crosscheckEvidence.blockers],
+          };
+        }
+
+        const inventoryCase =
+          NETWORK_CASES.find((item) => item.id === INVENTORY_MASTER_CASE_ID) ??
+          NETWORK_CASES[0];
+        const masterGraph = getEffectiveNetworkGraph(
+          INVENTORY_MASTER_CASE_ID,
+          state.networkGraphOverrides[INVENTORY_MASTER_CASE_ID],
+          buildUnifiedNetwork(inventoryCase)
+        );
+        const scopedNetworkCase =
+          NETWORK_CASES.find(
+            (item) => item.id === settingCase.protectedScope.networkCaseId
+          ) ?? inventoryCase;
+        const scopedGraph =
+          settingCase.protectedScope.networkCaseId === INVENTORY_MASTER_CASE_ID
+            ? masterGraph
+            : mergeMasterRelationsIntoCase(
+                getEffectiveNetworkGraph(
+                  scopedNetworkCase.id,
+                  state.networkGraphOverrides[scopedNetworkCase.id],
+                  buildUnifiedNetwork(scopedNetworkCase)
+                ),
+                masterGraph
+              );
+        const now = new Date().toISOString();
+        const result = buildCaseBaseline({
+          settingCase,
+          network: scopedGraph,
+          evidence: settingCase.links.sourceIntakeIds
+            .map((sourceId) =>
+              state.sourceIntakeRecords.find((item) => item.id === sourceId)
+            )
+            .filter((item): item is SourceIntakeRecord => Boolean(item))
+            .map((item) => ({
+              sourceIntakeId: item.id,
+              fileName: item.fileName,
+              documentType: item.documentType,
+              status: item.status,
+              stagedAt: item.stagedAt,
+              extractionMethod: item.extractionMethod,
+            })),
+          revisionBindings: {
+            networkRevisionId: state.sourceSnapshots.find(
+              (item) => item.kind === "network-model" && item.state === "current"
+            )?.networkRevisionId,
+            technicalDataRevisionId: state.sourceSnapshots.find(
+              (item) => item.kind === "technical-master" && item.state === "current"
+            )?.id,
+          },
+          frozenAt: now,
+          frozenBy: state.currentPersona,
+          id: `baseline_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+        });
+        if (!result.ok) return result;
+
+        set({
+          settingCases: state.settingCases.map((item) =>
+            item.id === id
+              ? {
+                  ...item,
+                  baseline: result.baseline,
+                  stage: "baseline_frozen",
+                  updatedAt: now,
+                  stageHistory: [
+                    ...item.stageHistory,
+                    {
+                      stage: "baseline_frozen",
+                      at: now,
+                      actor: state.currentPersona,
+                      note: `Baseline ${result.baseline.fingerprint.value} dibekukan`,
+                    },
+                  ],
+                }
+              : item
+          ),
+        });
+        appendAuditEvent(get, set, {
+          action: "setting_case_baseline_frozen",
+          scope: id,
+          targetId: result.baseline.id,
+          summary: `Frozen baseline for case "${settingCase.title}"`,
+          detail: [
+            `fingerprint=${result.baseline.fingerprint.value}`,
+            `evidence=${result.baseline.evidence.length}`,
+            `substations=${result.baseline.network.substations.length}`,
+            `lines=${result.baseline.network.lineRelations.length}`,
+            `relays=${result.baseline.network.relayIeds.length}`,
+            `issues=${result.baseline.issues.length}`,
+          ].join(" | "),
+        });
+        return result;
+      },
+
+      saveSettingCaseProposedRevision: (id, draft) => {
+        const state = get();
+        const settingCase = state.settingCases.find((item) => item.id === id);
+        if (
+          !settingCase ||
+          !settingCase.baseline ||
+          settingCase.stage !== "data_change_preparation"
+        ) {
+          return null;
+        }
+        const now = new Date().toISOString();
+        const version = settingCase.proposedDataRevisions.length + 1;
+        const revision = buildProposedDataRevision({
+          settingCase,
+          baseline: settingCase.baseline,
+          draft,
+          version,
+          id: `proposal_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+          createdAt: now,
+          createdBy: state.currentPersona,
+        });
+        set({
+          settingCases: state.settingCases.map((item) =>
+            item.id === id
+              ? {
+                  ...item,
+                  proposedDataRevisions: [
+                    ...(item.proposedDataRevisions ?? []),
+                    revision,
+                  ],
+                  updatedAt: now,
+                }
+              : item
+          ),
+        });
+        appendAuditEvent(get, set, {
+          action: "setting_case_proposed_revision_saved",
+          scope: id,
+          targetId: revision.id,
+          summary: `Saved proposed data revision v${revision.version} for "${settingCase.title}"`,
+          detail: [
+            `kinds=${revision.kinds.join(",")}`,
+            `status=${revision.status}`,
+            `changes=${revision.fieldChanges.length}`,
+            `fingerprint=${revision.fingerprint.value}`,
+          ].join(" | "),
+        });
+        return revision.id;
+      },
+
+      saveSettingCaseImpactAssessment: (id, assessmentInput) => {
+        const state = get();
+        const settingCase = state.settingCases.find((item) => item.id === id);
+        if (
+          !settingCase ||
+          !settingCase.baseline ||
+          settingCase.stage !== "impact_and_readiness"
+        ) {
+          return null;
+        }
+        const revisions = settingCase.proposedDataRevisions ?? [];
+        const latestRevision = revisions[revisions.length - 1];
+        const assessments = settingCase.impactAssessments ?? [];
+        const now = new Date().toISOString();
+        const assessment = buildCaseImpactAssessment({
+          settingCase,
+          baseline: settingCase.baseline,
+          proposedRevision: latestRevision,
+          assessmentInput,
+          version: assessments.length + 1,
+          id: `impact_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+          evaluatedAt: now,
+          evaluatedBy: state.currentPersona,
+        });
+        set({
+          settingCases: state.settingCases.map((item) =>
+            item.id === id
+              ? {
+                  ...item,
+                  impactAssessments: [
+                    ...(item.impactAssessments ?? []),
+                    assessment,
+                  ],
+                  updatedAt: now,
+                }
+              : item
+          ),
+        });
+        appendAuditEvent(get, set, {
+          action: "setting_case_impact_assessed",
+          scope: id,
+          targetId: assessment.id,
+          summary: `Saved impact assessment v${assessment.version} for "${settingCase.title}"`,
+          detail: [
+            `status=${assessment.status}`,
+            `endpoints=${assessment.endpoints.length}`,
+            `functions=${assessment.protectionFunctions.length}`,
+            `blockers=${assessment.issues.filter((item) => item.severity === "blocker").length}`,
+            `study=${assessment.study.selectedDisposition}`,
+            `fingerprint=${assessment.fingerprint.value}`,
+          ].join(" | "),
+        });
+        return assessment.id;
+      },
+
+      saveSettingCaseStudyPackageBinding: (id, scenarioIds) => {
+        const state = get();
+        const settingCase = state.settingCases.find((item) => item.id === id);
+        if (
+          !settingCase ||
+          !settingCase.baseline ||
+          settingCase.stage !== "study_preparation"
+        ) {
+          return null;
+        }
+        const assessments = settingCase.impactAssessments ?? [];
+        const latestImpact = assessments[assessments.length - 1];
+        if (!latestImpact) return null;
+        const revisions = settingCase.proposedDataRevisions ?? [];
+        const proposedRevision =
+          revisions.find((item) => item.id === latestImpact.proposedRevisionId) ??
+          revisions[revisions.length - 1];
+        const packageBindings = settingCase.studyPackageBindings ?? [];
+        const now = new Date().toISOString();
+        const binding = buildCaseStudyPackageBinding({
+          settingCase,
+          impactAssessment: latestImpact,
+          proposedRevision,
+          scenarioIds,
+          scenarios: state.studyScenarios,
+          snapshots: state.sourceSnapshots,
+          version: packageBindings.length + 1,
+          id: `study_package_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+          boundAt: now,
+          boundBy: state.currentPersona,
+        });
+        set({
+          settingCases: state.settingCases.map((item) =>
+            item.id === id
+              ? {
+                  ...item,
+                  studyPackageBindings: [
+                    ...(item.studyPackageBindings ?? []),
+                    binding,
+                  ],
+                  links:
+                    binding.status === "compatible"
+                      ? {
+                          ...item.links,
+                          scenarioId: binding.scenarioBindings[0]?.scenario.id,
+                          scenarioIds: binding.scenarioBindings.map(
+                            (entry) => entry.scenario.id
+                          ),
+                        }
+                      : item.links,
+                  updatedAt: now,
+                }
+              : item
+          ),
+        });
+        appendAuditEvent(get, set, {
+          action: "setting_case_study_package_bound",
+          scope: id,
+          targetId: binding.id,
+          summary: `Saved study package v${binding.version} for "${settingCase.title}"`,
+          detail: [
+            `scenarios=${binding.scenarioBindings
+              .map((entry) => entry.scenario.id)
+              .join(",")}`,
+            `status=${binding.status}`,
+            `required=${binding.requirementProfile.requiredConditions.join(",")}`,
+            `missing=${binding.missingRequiredConditions.join(",") || "-"}`,
+            `blockers=${binding.issues.filter((item) => item.severity === "blocker").length}`,
+            `fingerprint=${binding.fingerprint.value}`,
+          ].join(" | "),
+        });
+        return binding.id;
+      },
+
+      advanceSettingCaseStage: (id, note) => {
+        const state = get();
+        const settingCase = state.settingCases.find((item) => item.id === id);
+        if (!settingCase || isTerminalState(settingCase.stage)) return;
+        // Scoping -> Baseline Frozen is an atomic freeze transaction, not a
+        // generic status change.
+        if (settingCase.stage === "scoping") return;
+        const latestRevision =
+          settingCase.proposedDataRevisions[
+            settingCase.proposedDataRevisions.length - 1
+          ];
+        const impactAssessments = settingCase.impactAssessments ?? [];
+        const latestImpact = impactAssessments[impactAssessments.length - 1];
+        const studyBindings = settingCase.studyBindings ?? [];
+        const latestStudyBinding = studyBindings[studyBindings.length - 1];
+        const studyPackageBindings = settingCase.studyPackageBindings ?? [];
+        const latestStudyPackage =
+          studyPackageBindings[studyPackageBindings.length - 1];
+        const linkedEvidence = settingCase.links.sourceIntakeIds
+          .map((sourceId) =>
+            state.sourceIntakeRecords.find((item) => item.id === sourceId)
+          )
+          .filter((item): item is SourceIntakeRecord => Boolean(item));
+        const crosscheckEvidence = assessCrosscheckEvidence(
+          settingCase,
+          linkedEvidence
+        );
+        const gate = stageGate(settingCase, {
+          evidenceCount: settingCase.links.sourceIntakeIds.length,
+          hasScenario: Boolean(settingCase.links.scenarioId),
+          calculationCount: settingCase.links.calculationSnapshotIds.length,
+          changeSetCount: settingCase.links.engineeringChangeSetIds.length,
+          persona: state.currentPersona,
+          hasBaseline: Boolean(settingCase.baseline),
+          proposedRevisionReady: latestRevision?.status === "ready_for_impact",
+          impactAssessmentReady:
+            latestImpact?.status === "ready_for_study" ||
+            latestImpact?.status === "ready_without_study",
+          studyBindingReady: latestStudyBinding?.status === "compatible",
+          studyPackageReady: latestStudyPackage?.status === "compatible",
+          crosscheckEvidenceBlockers: crosscheckEvidence.blockers,
+          crosscheckEvidenceWarnings: crosscheckEvidence.warnings,
+        });
+        if (gate.blockers.length > 0) return;
+        const next = nextStageOf(settingCase);
+        if (!next || !isStageImplemented(next)) return;
+        get().setSettingCaseStage(id, next, note);
+      },
+
+      setSettingCaseStage: (id, stage, note) => {
+        const state = get();
+        const settingCase = state.settingCases.find((item) => item.id === id);
+        if (!settingCase || settingCase.stage === stage) return;
+        const targetIsTerminal = isTerminalState(stage);
+        const route = applicableStages(
+          settingCase.caseType,
+          settingCase.changeItems,
+          settingCase.impactAssessments,
+          settingCase.flowProfile
+        );
+        const resumingFromHold =
+          settingCase.stage === "on_hold" &&
+          !targetIsTerminal &&
+          isStageImplemented(stage as SettingCaseStage) &&
+          [...settingCase.stageHistory]
+            .reverse()
+            .find((event) => !isTerminalState(event.stage))?.stage === stage;
+        const normalAdvance =
+          !isTerminalState(settingCase.stage) &&
+          settingCase.stage !== "scoping" &&
+          !targetIsTerminal &&
+          nextStageOf(settingCase) === stage &&
+          isStageImplemented(stage as SettingCaseStage);
+        const allowedTerminalTransition =
+          !isTerminalState(settingCase.stage) &&
+          (stage === "on_hold" || stage === "cancelled");
+
+        if (
+          (!targetIsTerminal && !route.includes(stage as SettingCaseStage)) ||
+          (!normalAdvance && !resumingFromHold && !allowedTerminalTransition)
+        ) return;
+        const now = new Date().toISOString();
+        const actor = state.currentPersona;
+        set({
+          settingCases: state.settingCases.map((item) =>
+            item.id === id
+              ? {
+                  ...item,
+                  stage,
+                  updatedAt: now,
+                  stageHistory: [...item.stageHistory, { stage, at: now, actor, note }],
+                }
+              : item
+          ),
+        });
+        appendAuditEvent(get, set, {
+          action: "setting_case_stage_changed",
+          scope: id,
+          summary: `Case "${settingCase.title}" → ${STAGE_LABEL[stage]}`,
+          detail: note,
+        });
+      },
+
+      linkToSettingCase: (id, link) => {
+        const state = get();
+        const settingCase = state.settingCases.find((item) => item.id === id);
+        if (!settingCase) return;
+        if (link.kind === "source" && settingCase.baseline) return;
+        const links = { ...settingCase.links };
+        if (link.kind === "source" && !links.sourceIntakeIds.includes(link.refId)) {
+          links.sourceIntakeIds = [...links.sourceIntakeIds, link.refId];
+        } else if (
+          link.kind === "calculation" &&
+          !links.calculationSnapshotIds.includes(link.refId)
+        ) {
+          links.calculationSnapshotIds = [...links.calculationSnapshotIds, link.refId];
+        } else if (
+          link.kind === "changeSet" &&
+          !links.engineeringChangeSetIds.includes(link.refId)
+        ) {
+          links.engineeringChangeSetIds = [...links.engineeringChangeSetIds, link.refId];
+        } else if (link.kind === "study") {
+          links.studyId = link.refId;
+        } else {
+          return;
+        }
+        set({
+          settingCases: state.settingCases.map((item) =>
+            item.id === id ? { ...item, links, updatedAt: new Date().toISOString() } : item
+          ),
+        });
+        appendAuditEvent(get, set, {
+          action: "setting_case_linked",
+          scope: id,
+          targetId: link.refId,
+          summary: `Linked ${link.kind} to case "${settingCase.title}"`,
+        });
+      },
+
+      unlinkFromSettingCase: (id, link) => {
+        const state = get();
+        const settingCase = state.settingCases.find((item) => item.id === id);
+        if (!settingCase) return;
+        if (link.kind === "source" && settingCase.baseline) return;
+        const links = { ...settingCase.links };
+        if (link.kind === "source") {
+          links.sourceIntakeIds = links.sourceIntakeIds.filter((ref) => ref !== link.refId);
+        } else if (link.kind === "calculation") {
+          links.calculationSnapshotIds = links.calculationSnapshotIds.filter(
+            (ref) => ref !== link.refId
+          );
+        } else {
+          links.engineeringChangeSetIds = links.engineeringChangeSetIds.filter(
+            (ref) => ref !== link.refId
+          );
+        }
+        set({
+          settingCases: state.settingCases.map((item) =>
+            item.id === id ? { ...item, links, updatedAt: new Date().toISOString() } : item
+          ),
+        });
+        appendAuditEvent(get, set, {
+          action: "setting_case_updated",
+          scope: id,
+          targetId: link.refId,
+          summary: `Unlinked ${link.kind} from case "${settingCase.title}"`,
         });
       },
 
@@ -1326,6 +1948,8 @@ export const useProsetStore = create<State>()(
         sourceSnapshots: state.sourceSnapshots,
         studyScenarios: state.studyScenarios,
         engineeringChangeSets: state.engineeringChangeSets,
+        settingCases: state.settingCases,
+        activeSettingCaseId: state.activeSettingCaseId,
         currentTab: state.currentTab,
         activeCorridorId: state.activeCorridorId,
         selectedRelayId: state.selectedRelayId,
@@ -1462,9 +2086,96 @@ export const useProsetStore = create<State>()(
             ),
           ];
         }
+        // v18 -> v19: Setting Case lifecycle (BUSINESS_PROCESS_BLUEPRINT.md).
+        // The case work queue becomes the deliberate landing page; existing
+        // screens remain reachable from the new navigation.
+        if (version < 19) {
+          persisted.settingCases = Array.isArray(persisted.settingCases)
+            ? persisted.settingCases
+            : [];
+          persisted.activeSettingCaseId = persisted.activeSettingCaseId ?? null;
+          persisted.currentTab = "cases";
+        }
+        // v19 -> v20: immutable case baseline and append-only proposed data
+        // revision history. Existing cases retain their current stage but do
+        // not receive an invented baseline.
+        if (version < 20 && Array.isArray(persisted.settingCases)) {
+          persisted.settingCases = persisted.settingCases.map(
+            (settingCase: SettingCase) => ({
+              ...settingCase,
+              proposedDataRevisions: Array.isArray(
+                settingCase.proposedDataRevisions
+              )
+                ? settingCase.proposedDataRevisions
+                : [],
+            })
+          );
+        }
+        if (version < 21 && Array.isArray(persisted.settingCases)) {
+          persisted.settingCases = persisted.settingCases.map(
+            (settingCase: SettingCase) => ({
+              ...settingCase,
+              impactAssessments: Array.isArray(settingCase.impactAssessments)
+                ? settingCase.impactAssessments
+                : [],
+            })
+          );
+        }
+        // v21 -> v22: append-only Study Scenario compatibility bindings.
+        // Existing scenario links are not promoted into bindings because they
+        // do not prove revision compatibility.
+        if (version < 22 && Array.isArray(persisted.settingCases)) {
+          persisted.settingCases = persisted.settingCases.map(
+            (settingCase: SettingCase) => ({
+              ...settingCase,
+              studyBindings: Array.isArray(settingCase.studyBindings)
+                ? settingCase.studyBindings
+                : [],
+            })
+          );
+        }
+        // v22 -> v23: Sprint 4.1 flow authority/activation contract and
+        // multi-condition Study Scenario Package. A legacy single-scenario
+        // binding is retained as history but is not auto-promoted to a
+        // compatible package.
+        if (version < 23 && Array.isArray(persisted.settingCases)) {
+          persisted.settingCases = persisted.settingCases.map(
+            (settingCase: SettingCase) => ({
+              ...settingCase,
+              flowProfile:
+                settingCase.flowProfile ??
+                buildCaseFlowProfile({
+                  caseType: settingCase.caseType,
+                  changeItems: settingCase.changeItems ?? [],
+                  urgency: settingCase.urgency ?? "normal",
+                  owningUnit: settingCase.owningUnit ?? "",
+                  actor: settingCase.createdBy ?? "Migrated user",
+                  draft: {
+                    ownerLevel: "UPT",
+                    notifiedUnits: settingCase.remoteUnit
+                      ? [settingCase.remoteUnit]
+                      : [],
+                  },
+                }),
+              studyPackageBindings: Array.isArray(
+                settingCase.studyPackageBindings
+              )
+                ? settingCase.studyPackageBindings
+                : [],
+              links: {
+                ...settingCase.links,
+                scenarioIds: Array.isArray(settingCase.links?.scenarioIds)
+                  ? settingCase.links.scenarioIds
+                  : settingCase.links?.scenarioId
+                    ? [settingCase.links.scenarioId]
+                    : [],
+              },
+            })
+          );
+        }
         return persisted;
       },
-      version: 18,
+      version: 23,
     }
   )
 );

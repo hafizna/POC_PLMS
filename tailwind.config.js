@@ -12,8 +12,26 @@ export default {
           "Consolas",
           "monospace",
         ],
+        display: [
+          '"Iowan Old Style"',
+          '"Palatino Linotype"',
+          "Palatino",
+          "Georgia",
+          "serif",
+        ],
       },
       colors: {
+        ink: {
+          DEFAULT: "#111418",
+          2: "#3d4650",
+          3: "#6b7684",
+          4: "#98a2ad",
+        },
+        line: {
+          DEFAULT: "#dde3ea",
+          2: "#eef1f5",
+        },
+        panel: "#eef2f7",
         zone1: {
           DEFAULT: "#dc2626",
           fill: "rgba(220, 38, 38, 0.4)",

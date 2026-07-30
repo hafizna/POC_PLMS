@@ -803,6 +803,84 @@ The database menus remain available to Data Stewards and advanced engineering ro
 
 ## 13. Recommended MVP Remap
 
+### Current implementation boundary — Sprint 4.1
+
+The executable workflow currently covers `Draft`, `Scoping`, `Baseline Frozen`,
+`Data Change Preparation`, `Impact and Readiness`, and `Study Preparation`.
+Sprint 1 established
+business intent, reason-driven P1–P5 routing, ownership, protected scope, and
+evidence links. Sprint 2 added:
+
+- an immutable scoped case baseline containing frozen case context, network,
+  bays, line relations, relays, protection functions, evidence metadata, known
+  revision bindings, unresolved readiness issues, and a deterministic fingerprint;
+- evidence locking after baseline freeze;
+- append-only Proposed Data Revision versions with reason-specific fields for
+  reconductoring, CT, VT, relay, topology, policy, master correction, or other
+  technical work;
+- structural completeness validation without claiming engineering approval;
+- explicit preservation of active data: proposals are case payloads only.
+
+Sprint 3 adds a versioned `Case Impact Assessment` that:
+
+- derives local, remote, and one-hop neighboring endpoints from the frozen
+  network scope;
+- distinguishes installed protection functions from functions inferred by the
+  change-impact rule matrix;
+- evaluates relay identity, CT/VT, line electrical data, ownership, proposal,
+  baseline-revision, and evidence blockers;
+- enforces a new-study rule for reconductoring, GI insertion, and topology
+  changes;
+- marks CT/VT/relay/policy cases only as approved-scenario reuse candidates;
+- requires an explicit engineering decision for remote-side work and generic
+  master-data correction;
+- retains engineer scope confirmation and each assessment version/fingerprint.
+
+Sprint 4 adds append-only `Case Study Binding` versions that:
+
+- freeze the selected Study Scenario plus its network and fault snapshots so
+  later registry edits cannot rewrite prior evidence;
+- require an approved scenario, explicit operating condition, calculation
+  timestamp, source evidence, checksums, and eligible snapshot lifecycle state;
+- test scenario/snapshot revision consistency;
+- test reuse candidates against the frozen baseline network revision;
+- test mandatory new studies against the proposed network revision and reject
+  silent reuse of the baseline revision;
+- dynamically include or skip `Study Preparation` from the latest ready impact
+  disposition, including for master-data correction;
+- preserve blocked binding attempts in history and open the next gate only for
+  the latest compatible binding.
+
+The reconductoring proposal contract now requires an explicit proposed network
+revision/change-set reference. Missing active network/technical revision
+identities remain blockers rather than invented defaults. The indexed IHS 2021
+scenario is historical, has unknown condition/timestamp, and therefore remains
+reference-only rather than being auto-promoted.
+
+`Calculation` and all later stages remain locked. Existing calculation,
+comparison, register, vendor-import, network-builder, coverage, and report
+screens remain POC tools and are explicitly marked as not case-gated.
+
+Sprint 4.1 hardens the business flow before calculation:
+
+- P1 explicitly separates `issued_tap_document_audit` (official PDF TAP versus
+  issued register) from `actual_relay_readback_verification` (native/official
+  relay export). A PDF is never labelled as proof of actual installed setting.
+- case authority records owner level (`UPT`/`UIT`), maker, checker role,
+  approver role, notified units, and the UPT-to-UIT acknowledgement obligation;
+- permanent cases use the post-commission target network revision and exclude
+  the construction outage unless a temporary-setting request exists;
+- temporary/emergency cases require an expiry, emergency reason, and
+  restoration obligation;
+- one universal scenario is replaced by a requirement-driven Study Scenario
+  Package. Maximum/minimum/normal conditions are required only when the
+  impacted protection functions need them;
+- approval and activation are separate. Physical setting/technical revisions
+  activate on commissioning evidence; administrative-only corrections activate
+  on approved effective date;
+- visible future routes include commissioning/activation and restoration, but
+  their operational handlers remain outside the Sprint 4.1 executable boundary.
+
 ### Foundation F1 — Domain and Governance
 
 - canonical entity identities and effective dating;
