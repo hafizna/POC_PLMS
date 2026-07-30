@@ -19,12 +19,13 @@ const statusBadge: Record<LifecycleStatus, string> = {
   rejected: "bg-red-50 text-red-700 border-red-200",
   approved: "bg-emerald-50 text-emerald-700 border-emerald-200",
   issued: "bg-violet-50 text-violet-700 border-violet-200",
+  superseded: "bg-orange-50 text-orange-700 border-orange-200",
 };
 
 type Props = {
   line: NetworkLine;
   activeCase: NetworkCase;
-  miniNmm?: UnifiedNetwork;
+  networkGraph?: UnifiedNetwork;
   status?: RelationStatus;
 };
 
@@ -41,18 +42,18 @@ const PROTECTION_ORDER: ProtectionFunctionId[] = [
   "TELE",
 ];
 
-export function LineDetailPanel({ line, activeCase, miniNmm, status }: Props) {
+export function LineDetailPanel({ line, activeCase, networkGraph, status }: Props) {
   const setTab = useProsetStore((s) => s.setTab);
   const selectLine = useProsetStore((s) => s.selectLine);
   const ctVtOverrides = useProsetStore((s) => s.ctVtOverrides);
 
   const fromNode = activeCase.nodes.find((n) => n.id === line.fromNodeId);
   const toNode = activeCase.nodes.find((n) => n.id === line.toNodeId);
-  const relation = miniNmm?.lineRelations.find((r) => r.id === line.id);
-  const fromBay = relation ? miniNmm?.bays.find((b) => b.id === relation.fromBayId) : undefined;
-  const toBay = relation ? miniNmm?.bays.find((b) => b.id === relation.toBayId) : undefined;
-  const fromIed = fromBay ? miniNmm?.relayIeds.find((i) => i.bayId === fromBay.id) : undefined;
-  const toIed = toBay ? miniNmm?.relayIeds.find((i) => i.bayId === toBay.id) : undefined;
+  const relation = networkGraph?.lineRelations.find((r) => r.id === line.id);
+  const fromBay = relation ? networkGraph?.bays.find((b) => b.id === relation.fromBayId) : undefined;
+  const toBay = relation ? networkGraph?.bays.find((b) => b.id === relation.toBayId) : undefined;
+  const fromIed = fromBay ? networkGraph?.relayIeds.find((i) => i.bayId === fromBay.id) : undefined;
+  const toIed = toBay ? networkGraph?.relayIeds.find((i) => i.bayId === toBay.id) : undefined;
   const fromCtVt = getEffectiveCtVt(fromIed, ctVtOverrides);
   const toCtVt = getEffectiveCtVt(toIed, ctVtOverrides);
 
@@ -204,6 +205,7 @@ function pickHighest(items: FunctionPromotion[]): FunctionPromotion {
   const rank: Record<LifecycleStatus, number> = {
     imported: 0,
     rejected: 0,
+    superseded: 0,
     reviewed: 1,
     approved: 2,
     issued: 3,

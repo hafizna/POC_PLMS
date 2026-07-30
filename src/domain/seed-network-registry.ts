@@ -1,9 +1,9 @@
 import type { LifecycleStatus } from "./unified";
 import {
-  MINI_NMM_NETWORK_NODES,
-  MINI_NMM_NETWORK_LINES,
-  MINI_NMM_RELAY_ASSETS,
-} from "./mini-nmm";
+  NETWORK_GRAPH_NODES,
+  NETWORK_GRAPH_LINES,
+  NETWORK_GRAPH_RELAY_ASSETS,
+} from "./network-graph";
 
 export type RegistryConfidence = "high" | "medium" | "low" | "missing";
 
@@ -38,6 +38,11 @@ export type NetworkLine = {
   vtRatio?: string;
   relayMain?: string;
   protectionFunctions: string[];
+  r1Ohm?: number;
+  x1Ohm?: number;
+  r0Ohm?: number;
+  x0Ohm?: number;
+  currentRatingKa?: number;
   lineXOhm?: number;
   physicalLengthKm?: number;
   sourceIds: string[];
@@ -145,14 +150,14 @@ export const REGISTRY_SOURCES: RegistrySource[] = [
   },
 ];
 
-// Corridor topology data is derived from the mini-NMM single source of truth
-// in src/domain/mini-nmm.ts. To change a node, bay, line, or IED for the
+// Corridor topology data is derived from the network graph single source of truth
+// in src/domain/network-graph.ts. To change a node, bay, line, or IED for the
 // corridor case, edit the seeds there.
-export const NETWORK_NODES: NetworkNode[] = MINI_NMM_NETWORK_NODES;
+export const NETWORK_NODES: NetworkNode[] = NETWORK_GRAPH_NODES;
 
-export const NETWORK_LINES: NetworkLine[] = MINI_NMM_NETWORK_LINES;
+export const NETWORK_LINES: NetworkLine[] = NETWORK_GRAPH_LINES;
 
-export const RELAY_ASSETS: RelayAsset[] = MINI_NMM_RELAY_ASSETS;
+export const RELAY_ASSETS: RelayAsset[] = NETWORK_GRAPH_RELAY_ASSETS;
 
 export const ULTG_INVENTORY_NODES: NetworkNode[] = [
   { id: "angke", name: "Angke", shortCode: "AGK", type: "GI", voltageKv: 150, sldSourceId: "src_sld_folder" },

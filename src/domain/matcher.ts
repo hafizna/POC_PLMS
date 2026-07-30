@@ -20,8 +20,8 @@ export type ImportedEndpoint = {
 export type MatchStatus =
   | "matched"            // exactly 1 LineRelation cocok
   | "ambiguous"          // multi candidate; user pilih manual
-  | "needs_relation"     // both substations ada di mini-NMM, line belum ada
-  | "needs_substation"   // remote substation belum ada di mini-NMM (perlu expansion)
+  | "needs_relation"     // both substations ada di network graph, line belum ada
+  | "needs_substation"   // remote substation belum ada di network graph (perlu expansion)
   | "unmatched";         // local substation bukan bagian case
 
 export type LineMatch = {
@@ -115,7 +115,7 @@ export function matchEndpointToLine(
     return {
       status: "needs_relation",
       candidateLineIds: [],
-      reason: "Both substations exist in mini-NMM, but no line relation connects them. Add relation.",
+      reason: "Both substations exist in network graph, but no line relation connects them. Add relation.",
       localStationHint: localStation,
       remoteStationHint: remote.endpoint,
     };
@@ -123,7 +123,7 @@ export function matchEndpointToLine(
   return {
     status: "needs_substation",
     candidateLineIds: [],
-    reason: `Remote endpoint "${remote.endpoint}" not yet in mini-NMM. Add substation + relation.`,
+    reason: `Remote endpoint "${remote.endpoint}" not yet in network graph. Add substation + relation.`,
     localStationHint: localStation,
     remoteStationHint: remote.endpoint,
   };
@@ -133,7 +133,7 @@ export function matchEndpointToLine(
 // substation and bay strings) belongs to the active case. Replaces the
 // hardcoded `/DURIKOSAMBI|DAAN MOGOT|.../i` regex used to scope inbox/import
 // previews to the corridor — the predicate is now derived from the case's
-// own substation list, so adding a new case in mini-NMM or NETWORK_CASES
+// own substation list, so adding a new case in network graph or NETWORK_CASES
 // automatically widens the scope.
 export function buildCaseScopePredicate(
   nodes: NetworkNode[]

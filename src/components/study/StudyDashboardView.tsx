@@ -1,13 +1,13 @@
 import { useMemo, useState } from "react";
-import { Calculator, ClipboardList, FileText, GitCompareArrows, Network, Plus, Route, Search, Settings2 } from "lucide-react";
+import { AlertTriangle, Calculator, CheckCircle2, ClipboardList, Database, FileSearch, FileText, GitCompareArrows, Inbox, Network, Plus, Route, Search, Settings2 } from "lucide-react";
 import { NETWORK_CASES, ULTG_INVENTORY_NODES } from "../../domain/seed-network-registry";
 import {
-  getEffectiveMiniNmm,
+  getEffectiveNetworkGraph,
   INVENTORY_MASTER_CASE_ID,
   mergeMasterRelationsIntoCase,
-  networkLinesFromMiniNmm,
-  networkNodesFromMiniNmm,
-} from "../../domain/mini-nmm";
+  networkLinesFromGraph,
+  networkNodesFromGraph,
+} from "../../domain/network-graph";
 import { buildUnifiedNetwork } from "../../domain/unified";
 import { useProsetStore } from "../../store/useProsetStore";
 import { normalizeStationName } from "../../domain/normalization";
@@ -23,6 +23,12 @@ import {
   summarizeOcrMismatch,
 } from "../../domain/ocr-import";
 import { getEffectiveCtVt } from "../../domain/instrument-transformers";
+import {
+  resolveFaultScenario,
+  type ScenarioResolution,
+  type SourceSnapshot,
+  type StudyScenario,
+} from "../../domain/engineering-data";
 
 type BayStatus =
   | "perlu mapping"
@@ -55,49 +61,61 @@ export function StudyDashboardView() {
   const [isWizardOpen, setIsWizardOpen] = useState(false);
 
   const activeCaseId = useProsetStore((s) => s.activeNetworkCaseId);
-  const miniNmmOverrides = useProsetStore((s) => s.miniNmmOverrides);
+  const networkGraphOverrides = useProsetStore((s) => s.networkGraphOverrides);
   const ctVtOverrides = useProsetStore((s) => s.ctVtOverrides);
   const setTab = useProsetStore((s) => s.setTab);
   const selectLine = useProsetStore((s) => s.selectLine);
   const studies = useProsetStore((s) => s.studies);
   const activeStudyId = useProsetStore((s) => s.activeStudyId);
   const setActiveStudy = useProsetStore((s) => s.setActiveStudy);
+  const sourceSnapshots = useProsetStore((s) => s.sourceSnapshots);
+  const studyScenarios = useProsetStore((s) => s.studyScenarios);
+  const setStudyScenario = useProsetStore((s) => s.setStudyScenario);
   
   const activeStudy = studies.find((study) => study.id === activeStudyId);
+  const scenarioResolution = useMemo(
+    () =>
+      resolveFaultScenario(
+        sourceSnapshots,
+        studyScenarios,
+        activeStudy?.scenarioId
+      ),
+    [activeStudy?.scenarioId, sourceSnapshots, studyScenarios]
+  );
   const activeCase =
     NETWORK_CASES.find((item) => item.id === activeCaseId) ?? NETWORK_CASES[0];
   const inventoryCase =
     NETWORK_CASES.find((item) => item.id === INVENTORY_MASTER_CASE_ID) ?? activeCase;
   
-  const fallbackMiniNmm = useMemo(() => buildUnifiedNetwork(activeCase), [activeCase]);
-  const masterFallbackMiniNmm = useMemo(() => buildUnifiedNetwork(inventoryCase), [inventoryCase]);
+  const fallbackNetworkGraph = useMemo(() => buildUnifiedNetwork(activeCase), [activeCase]);
+  const masterFallbackNetworkGraph = useMemo(() => buildUnifiedNetwork(inventoryCase), [inventoryCase]);
   
-  const masterMiniNmm = useMemo(
+  const masterNetworkGraph = useMemo(
     () =>
-      getEffectiveMiniNmm(
+      getEffectiveNetworkGraph(
         INVENTORY_MASTER_CASE_ID,
-        miniNmmOverrides[INVENTORY_MASTER_CASE_ID],
-        masterFallbackMiniNmm
+        networkGraphOverrides[INVENTORY_MASTER_CASE_ID],
+        masterFallbackNetworkGraph
       ),
-    [masterFallbackMiniNmm, miniNmmOverrides]
+    [masterFallbackNetworkGraph, networkGraphOverrides]
   );
   
-  const miniNmm = useMemo(
+  const networkGraph = useMemo(
     () =>
       mergeMasterRelationsIntoCase(
-        getEffectiveMiniNmm(activeCase.id, miniNmmOverrides[activeCase.id], fallbackMiniNmm),
-        masterMiniNmm
+        getEffectiveNetworkGraph(activeCase.id, networkGraphOverrides[activeCase.id], fallbackNetworkGraph),
+        masterNetworkGraph
       ),
-    [activeCase.id, fallbackMiniNmm, masterMiniNmm, miniNmmOverrides]
+    [activeCase.id, fallbackNetworkGraph, masterNetworkGraph, networkGraphOverrides]
   );
 
   const derivedNodes = useMemo(
-    () => (miniNmm ? networkNodesFromMiniNmm(miniNmm) : activeCase.nodes),
-    [activeCase.nodes, miniNmm]
+    () => (networkGraph ? networkNodesFromGraph(networkGraph) : activeCase.nodes),
+    [activeCase.nodes, networkGraph]
   );
   const derivedLines = useMemo(
-    () => (miniNmm ? networkLinesFromMiniNmm(miniNmm) : activeCase.lines),
-    [activeCase.lines, miniNmm]
+    () => (networkGraph ? networkLinesFromGraph(networkGraph) : activeCase.lines),
+    [activeCase.lines, networkGraph]
   );
 
   const lineReadiness = useMemo(() => {
@@ -130,17 +148,17 @@ export function StudyDashboardView() {
   }, [derivedLines, derivedNodes]);
 
   const rows: BayRow[] = useMemo(() => {
-    if (!miniNmm) return [];
+    if (!networkGraph) return [];
     const scopedSubstations = buildStudyScopeKeys(activeStudy?.substationIds ?? []);
-    return miniNmm.bays
+    return networkGraph.bays
       .flatMap((bay) => {
-        const sub = miniNmm.substations.find((item) => item.id === bay.substationId);
+        const sub = networkGraph.substations.find((item) => item.id === bay.substationId);
         // Only show bays in the active study scope
         if (scopedSubstations.size > 0 && !isSubstationInScope(sub, bay.substationId, scopedSubstations)) {
           return [];
         }
         
-        const relation = miniNmm.lineRelations.find(
+        const relation = networkGraph.lineRelations.find(
           (item) => item.fromBayId === bay.id || item.toBayId === bay.id
         );
         const remoteSubId =
@@ -149,9 +167,9 @@ export function StudyDashboardView() {
             : relation?.toBayId === bay.id
               ? relation.fromSubstationId
               : undefined;
-        const remoteSub = miniNmm.substations.find((item) => item.id === remoteSubId);
-        const ied = miniNmm.relayIeds.find((item) => item.bayId === bay.id);
-        const functions = miniNmm.protectionFunctions
+        const remoteSub = networkGraph.substations.find((item) => item.id === remoteSubId);
+        const ied = networkGraph.relayIeds.find((item) => item.bayId === bay.id);
+        const functions = networkGraph.protectionFunctions
           .filter((item) => item.relayIedId === ied?.id)
           .map((item) => item.function);
 
@@ -209,7 +227,7 @@ export function StudyDashboardView() {
       .sort((a, b) =>
         `${a.substationCode} ${a.bayName}`.localeCompare(`${b.substationCode} ${b.bayName}`)
       );
-  }, [activeStudy?.substationIds, ctVtOverrides, lineReadiness.driftLineIds, lineReadiness.lcdTapLineIds, miniNmm]);
+  }, [activeStudy?.substationIds, ctVtOverrides, lineReadiness.driftLineIds, lineReadiness.lcdTapLineIds, networkGraph]);
 
   const filteredRows = useMemo(() => {
     const q = search.toLowerCase();
@@ -319,6 +337,28 @@ export function StudyDashboardView() {
           </div>
         )}
       </section>
+
+      {activeStudy && (
+        <StudyScenarioPanel
+          studyName={activeStudy.name}
+          scenarioId={activeStudy.scenarioId}
+          scenarios={studyScenarios}
+          snapshots={sourceSnapshots}
+          resolution={scenarioResolution}
+          onChange={(scenarioId) => setStudyScenario(activeStudy.id, scenarioId)}
+        />
+      )}
+
+      {activeStudy && (
+        <GuidedFlowPanel
+          relationCount={relationCount}
+          mappedBayCount={rows.filter((row) => row.relationId).length}
+          readyCount={readyCount}
+          comparisonCount={rows.filter((row) => row.hasComparison).length}
+          coverageReadyCount={coverageReadyCount}
+          onNavigate={setTab}
+        />
+      )}
 
       {activeStudy && (
         <section className="bg-white border border-slate-200 rounded-lg overflow-hidden flex flex-col min-h-[500px]">
@@ -454,6 +494,232 @@ export function StudyDashboardView() {
         </section>
       )}
     </div>
+  );
+}
+
+function StudyScenarioPanel({
+  studyName,
+  scenarioId,
+  scenarios,
+  snapshots,
+  resolution,
+  onChange,
+}: {
+  studyName: string;
+  scenarioId?: string;
+  scenarios: StudyScenario[];
+  snapshots: SourceSnapshot[];
+  resolution: ScenarioResolution;
+  onChange: (scenarioId: string | null) => void;
+}) {
+  const selected = scenarios.find((scenario) => scenario.id === scenarioId);
+  const networkSnapshot = selected
+    ? snapshots.find((snapshot) => snapshot.id === selected.networkSnapshotId)
+    : undefined;
+  const faultSnapshot = selected?.faultSnapshotId
+    ? snapshots.find((snapshot) => snapshot.id === selected.faultSnapshotId)
+    : undefined;
+  const blocked = resolution.status === "blocked";
+
+  return (
+    <section
+      className={`rounded-lg border overflow-hidden ${
+        blocked ? "border-amber-300 bg-amber-50/40" : "border-blue-200 bg-white"
+      }`}
+    >
+      <div
+        className={`px-4 py-3 border-b flex items-start justify-between gap-4 flex-wrap ${
+          blocked ? "border-amber-200 bg-amber-50" : "border-blue-200 bg-blue-50"
+        }`}
+      >
+        <div className="flex items-start gap-2">
+          {blocked ? (
+            <AlertTriangle className="w-4 h-4 text-amber-700 mt-0.5" />
+          ) : (
+            <Database className="w-4 h-4 text-blue-700 mt-0.5" />
+          )}
+          <div>
+            <h3 className="text-xs uppercase tracking-wider font-semibold text-slate-800">
+              Study Scenario
+            </h3>
+            <p className="text-[11px] text-slate-600 mt-0.5">
+              Fault level untuk {studyName} hanya boleh diambil melalui scenario ini.
+            </p>
+          </div>
+        </div>
+        <select
+          value={scenarioId ?? ""}
+          onChange={(event) => onChange(event.target.value || null)}
+          className="min-w-72 bg-white text-xs px-3 py-2 rounded border border-slate-300 focus:border-blue-500 focus:outline-none"
+        >
+          <option value="">Select scenario — fault lookup blocked</option>
+          {scenarios.map((scenario) => (
+            <option key={scenario.id} value={scenario.id}>
+              {scenario.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {selected ? (
+        <div className="p-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 text-xs">
+            <ScenarioDatum label="Network revision" value={selected.networkRevisionId} />
+            <ScenarioDatum
+              label="Method / condition"
+              value={`${selected.studyMethod} / ${selected.condition}`}
+            />
+            <ScenarioDatum
+              label="Network snapshot"
+              value={networkSnapshot?.label ?? selected.networkSnapshotId}
+            />
+            <ScenarioDatum
+              label="Fault snapshot"
+              value={faultSnapshot?.label ?? selected.faultSnapshotId ?? "not selected"}
+            />
+          </div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <span className="text-[10px] px-2 py-1 rounded border border-slate-200 bg-slate-50 text-slate-600">
+              calculated at: {selected.calculatedAt ?? "unknown"}
+            </span>
+            <span className="text-[10px] px-2 py-1 rounded border border-slate-200 bg-slate-50 text-slate-600">
+              generation: {selected.generationState}
+            </span>
+            <span className="text-[10px] px-2 py-1 rounded border border-slate-200 bg-slate-50 text-slate-600">
+              source state: {selected.sourceState}
+            </span>
+          </div>
+          {resolution.issues.length > 0 && (
+            <div className="mt-3 space-y-1">
+              {resolution.issues.map((issue, index) => (
+                <div
+                  key={`${issue.code}-${index}`}
+                  className={`text-[11px] ${
+                    issue.severity === "error" ? "text-red-700" : "text-amber-700"
+                  }`}
+                >
+                  {issue.severity === "error" ? "Blocked" : "Review"}: {issue.message}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="p-4 text-xs text-amber-800">
+          No scenario is attached. Automatic fault-study lookup is blocked; manual values must
+          be identified explicitly as manual input.
+        </div>
+      )}
+    </section>
+  );
+}
+
+function ScenarioDatum({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded border border-slate-200 bg-slate-50/70 p-2.5">
+      <div className="text-[10px] uppercase tracking-wider font-semibold text-slate-500">
+        {label}
+      </div>
+      <div className="text-xs text-slate-800 mt-1">{value}</div>
+    </div>
+  );
+}
+
+function GuidedFlowPanel({
+  relationCount,
+  mappedBayCount,
+  readyCount,
+  comparisonCount,
+  coverageReadyCount,
+  onNavigate,
+}: {
+  relationCount: number;
+  mappedBayCount: number;
+  readyCount: number;
+  comparisonCount: number;
+  coverageReadyCount: number;
+  onNavigate: (tab: "source-index" | "network-model" | "inbox" | "calculation" | "comparison" | "verified-report") => void;
+}) {
+  const steps = [
+    {
+      label: "Source Documents",
+      detail: "SLD, TAP, workbook, and validation docs indexed",
+      icon: <FileSearch className="w-4 h-4" />,
+      done: true,
+      action: () => onNavigate("source-index"),
+    },
+    {
+      label: "Working Network",
+      detail: `${relationCount} relation${relationCount === 1 ? "" : "s"} modeled`,
+      icon: <Network className="w-4 h-4" />,
+      done: relationCount > 0,
+      action: () => onNavigate("network-model"),
+    },
+    {
+      label: "Mapping Inbox",
+      detail: `${mappedBayCount} bay${mappedBayCount === 1 ? "" : "s"} linked to relation`,
+      icon: <Inbox className="w-4 h-4" />,
+      done: mappedBayCount > 0,
+      action: () => onNavigate("inbox"),
+    },
+    {
+      label: "Calculation",
+      detail: `${readyCount} bay${readyCount === 1 ? "" : "s"} ready for workbook`,
+      icon: <Calculator className="w-4 h-4" />,
+      done: readyCount > 0,
+      action: () => onNavigate("calculation"),
+    },
+    {
+      label: "Comparison",
+      detail: `${comparisonCount} line${comparisonCount === 1 ? "" : "s"} with comparison data`,
+      icon: <GitCompareArrows className="w-4 h-4" />,
+      done: comparisonCount > 0,
+      action: () => onNavigate("comparison"),
+    },
+    {
+      label: "Report",
+      detail: `${coverageReadyCount} line${coverageReadyCount === 1 ? "" : "s"} coverage ready`,
+      icon: <FileText className="w-4 h-4" />,
+      done: coverageReadyCount > 0,
+      action: () => onNavigate("verified-report"),
+    },
+  ];
+
+  return (
+    <section className="bg-white border border-slate-200 rounded-lg overflow-hidden">
+      <div className="border-b border-slate-200 px-4 py-3 bg-slate-50 flex items-center justify-between gap-3 flex-wrap">
+        <div>
+          <h3 className="text-sm font-semibold text-slate-800">Guided Flow</h3>
+          <div className="text-[11px] text-slate-500 mt-0.5">
+            Jalur kerja utama dari dokumen sumber sampai verified report.
+          </div>
+        </div>
+        <span className="text-[10px] px-2 py-1 rounded border border-blue-200 bg-blue-50 text-blue-700">
+          {steps.filter((step) => step.done).length}/{steps.length} ready
+        </span>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 divide-y md:divide-y-0 md:divide-x divide-slate-100">
+        {steps.map((step, index) => (
+          <button
+            key={step.label}
+            type="button"
+            onClick={step.action}
+            className="text-left p-4 hover:bg-slate-50 transition-colors"
+          >
+            <div className="flex items-center justify-between gap-2">
+              <span className={`inline-flex items-center justify-center rounded-md border p-1.5 ${
+                step.done ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-slate-200 bg-white text-slate-500"
+              }`}>
+                {step.done ? <CheckCircle2 className="w-4 h-4" /> : step.icon}
+              </span>
+              <span className="text-[10px] text-slate-400">Step {index + 1}</span>
+            </div>
+            <div className="mt-3 text-xs font-semibold text-slate-900">{step.label}</div>
+            <div className="mt-1 text-[11px] leading-4 text-slate-500">{step.detail}</div>
+          </button>
+        ))}
+      </div>
+    </section>
   );
 }
 

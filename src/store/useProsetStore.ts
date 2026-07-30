@@ -6,11 +6,11 @@ import { COMPARISON_BAYS, findComparisonBayIdForLine } from "../domain/seed-comp
 import { NETWORK_CASES } from "../domain/seed-network-registry";
 import { buildUnifiedNetwork } from "../domain/unified";
 import {
-  getEffectiveMiniNmm,
+  getEffectiveNetworkGraph,
   INVENTORY_MASTER_CASE_ID,
   mergeMasterRelationsIntoCase,
-  networkLinesFromMiniNmm,
-} from "../domain/mini-nmm";
+  networkLinesFromGraph,
+} from "../domain/network-graph";
 import type {
   Bay,
   Busbar,
@@ -22,8 +22,22 @@ import type {
   ProtectionFunctionId,
 } from "../domain/unified";
 import type { CtSpec, VtSpec } from "../domain/instrument-transformers";
+import type { VerificationReferenceDraft } from "../domain/setting-verification";
+import type { VendorImportHandoffDraft } from "../domain/vendor-import";
+import {
+  LEGACY_STUDY_SCENARIO_ID,
+  cloneDefaultSourceSnapshots,
+  cloneDefaultStudyScenarios,
+  type SourceSnapshot,
+  type StudyScenario,
+} from "../domain/engineering-data";
+import {
+  buildInsertionChangeSet,
+  type EngineeringChangeBaseline,
+  type EngineeringChangeSet,
+} from "../domain/engineering-change";
 
-export type MiniNmmOverride = {
+export type NetworkGraphOverride = {
   substations: UnifiedSubstation[];
   busbars: Busbar[];
   bays: Bay[];
@@ -32,7 +46,15 @@ export type MiniNmmOverride = {
   ieds: RelayIED[];
 };
 
-const EMPTY_OVERRIDE: MiniNmmOverride = {
+export type NetworkUndoEntry = {
+  id: string;
+  caseId: string;
+  at: string;
+  summary: string;
+  overrideBefore?: NetworkGraphOverride;
+};
+
+const EMPTY_OVERRIDE: NetworkGraphOverride = {
   substations: [],
   busbars: [],
   bays: [],
@@ -42,16 +64,18 @@ const EMPTY_OVERRIDE: MiniNmmOverride = {
 };
 
 export type Tab =
+  | "reference-setting"
   | "home"
   | "master-data"
   | "study-dashboard"
   | "network-model"
-  | "mini-nmm-editor"
+  | "network-graph-editor"
   | "source-index"
   | "inbox"
   | "line-registry"
   | "calculation"
   | "comparison"
+  | "vendor-import"
   | "coverage"
   | "verified-report"
   | "audit-trail";
@@ -67,6 +91,7 @@ export type Study = {
   subjectBayId?: string;
   subjectLineId?: string;
   subjectLabel?: string;
+  scenarioId?: string;
   sourceBridge?: {
     kind: "legacy_crosscheck_workbook";
     sourceRef: string;
@@ -80,18 +105,44 @@ export type CreateStudyOptions = {
   subjectBayId?: string;
   subjectLineId?: string;
   subjectLabel?: string;
+  scenarioId?: string;
   sourceBridge?: Study["sourceBridge"];
 };
 
+// Two Studies, each scoped to one subject line — not one Study spanning
+// four GI as a single "corridor" (the old seed's mistake: a Study should be
+// "test protection for this one penghantar", with neighbors included only
+// for Z2/Z3 forward-chain context, not as co-equal subjects). Both draw
+// their subjectBayId/subjectLineId from NETWORK_GRAPH_DKS_PIK, which is now
+// built from the graph-builder anchor (digsilentLineDb-confirmed shortCodes
+// DKSBI/DNMGT/PINKA/MB), not the retired generateCorridorNmm generator.
 const DEFAULT_STUDIES: Study[] = [
   {
-    id: "study_dks_dm_pik_mkb",
-    name: "Koridor DKS - DM - PIK - MKB",
+    id: "study_dksbi_dnmgt",
+    name: "Penghantar DKSBI - DNMGT",
     description:
-      "Analisis distance/LCD setting penghantar 150 kV koridor Durikosambi - Daan Mogot - Pantai Indah Kapuk - Muarakarang Baru, termasuk cabang DKS-GRB dan DKS-KBJ.",
+      "Analisis distance/LCD setting penghantar 150 kV Durikosambi - Daan Mogot. Neighbor DNMGT-PINKA disertakan untuk konteks Z2/Z3 forward-chain.",
     createdAt: "2026-01-15T00:00:00Z",
-    updatedAt: "2026-05-09T00:00:00Z",
-    substationIds: ["dks", "daan_mogot", "pantai_indah_kapuk", "muarakarang_baru_gi", "grogol_baru", "kebon_jeruk"],
+    updatedAt: "2026-07-29T00:00:00Z",
+    substationIds: ["sub_durikosambi", "sub_daan_mogot", "sub_pantai_indah_kapuk"],
+    subjectBayId: "bay_sub_durikosambi_sub_daan_mogot_1",
+    subjectLineId: "anchor_line_359",
+    subjectLabel: "DKSBI | PHT 150kV DAAN MOGOT GIS#1",
+    scenarioId: LEGACY_STUDY_SCENARIO_ID,
+    status: "active",
+  },
+  {
+    id: "study_dnmgt_pinka",
+    name: "Penghantar DNMGT - PINKA",
+    description:
+      "Analisis distance/LCD setting penghantar 150 kV Daan Mogot - Pantai Indah Kapuk. Neighbor DKSBI-DNMGT (reverse) dan PINKA-MB (forward) disertakan untuk konteks Z2/Z3.",
+    createdAt: "2026-01-15T00:00:00Z",
+    updatedAt: "2026-07-29T00:00:00Z",
+    substationIds: ["sub_daan_mogot", "sub_pantai_indah_kapuk", "sub_durikosambi", "sub_m_karang_baru"],
+    subjectBayId: "bay_sub_daan_mogot_sub_pantai_indah_kapuk_1",
+    subjectLineId: "anchor_line_361",
+    subjectLabel: "DNMGT | PHT 150kV GIS PANTAI INDAH KAPUK#1",
+    scenarioId: LEGACY_STUDY_SCENARIO_ID,
     status: "active",
   },
 ];
@@ -108,19 +159,23 @@ export type AuditEvent = {
     | "study_created"
     | "study_deleted"
     | "study_selected"
+    | "study_scenario_selected"
+    | "engineering_change_set_created"
     | "line_selected"
     | "zone_updated"
     | "relay_reset"
     | "reset_edits"
-    | "mini_nmm_add"
-    | "mini_nmm_remove"
-    | "mini_nmm_reset"
+    | "network_graph_add"
+    | "network_graph_remove"
+    | "network_graph_reset"
     | "ct_vt_update"
     | "ct_vt_clear"
     | "pdf_tap_promote"
     | "pdf_tap_unpromote"
     | "calculation_snapshot_add"
-    | "calculation_snapshot_remove";
+    | "calculation_snapshot_remove"
+    | "reference_verification_staged"
+    | "vendor_import_staged";
   scope?: string;
   targetId?: string;
   summary: string;
@@ -236,6 +291,9 @@ type State = {
   // Study management
   studies: Study[];
   activeStudyId: string | null;
+  sourceSnapshots: SourceSnapshot[];
+  studyScenarios: StudyScenario[];
+  engineeringChangeSets: EngineeringChangeSet[];
 
   // UI state
   currentTab: Tab;
@@ -250,15 +308,29 @@ type State = {
   // Mutations from user edits (persisted)
   relayOverrides: Record<string, RelayOverride>;
   candidateDecisions: Record<string, CandidateDecision>;
-  miniNmmOverrides: Record<string, MiniNmmOverride>;
+  // Per-GI confirmation decisions from the graph builder (src/domain/graph-builder.ts).
+  // Keyed by the GraphBuildGroup's station id. Unlike candidateDecisions
+  // (one decision per imported record/row), this is one decision per
+  // substation covering all of its bays/relations at once.
+  graphBuildDecisions: Record<string, { status: "confirmed" | "rejected"; decidedAt: string }>;
+  networkGraphOverrides: Record<string, NetworkGraphOverride>;
+  networkUndoStack: Record<string, NetworkUndoEntry[]>;
   ctVtOverrides: Record<string, CtVtOverride>;
   auditEvents: AuditEvent[];
   sourceIntakeRecords: SourceIntakeRecord[];
   pdfTapPromotions: PdfTapPromotion[];
   calculationSnapshots: CalculationSnapshot[];
+  verificationReferenceDraft: VerificationReferenceDraft | null;
+  vendorImportHandoffDraft: VendorImportHandoffDraft | null;
 
   // Actions
   setTab: (tab: Tab) => void;
+  stageReferenceForVerification: (
+    draft: Omit<VerificationReferenceDraft, "stagedAt">
+  ) => void;
+  stageVendorImportForVerification: (
+    draft: Omit<VendorImportHandoffDraft, "importedAt">
+  ) => void;
   setPersona: (p: Persona) => void;
   setActiveCorridor: (id: string) => void;
   selectRelay: (id: string | null) => void;
@@ -276,6 +348,7 @@ type State = {
   ) => void;
   deleteStudy: (id: string) => void;
   setActiveStudy: (id: string) => void;
+  setStudyScenario: (studyId: string, scenarioId: string | null) => void;
   updateZone: (relayId: string, zoneId: "Z1" | "Z2" | "Z3", patch: ZoneOverride) => void;
   resetRelay: (relayId: string) => void;
   resetAll: () => void;
@@ -287,14 +360,54 @@ type State = {
   ) => void;
   clearCandidateDecision: (candidateId: string) => void;
   getCandidateStatus: (candidateId: string, defaultStatus: LifecycleStatus) => LifecycleStatus;
-  addMiniNmmSubstation: (caseId: string, sub: UnifiedSubstation) => void;
-  addMiniNmmBusbar: (caseId: string, busbar: Busbar) => void;
-  addMiniNmmBay: (caseId: string, bay: Bay) => void;
-  addMiniNmmTerminal: (caseId: string, terminal: Terminal) => void;
-  addMiniNmmRelation: (caseId: string, relation: LineRelation) => void;
-  addMiniNmmIed: (caseId: string, ied: RelayIED) => void;
-  removeMiniNmmEntry: (caseId: string, kind: "substation" | "busbar" | "bay" | "terminal" | "relation" | "ied", id: string) => void;
-  resetMiniNmmOverrides: (caseId: string) => void;
+  // Commits one graph-builder GraphBuildGroup (one GI's substation + all its
+  // bays + line relations) to the network graph override in a single action, so
+  // review happens per-GI instead of per-record.
+  confirmGraphBuildGroup: (
+    caseId: string,
+    payload: { substation: UnifiedSubstation; bays: Bay[]; relations: LineRelation[] }
+  ) => void;
+  rejectGraphBuildGroup: (stationId: string) => void;
+  clearGraphBuildDecision: (stationId: string) => void;
+  // A GI insertion project physically cuts an existing line into two new
+  // segments (e.g. Grogol Baru 2023 cutting the pre-existing DKSBI-GROGOL
+  // line). Commits the new substation + its busbar + two new LineRelations
+  // (with their bays/terminals) in one action, and marks the old relation
+  // "superseded" (not deleted — it's retired data, not wrong data) rather
+  // than leaving it duplicated alongside the new segments.
+  insertSubstationIntoLine: (
+    caseId: string,
+    payload: {
+      oldRelation: LineRelation;
+      newSubstation: UnifiedSubstation;
+      newBusbar: Busbar;
+      segments: Array<{
+        relation: LineRelation;
+        bays: Bay[];
+        terminals: Terminal[];
+      }>;
+    }
+  ) => void;
+  addNetworkGraphSubstation: (caseId: string, sub: UnifiedSubstation) => void;
+  addNetworkGraphSubstationBundle: (caseId: string, sub: UnifiedSubstation, busbar: Busbar) => void;
+  addNetworkGraphBusbar: (caseId: string, busbar: Busbar) => void;
+  addNetworkGraphBay: (caseId: string, bay: Bay) => void;
+  addNetworkGraphTerminal: (caseId: string, terminal: Terminal) => void;
+  addNetworkGraphRelation: (caseId: string, relation: LineRelation) => void;
+  addNetworkGraphRelationBundle: (
+    caseId: string,
+    payload: {
+      busbars?: Busbar[];
+      bays: Bay[];
+      terminals: Terminal[];
+      relation: LineRelation;
+      substations?: UnifiedSubstation[];
+    }
+  ) => void;
+  addNetworkGraphIed: (caseId: string, ied: RelayIED) => void;
+  removeNetworkGraphEntry: (caseId: string, kind: "substation" | "busbar" | "bay" | "terminal" | "relation" | "ied", id: string) => void;
+  resetNetworkGraphOverrides: (caseId: string) => void;
+  undoLastNetworkChange: (caseId: string) => void;
   updateCtVtOverride: (record: CtVtOverrideInput) => void;
   clearCtVtOverride: (iedId: string) => void;
   addSourceIntakeRecord: (record: Omit<SourceIntakeRecord, "id" | "stagedAt" | "actor" | "status"> & { status?: SourceIntakeRecord["status"] }) => string;
@@ -323,8 +436,11 @@ export const useProsetStore = create<State>()(
 
       studies: DEFAULT_STUDIES,
       activeStudyId: DEFAULT_STUDIES[0]?.id ?? null,
+      sourceSnapshots: cloneDefaultSourceSnapshots(),
+      studyScenarios: cloneDefaultStudyScenarios(),
+      engineeringChangeSets: [],
 
-      currentTab: "home",
+      currentTab: "reference-setting",
       currentPersona: "Engineer",
       activeCorridorId: CORRIDORS.length > 0 ? CORRIDORS[0].id : "unknown",
       selectedRelayId: TOPOLOGY.relays.length > 0 ? TOPOLOGY.relays[0].id : "unknown",
@@ -335,14 +451,50 @@ export const useProsetStore = create<State>()(
 
       relayOverrides: {},
       candidateDecisions: {},
-      miniNmmOverrides: {},
+      graphBuildDecisions: {},
+      networkGraphOverrides: {},
+      networkUndoStack: {},
       ctVtOverrides: {},
       auditEvents: [],
       sourceIntakeRecords: [],
       pdfTapPromotions: [],
       calculationSnapshots: [],
+      verificationReferenceDraft: null,
+      vendorImportHandoffDraft: null,
 
       setTab: (tab) => set({ currentTab: tab }),
+      stageReferenceForVerification: (draft) => {
+        const staged: VerificationReferenceDraft = {
+          ...draft,
+          stagedAt: new Date().toISOString(),
+        };
+        set({
+          verificationReferenceDraft: staged,
+          currentTab: "comparison",
+        });
+        appendAuditEvent(get, set, {
+          action: "reference_verification_staged",
+          scope: draft.kind,
+          summary: `Staged ${draft.contextLabel} for actual verification`,
+          detail: `${draft.result.ruleId} v${draft.result.ruleVersion}`,
+        });
+      },
+      stageVendorImportForVerification: (draft) => {
+        const staged: VendorImportHandoffDraft = {
+          ...draft,
+          importedAt: new Date().toISOString(),
+        };
+        set({
+          vendorImportHandoffDraft: staged,
+          currentTab: "comparison",
+        });
+        appendAuditEvent(get, set, {
+          action: "vendor_import_staged",
+          scope: draft.adapterId,
+          summary: `Staged ${draft.sourceFileName} for actual verification`,
+          detail: "Normalized by MVP 1C vendor import",
+        });
+      },
       setPersona: (p) => set({ currentPersona: p }),
       setActiveCorridor: (id) => set({ activeCorridorId: id }),
       selectRelay: (id) => set({ selectedRelayId: id }),
@@ -360,27 +512,27 @@ export const useProsetStore = create<State>()(
         const state = get();
         const inventoryCase =
           NETWORK_CASES.find((c) => c.id === INVENTORY_MASTER_CASE_ID) ?? NETWORK_CASES[0];
-        const masterMiniNmm = getEffectiveMiniNmm(
+        const masterNetworkGraph = getEffectiveNetworkGraph(
           INVENTORY_MASTER_CASE_ID,
-          state.miniNmmOverrides[INVENTORY_MASTER_CASE_ID],
+          state.networkGraphOverrides[INVENTORY_MASTER_CASE_ID],
           buildUnifiedNetwork(inventoryCase)
         );
         const owningCase = NETWORK_CASES.find((c) => {
           if (c.lines.some((l) => l.id === lineId)) return true;
           const effective = mergeMasterRelationsIntoCase(
-            getEffectiveMiniNmm(c.id, state.miniNmmOverrides[c.id], buildUnifiedNetwork(c)),
-            masterMiniNmm
+            getEffectiveNetworkGraph(c.id, state.networkGraphOverrides[c.id], buildUnifiedNetwork(c)),
+            masterNetworkGraph
           );
-          return Boolean(effective && networkLinesFromMiniNmm(effective).some((l) => l.id === lineId));
+          return Boolean(effective && networkLinesFromGraph(effective).some((l) => l.id === lineId));
         });
         if (!owningCase) return;
         const effective = mergeMasterRelationsIntoCase(
-          getEffectiveMiniNmm(owningCase.id, state.miniNmmOverrides[owningCase.id], buildUnifiedNetwork(owningCase)),
-          masterMiniNmm
+          getEffectiveNetworkGraph(owningCase.id, state.networkGraphOverrides[owningCase.id], buildUnifiedNetwork(owningCase)),
+          masterNetworkGraph
         );
         const line =
           owningCase.lines.find((l) => l.id === lineId) ??
-          (effective ? networkLinesFromMiniNmm(effective).find((l) => l.id === lineId) : undefined);
+          (effective ? networkLinesFromGraph(effective).find((l) => l.id === lineId) : undefined);
         if (!line) return;
         const compareBay = findComparisonBayIdForLine(lineId);
         const corridorId =
@@ -416,6 +568,7 @@ export const useProsetStore = create<State>()(
           subjectBayId: options?.subjectBayId,
           subjectLineId: options?.subjectLineId,
           subjectLabel: options?.subjectLabel,
+          scenarioId: options?.scenarioId,
           sourceBridge: options?.sourceBridge,
           status: "active",
         };
@@ -466,6 +619,34 @@ export const useProsetStore = create<State>()(
         });
       },
 
+      setStudyScenario: (studyId, scenarioId) => {
+        const state = get();
+        const study = state.studies.find((item) => item.id === studyId);
+        if (!study || study.scenarioId === (scenarioId ?? undefined)) return;
+        if (scenarioId && !state.studyScenarios.some((item) => item.id === scenarioId)) return;
+
+        const updatedAt = new Date().toISOString();
+        set({
+          studies: state.studies.map((item) =>
+            item.id === studyId
+              ? { ...item, scenarioId: scenarioId ?? undefined, updatedAt }
+              : item
+          ),
+        });
+        const scenario = state.studyScenarios.find((item) => item.id === scenarioId);
+        appendAuditEvent(get, set, {
+          action: "study_scenario_selected",
+          scope: studyId,
+          targetId: scenarioId ?? undefined,
+          summary: scenario
+            ? `Selected scenario for ${study.name}: ${scenario.name}`
+            : `Cleared scenario for ${study.name}`,
+          detail: scenario
+            ? `${scenario.networkRevisionId} | ${scenario.studyMethod} | ${scenario.condition}`
+            : "Fault-study lookup is blocked until another scenario is selected.",
+        });
+      },
+
       updateZone: (relayId, zoneId, patch) => {
         const ov = { ...get().relayOverrides };
         const current = ov[relayId] ?? {};
@@ -493,7 +674,13 @@ export const useProsetStore = create<State>()(
       },
 
       resetAll: () => {
-        set({ relayOverrides: {}, candidateDecisions: {} });
+        set({
+          relayOverrides: {},
+          candidateDecisions: {},
+          graphBuildDecisions: {},
+          verificationReferenceDraft: null,
+          vendorImportHandoffDraft: null,
+        });
         appendAuditEvent(get, set, {
           action: "reset_edits",
           summary: "Reset relay overrides and candidate decisions",
@@ -532,18 +719,20 @@ export const useProsetStore = create<State>()(
         return get().candidateDecisions[candidateId]?.status ?? defaultStatus;
       },
 
-      addMiniNmmSubstation: (caseId, sub) => {
-        const next = { ...get().miniNmmOverrides };
-        const existing = next[caseId] ?? { ...EMPTY_OVERRIDE };
+      addNetworkGraphSubstation: (caseId, sub) => {
+        const current = get();
+        const next = { ...current.networkGraphOverrides };
+        const existing = normalizedOverride(next[caseId]);
         next[caseId] = {
           ...existing,
-          busbars: existing.busbars ?? [],
-          terminals: existing.terminals ?? [],
           substations: [...existing.substations, sub],
         };
-        set({ miniNmmOverrides: next });
+        set({
+          networkGraphOverrides: next,
+          networkUndoStack: pushNetworkUndo(current, caseId, `Added substation ${sub.shortCode}`),
+        });
         appendAuditEvent(get, set, {
-          action: "mini_nmm_add",
+          action: "network_graph_add",
           scope: caseId,
           targetId: sub.id,
           summary: "Added substation",
@@ -551,17 +740,42 @@ export const useProsetStore = create<State>()(
         });
       },
 
-      addMiniNmmBusbar: (caseId, busbar) => {
-        const next = { ...get().miniNmmOverrides };
-        const existing = next[caseId] ?? { ...EMPTY_OVERRIDE };
+      addNetworkGraphSubstationBundle: (caseId, sub, busbar) => {
+        const current = get();
+        const next = { ...current.networkGraphOverrides };
+        const existing = normalizedOverride(next[caseId]);
         next[caseId] = {
           ...existing,
-          busbars: [...(existing.busbars ?? []), busbar],
-          terminals: existing.terminals ?? [],
+          substations: [...existing.substations, sub],
+          busbars: upsertById(existing.busbars, [busbar]),
         };
-        set({ miniNmmOverrides: next });
+        set({
+          networkGraphOverrides: next,
+          networkUndoStack: pushNetworkUndo(current, caseId, `Added substation ${sub.shortCode}`),
+        });
         appendAuditEvent(get, set, {
-          action: "mini_nmm_add",
+          action: "network_graph_add",
+          scope: caseId,
+          targetId: sub.id,
+          summary: "Added substation with busbar",
+          detail: `${sub.shortCode} ${sub.name} | ${busbar.label}`,
+        });
+      },
+
+      addNetworkGraphBusbar: (caseId, busbar) => {
+        const current = get();
+        const next = { ...current.networkGraphOverrides };
+        const existing = normalizedOverride(next[caseId]);
+        next[caseId] = {
+          ...existing,
+          busbars: [...existing.busbars, busbar],
+        };
+        set({
+          networkGraphOverrides: next,
+          networkUndoStack: pushNetworkUndo(current, caseId, `Added busbar ${busbar.id}`),
+        });
+        appendAuditEvent(get, set, {
+          action: "network_graph_add",
           scope: caseId,
           targetId: busbar.id,
           summary: "Added busbar",
@@ -569,18 +783,20 @@ export const useProsetStore = create<State>()(
         });
       },
 
-      addMiniNmmBay: (caseId, bay) => {
-        const next = { ...get().miniNmmOverrides };
-        const existing = next[caseId] ?? { ...EMPTY_OVERRIDE };
+      addNetworkGraphBay: (caseId, bay) => {
+        const current = get();
+        const next = { ...current.networkGraphOverrides };
+        const existing = normalizedOverride(next[caseId]);
         next[caseId] = {
           ...existing,
-          busbars: existing.busbars ?? [],
-          terminals: existing.terminals ?? [],
           bays: [...existing.bays, bay],
         };
-        set({ miniNmmOverrides: next });
+        set({
+          networkGraphOverrides: next,
+          networkUndoStack: pushNetworkUndo(current, caseId, `Added bay ${bay.rawName}`),
+        });
         appendAuditEvent(get, set, {
-          action: "mini_nmm_add",
+          action: "network_graph_add",
           scope: caseId,
           targetId: bay.id,
           summary: "Added bay",
@@ -588,17 +804,20 @@ export const useProsetStore = create<State>()(
         });
       },
 
-      addMiniNmmTerminal: (caseId, terminal) => {
-        const next = { ...get().miniNmmOverrides };
-        const existing = next[caseId] ?? { ...EMPTY_OVERRIDE };
+      addNetworkGraphTerminal: (caseId, terminal) => {
+        const current = get();
+        const next = { ...current.networkGraphOverrides };
+        const existing = normalizedOverride(next[caseId]);
         next[caseId] = {
           ...existing,
-          busbars: existing.busbars ?? [],
-          terminals: [...(existing.terminals ?? []), terminal],
+          terminals: [...existing.terminals, terminal],
         };
-        set({ miniNmmOverrides: next });
+        set({
+          networkGraphOverrides: next,
+          networkUndoStack: pushNetworkUndo(current, caseId, `Added terminal ${terminal.id}`),
+        });
         appendAuditEvent(get, set, {
-          action: "mini_nmm_add",
+          action: "network_graph_add",
           scope: caseId,
           targetId: terminal.id,
           summary: "Added terminal",
@@ -606,18 +825,20 @@ export const useProsetStore = create<State>()(
         });
       },
 
-      addMiniNmmRelation: (caseId, relation) => {
-        const next = { ...get().miniNmmOverrides };
-        const existing = next[caseId] ?? { ...EMPTY_OVERRIDE };
+      addNetworkGraphRelation: (caseId, relation) => {
+        const current = get();
+        const next = { ...current.networkGraphOverrides };
+        const existing = normalizedOverride(next[caseId]);
         next[caseId] = {
           ...existing,
-          busbars: existing.busbars ?? [],
-          terminals: existing.terminals ?? [],
           relations: [...existing.relations, relation],
         };
-        set({ miniNmmOverrides: next });
+        set({
+          networkGraphOverrides: next,
+          networkUndoStack: pushNetworkUndo(current, caseId, `Added relation #${relation.circuit}`),
+        });
         appendAuditEvent(get, set, {
-          action: "mini_nmm_add",
+          action: "network_graph_add",
           scope: caseId,
           targetId: relation.id,
           summary: "Added line relation",
@@ -625,18 +846,201 @@ export const useProsetStore = create<State>()(
         });
       },
 
-      addMiniNmmIed: (caseId, ied) => {
-        const next = { ...get().miniNmmOverrides };
-        const existing = next[caseId] ?? { ...EMPTY_OVERRIDE };
+      addNetworkGraphRelationBundle: (caseId, payload) => {
+        const current = get();
+        const next = { ...current.networkGraphOverrides };
+        const existing = normalizedOverride(next[caseId]);
         next[caseId] = {
           ...existing,
-          busbars: existing.busbars ?? [],
-          terminals: existing.terminals ?? [],
+          substations: upsertById(existing.substations, payload.substations ?? []),
+          busbars: upsertById(existing.busbars, payload.busbars ?? []),
+          bays: upsertById(existing.bays, payload.bays),
+          terminals: upsertById(existing.terminals, payload.terminals),
+          relations: upsertById(existing.relations, [payload.relation]),
+        };
+        set({
+          networkGraphOverrides: next,
+          networkUndoStack: pushNetworkUndo(
+            current,
+            caseId,
+            `Added relation ${payload.relation.fromSubstationId} -> ${payload.relation.toSubstationId} #${payload.relation.circuit}`
+          ),
+          activeNetworkLineId: payload.relation.id,
+        });
+        appendAuditEvent(get, set, {
+          action: "network_graph_add",
+          scope: caseId,
+          targetId: payload.relation.id,
+          summary: "Added line relation bundle",
+          detail: `${payload.relation.fromSubstationId} -> ${payload.relation.toSubstationId} #${payload.relation.circuit}`,
+        });
+      },
+
+      confirmGraphBuildGroup: (caseId, payload) => {
+        const current = get();
+        const next = { ...current.networkGraphOverrides };
+        const existing = normalizedOverride(next[caseId]);
+        next[caseId] = {
+          ...existing,
+          substations: upsertById(existing.substations, [payload.substation]),
+          bays: upsertById(existing.bays, payload.bays),
+          relations: upsertById(existing.relations, payload.relations),
+        };
+        set({
+          networkGraphOverrides: next,
+          networkUndoStack: pushNetworkUndo(
+            current,
+            caseId,
+            `Confirmed graph-builder group for ${payload.substation.name}`
+          ),
+          graphBuildDecisions: {
+            ...current.graphBuildDecisions,
+            [payload.substation.id]: { status: "confirmed", decidedAt: new Date().toISOString() },
+          },
+        });
+        appendAuditEvent(get, set, {
+          action: "network_graph_add",
+          scope: caseId,
+          targetId: payload.substation.id,
+          summary: "Confirmed graph-builder GI group",
+          detail: `${payload.substation.name}: ${payload.bays.length} bay(s), ${payload.relations.length} relation(s)`,
+        });
+      },
+
+      rejectGraphBuildGroup: (stationId) => {
+        set((state) => ({
+          graphBuildDecisions: {
+            ...state.graphBuildDecisions,
+            [stationId]: { status: "rejected", decidedAt: new Date().toISOString() },
+          },
+        }));
+        appendAuditEvent(get, set, {
+          action: "candidate_decision",
+          scope: stationId,
+          targetId: stationId,
+          summary: "Rejected graph-builder GI group",
+        });
+      },
+
+      clearGraphBuildDecision: (stationId) => {
+        set((state) => {
+          const next = { ...state.graphBuildDecisions };
+          delete next[stationId];
+          return { graphBuildDecisions: next };
+        });
+      },
+
+      insertSubstationIntoLine: (caseId, payload) => {
+        const current = get();
+        const networkCase =
+          NETWORK_CASES.find((item) => item.id === caseId) ?? NETWORK_CASES[0];
+        const beforeNetwork = getEffectiveNetworkGraph(
+          caseId,
+          current.networkGraphOverrides[caseId],
+          buildUnifiedNetwork(networkCase)
+        );
+        const next = { ...current.networkGraphOverrides };
+        const existing = normalizedOverride(next[caseId]);
+        const supersededRelation: LineRelation = { ...payload.oldRelation, status: "superseded" };
+        const allBays = payload.segments.flatMap((s) => s.bays);
+        const allTerminals = payload.segments.flatMap((s) => s.terminals);
+        const allRelations = payload.segments.map((s) => s.relation);
+        next[caseId] = {
+          ...existing,
+          substations: upsertById(existing.substations, [payload.newSubstation]),
+          busbars: upsertById(existing.busbars, [payload.newBusbar]),
+          bays: upsertById(existing.bays, allBays),
+          terminals: upsertById(existing.terminals, allTerminals),
+          relations: upsertById(existing.relations, [supersededRelation, ...allRelations]),
+        };
+        const afterNetwork = getEffectiveNetworkGraph(
+          caseId,
+          next[caseId],
+          buildUnifiedNetwork(networkCase)
+        );
+        if (!beforeNetwork || !afterNetwork) return;
+
+        const activeStudy = current.studies.find(
+          (study) => study.id === current.activeStudyId
+        );
+        const scenario = current.studyScenarios.find(
+          (item) => item.id === activeStudy?.scenarioId
+        );
+        const networkSnapshot = current.sourceSnapshots.find(
+          (item) => item.id === scenario?.networkSnapshotId
+        );
+        const baselineWarnings: string[] = [];
+        if (!scenario) {
+          baselineWarnings.push(
+            "No Study Scenario was selected when this change was recorded."
+          );
+        }
+        if (networkSnapshot?.state === "historical") {
+          baselineWarnings.push(
+            "Baseline network snapshot is historical and is not current network truth."
+          );
+        }
+        const baseline: EngineeringChangeBaseline = {
+          studyId: activeStudy?.id,
+          scenarioId: scenario?.id,
+          networkSnapshotId: scenario?.networkSnapshotId,
+          faultSnapshotId: scenario?.faultSnapshotId,
+          networkRevisionId:
+            scenario?.networkRevisionId ?? `working-network:${caseId}:unversioned`,
+          warnings: baselineWarnings,
+        };
+        const createdAt = new Date().toISOString();
+        const changeSet = buildInsertionChangeSet({
+          id: `ecs_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+          caseId,
+          createdAt,
+          actor: current.currentPersona,
+          baseline,
+          beforeNetwork,
+          afterNetwork,
+          oldRelationId: payload.oldRelation.id,
+          newSubstationId: payload.newSubstation.id,
+          newRelationIds: allRelations.map((relation) => relation.id),
+        });
+        set({
+          networkGraphOverrides: next,
+          engineeringChangeSets: [changeSet, ...current.engineeringChangeSets],
+          networkUndoStack: pushNetworkUndo(
+            current,
+            caseId,
+            `Inserted ${payload.newSubstation.name} into line ${payload.oldRelation.id}`
+          ),
+        });
+        appendAuditEvent(get, set, {
+          action: "network_graph_add",
+          scope: caseId,
+          targetId: payload.newSubstation.id,
+          summary: "Inserted substation into existing line",
+          detail: `${payload.newSubstation.name} split ${payload.oldRelation.id} into ${allRelations.map((relation) => relation.id).join(", ")}`,
+        });
+        appendAuditEvent(get, set, {
+          action: "engineering_change_set_created",
+          scope: caseId,
+          targetId: changeSet.id,
+          summary: `Recorded change set: ${changeSet.title}`,
+          detail: `${changeSet.fingerprint.algorithm}:${changeSet.fingerprint.value} | ${changeSet.operations.length} operation(s) | validation=${changeSet.validation.valid ? "valid" : "invalid"}`,
+        });
+      },
+
+      addNetworkGraphIed: (caseId, ied) => {
+        const current = get();
+        const next = { ...current.networkGraphOverrides };
+        const existing = normalizedOverride(next[caseId]);
+        next[caseId] = {
+          ...existing,
           ieds: [...existing.ieds, ied],
         };
-        set({ miniNmmOverrides: next });
+        set({
+          networkGraphOverrides: next,
+          networkUndoStack: pushNetworkUndo(current, caseId, `Added IED ${ied.make} ${ied.model}`),
+        });
         appendAuditEvent(get, set, {
-          action: "mini_nmm_add",
+          action: "network_graph_add",
           scope: caseId,
           targetId: ied.id,
           summary: "Added relay IED",
@@ -644,35 +1048,74 @@ export const useProsetStore = create<State>()(
         });
       },
 
-      removeMiniNmmEntry: (caseId, kind, id) => {
-        const next = { ...get().miniNmmOverrides };
+      removeNetworkGraphEntry: (caseId, kind, id) => {
+        const current = get();
+        const next = { ...current.networkGraphOverrides };
         const existing = next[caseId];
         if (!existing) return;
-        const updated = { ...existing };
-        if (kind === "substation") updated.substations = existing.substations.filter((s) => s.id !== id);
-        if (kind === "busbar") updated.busbars = (existing.busbars ?? []).filter((b) => b.id !== id);
-        if (kind === "bay") updated.bays = existing.bays.filter((b) => b.id !== id);
-        if (kind === "terminal") updated.terminals = (existing.terminals ?? []).filter((t) => t.id !== id);
-        if (kind === "relation") updated.relations = existing.relations.filter((r) => r.id !== id);
-        if (kind === "ied") updated.ieds = existing.ieds.filter((i) => i.id !== id);
+        const {
+          override: updated,
+          removedIedIds,
+          removedRelationIds,
+        } = removeNetworkGraphEntryCascade(normalizedOverride(existing), kind, id);
+        const nextCtVtOverrides = { ...current.ctVtOverrides };
+        for (const iedId of removedIedIds) delete nextCtVtOverrides[iedId];
         next[caseId] = updated;
-        set({ miniNmmOverrides: next });
+        set({
+          networkGraphOverrides: next,
+          ctVtOverrides: nextCtVtOverrides,
+          networkUndoStack: pushNetworkUndo(current, caseId, `Removed ${kind} ${id}`),
+          ...(current.activeNetworkLineId && removedRelationIds.includes(current.activeNetworkLineId)
+            ? { activeNetworkLineId: null }
+            : {}),
+        });
         appendAuditEvent(get, set, {
-          action: "mini_nmm_remove",
+          action: "network_graph_remove",
           scope: caseId,
           targetId: id,
           summary: `Removed ${kind}`,
+          detail: removedIedIds.length > 0 ? `Cascade removed ${removedIedIds.length} linked IED(s)` : undefined,
         });
       },
 
-      resetMiniNmmOverrides: (caseId) => {
-        const next = { ...get().miniNmmOverrides };
+      resetNetworkGraphOverrides: (caseId) => {
+        const current = get();
+        const next = { ...current.networkGraphOverrides };
         delete next[caseId];
-        set({ miniNmmOverrides: next });
+        set({
+          networkGraphOverrides: next,
+          networkUndoStack: pushNetworkUndo(current, caseId, "Reset network overrides"),
+        });
         appendAuditEvent(get, set, {
-          action: "mini_nmm_reset",
+          action: "network_graph_reset",
           scope: caseId,
-          summary: "Reset mini-NMM overrides",
+          summary: "Reset network graph overrides",
+        });
+      },
+
+      undoLastNetworkChange: (caseId) => {
+        const current = get();
+        const stack = current.networkUndoStack[caseId] ?? [];
+        const [entry, ...rest] = stack;
+        if (!entry) return;
+        const nextOverrides = { ...current.networkGraphOverrides };
+        if (entry.overrideBefore) {
+          nextOverrides[caseId] = cloneNetworkGraphOverride(entry.overrideBefore);
+        } else {
+          delete nextOverrides[caseId];
+        }
+        set({
+          networkGraphOverrides: nextOverrides,
+          networkUndoStack: {
+            ...current.networkUndoStack,
+            [caseId]: rest,
+          },
+        });
+        appendAuditEvent(get, set, {
+          action: "network_graph_reset",
+          scope: caseId,
+          targetId: entry.id,
+          summary: `Undo network change: ${entry.summary}`,
         });
       },
 
@@ -868,14 +1311,21 @@ export const useProsetStore = create<State>()(
       partialize: (state) => ({
         relayOverrides: state.relayOverrides,
         candidateDecisions: state.candidateDecisions,
-        miniNmmOverrides: state.miniNmmOverrides,
+        graphBuildDecisions: state.graphBuildDecisions,
+        networkGraphOverrides: state.networkGraphOverrides,
+        networkUndoStack: state.networkUndoStack,
         ctVtOverrides: state.ctVtOverrides,
         auditEvents: state.auditEvents,
         sourceIntakeRecords: state.sourceIntakeRecords,
         pdfTapPromotions: state.pdfTapPromotions,
         calculationSnapshots: state.calculationSnapshots,
+        verificationReferenceDraft: state.verificationReferenceDraft,
+        vendorImportHandoffDraft: state.vendorImportHandoffDraft,
         studies: state.studies,
         activeStudyId: state.activeStudyId,
+        sourceSnapshots: state.sourceSnapshots,
+        studyScenarios: state.studyScenarios,
+        engineeringChangeSets: state.engineeringChangeSets,
         currentTab: state.currentTab,
         activeCorridorId: state.activeCorridorId,
         selectedRelayId: state.selectedRelayId,
@@ -916,12 +1366,241 @@ export const useProsetStore = create<State>()(
         if (version < 9) {
           persisted.calculationSnapshots = persisted.calculationSnapshots ?? [];
         }
+        if (version < 10) {
+          persisted.networkUndoStack = persisted.networkUndoStack ?? {};
+        }
+        // v10 -> v11: mini-NMM naming renamed to "network graph" throughout
+        // (PLMS's own topology model, unrelated to the external NMM project
+        // it was named after — that project is no longer a PLMS dependency).
+        // Carry forward any already-persisted override data under the old
+        // key/tab id so existing users don't silently lose it.
+        if (version < 11) {
+          if (persisted.currentTab === "mini-nmm-editor") {
+            persisted.currentTab = "network-graph-editor";
+          }
+          if (persisted.miniNmmOverrides && !persisted.networkGraphOverrides) {
+            persisted.networkGraphOverrides = persisted.miniNmmOverrides;
+          }
+          delete persisted.miniNmmOverrides;
+          persisted.graphBuildDecisions = persisted.graphBuildDecisions ?? {};
+        }
+        // v11 -> v12: the single 4-GI "Koridor DKS-DM-PIK-MKB" Study (wrong
+        // scope — one Study covering 4 GI as co-equal subjects instead of
+        // one subject line per Study) replaced by two per-line Studies
+        // seeded from graph-builder's DIgSILENT-anchored ids. Only swap the
+        // seed if the user still has exactly the untouched old default (one
+        // Study, that exact id) — never touch a user's real Studies.
+        if (version < 12) {
+          if (
+            Array.isArray(persisted.studies) &&
+            persisted.studies.length === 1 &&
+            persisted.studies[0]?.id === "study_dks_dm_pik_mkb"
+          ) {
+            persisted.studies = DEFAULT_STUDIES;
+            persisted.activeStudyId = DEFAULT_STUDIES[0].id;
+          }
+        }
+        // v12 -> v13: MVP 1A is now centred on the workbook-backed
+        // reference-setting workflow. Existing screens remain available,
+        // but the new workflow is the deliberate landing page.
+        if (version < 13) {
+          persisted.currentTab = "reference-setting";
+        }
+        if (version < 14) {
+          persisted.verificationReferenceDraft = null;
+        }
+        if (version < 15) {
+          persisted.vendorImportHandoffDraft = null;
+        }
+        // v15 -> v16: introduce versioned engineering source snapshots and
+        // Study Scenarios. Existing user-created Studies are preserved and
+        // intentionally remain without a scenario until the engineer selects
+        // one; only the known untouched default studies receive the historical
+        // IHS scenario automatically.
+        if (version < 16) {
+          persisted.sourceSnapshots =
+            Array.isArray(persisted.sourceSnapshots) && persisted.sourceSnapshots.length > 0
+              ? persisted.sourceSnapshots
+              : cloneDefaultSourceSnapshots();
+          persisted.studyScenarios =
+            Array.isArray(persisted.studyScenarios) && persisted.studyScenarios.length > 0
+              ? persisted.studyScenarios
+              : cloneDefaultStudyScenarios();
+          if (Array.isArray(persisted.studies)) {
+            persisted.studies = persisted.studies.map((study: Study) =>
+              DEFAULT_STUDIES.some(
+                (seed) =>
+                  seed.id === study.id &&
+                  seed.subjectLineId === study.subjectLineId &&
+                  seed.name === study.name
+              )
+                ? { ...study, scenarioId: study.scenarioId ?? LEGACY_STUDY_SCENARIO_ID }
+                : study
+            );
+          }
+        }
+        if (version < 17) {
+          persisted.engineeringChangeSets = Array.isArray(
+            persisted.engineeringChangeSets
+          )
+            ? persisted.engineeringChangeSets
+            : [];
+        }
+        // v17 -> v18: append newly indexed immutable source snapshots without
+        // replacing user-created snapshots or changing existing scenario ids.
+        if (version < 18) {
+          const existingSnapshots = Array.isArray(persisted.sourceSnapshots)
+            ? persisted.sourceSnapshots
+            : [];
+          const existingIds = new Set(
+            existingSnapshots.map((snapshot: SourceSnapshot) => snapshot.id)
+          );
+          persisted.sourceSnapshots = [
+            ...existingSnapshots,
+            ...cloneDefaultSourceSnapshots().filter(
+              (snapshot) => !existingIds.has(snapshot.id)
+            ),
+          ];
+        }
         return persisted;
       },
-      version: 9,
+      version: 18,
     }
   )
 );
+
+type NetworkGraphEntityKind = "substation" | "busbar" | "bay" | "terminal" | "relation" | "ied";
+
+function normalizedOverride(value?: NetworkGraphOverride): NetworkGraphOverride {
+  return {
+    substations: [...(value?.substations ?? [])],
+    busbars: [...(value?.busbars ?? [])],
+    bays: [...(value?.bays ?? [])],
+    terminals: [...(value?.terminals ?? [])],
+    relations: [...(value?.relations ?? [])],
+    ieds: [...(value?.ieds ?? [])],
+  };
+}
+
+function cloneNetworkGraphOverride(value: NetworkGraphOverride): NetworkGraphOverride {
+  return normalizedOverride(value);
+}
+
+function upsertById<T extends { id: string }>(existing: T[], additions: T[]): T[] {
+  const next = [...existing];
+  for (const item of additions) {
+    const index = next.findIndex((existingItem) => existingItem.id === item.id);
+    if (index >= 0) next[index] = item;
+    else next.push(item);
+  }
+  return next;
+}
+
+function pushNetworkUndo(
+  state: State,
+  caseId: string,
+  summary: string
+): Record<string, NetworkUndoEntry[]> {
+  const entry: NetworkUndoEntry = {
+    id: `netundo_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    caseId,
+    at: new Date().toISOString(),
+    summary,
+    overrideBefore: state.networkGraphOverrides[caseId]
+      ? cloneNetworkGraphOverride(state.networkGraphOverrides[caseId])
+      : undefined,
+  };
+  return {
+    ...state.networkUndoStack,
+    [caseId]: [entry, ...(state.networkUndoStack[caseId] ?? [])].slice(0, 20),
+  };
+}
+
+function removeNetworkGraphEntryCascade(
+  override: NetworkGraphOverride,
+  kind: NetworkGraphEntityKind,
+  id: string
+): {
+  override: NetworkGraphOverride;
+  removedIedIds: string[];
+  removedRelationIds: string[];
+} {
+  const next = cloneNetworkGraphOverride(override);
+  const removedBayIds = new Set<string>();
+  const removedBusbarIds = new Set<string>();
+  const removedRelationIds = new Set<string>();
+
+  if (kind === "relation") {
+    const relation = next.relations.find((item) => item.id === id);
+    if (relation) {
+      removedRelationIds.add(relation.id);
+      removedBayIds.add(relation.fromBayId);
+      removedBayIds.add(relation.toBayId);
+    }
+  }
+
+  if (kind === "substation") {
+    for (const relation of next.relations) {
+      if (relation.fromSubstationId === id || relation.toSubstationId === id) {
+        removedRelationIds.add(relation.id);
+        removedBayIds.add(relation.fromBayId);
+        removedBayIds.add(relation.toBayId);
+      }
+    }
+    for (const bay of next.bays) {
+      if (bay.substationId === id) removedBayIds.add(bay.id);
+    }
+    for (const busbar of next.busbars) {
+      if (busbar.substationId === id) removedBusbarIds.add(busbar.id);
+    }
+    next.substations = next.substations.filter((item) => item.id !== id);
+  }
+
+  if (kind === "bay") {
+    removedBayIds.add(id);
+    for (const relation of next.relations) {
+      if (relation.fromBayId === id || relation.toBayId === id) {
+        removedRelationIds.add(relation.id);
+        removedBayIds.add(relation.fromBayId);
+        removedBayIds.add(relation.toBayId);
+      }
+    }
+  }
+
+  if (kind === "busbar") {
+    removedBusbarIds.add(id);
+    next.busbars = next.busbars.filter((item) => item.id !== id);
+  }
+
+  const removedIedIds = next.ieds
+    .filter((item) => (kind === "ied" && item.id === id) || removedBayIds.has(item.bayId))
+    .map((item) => item.id);
+
+  if (kind === "terminal") {
+    next.terminals = next.terminals.filter((item) => item.id !== id);
+  }
+  if (kind === "ied") {
+    next.ieds = next.ieds.filter((item) => item.id !== id);
+  }
+
+  if (removedRelationIds.size > 0) {
+    next.relations = next.relations.filter((item) => !removedRelationIds.has(item.id));
+  }
+  if (removedBayIds.size > 0) {
+    next.bays = next.bays.filter((item) => !removedBayIds.has(item.id));
+    next.terminals = next.terminals.filter((item) => !removedBayIds.has(item.bayId));
+    next.ieds = next.ieds.filter((item) => !removedBayIds.has(item.bayId));
+  }
+  if (removedBusbarIds.size > 0) {
+    next.terminals = next.terminals.filter((item) => !removedBusbarIds.has(item.busbarId));
+  }
+
+  return {
+    override: next,
+    removedIedIds,
+    removedRelationIds: Array.from(removedRelationIds),
+  };
+}
 
 function appendAuditEvent(
   get: () => State,

@@ -10,13 +10,13 @@ import {
 import { ULTG_INVENTORY_NODES } from "../../domain/seed-network-registry";
 import { normalizeStationName } from "../../domain/normalization";
 import {
-  getEffectiveMiniNmm,
+  getEffectiveNetworkGraph,
   INVENTORY_MASTER_CASE_ID,
   mergeMasterRelationsIntoCase,
-  networkLinesFromMiniNmm,
-  networkNodesFromMiniNmm,
-  relayAssetsFromMiniNmm,
-} from "../../domain/mini-nmm";
+  networkLinesFromGraph,
+  networkNodesFromGraph,
+  relayAssetsFromGraph,
+} from "../../domain/network-graph";
 import { buildUnifiedNetwork } from "../../domain/unified";
 import { NETWORK_CASES } from "../../domain/seed-network-registry";
 import { useProsetStore } from "../../store/useProsetStore";
@@ -26,7 +26,7 @@ type MasterTab = "substations" | "relations" | "relays" | "functions";
 
 export function MasterDataView() {
   const [activeTab, setActiveTab] = useState<MasterTab>("substations");
-  const miniNmmOverrides = useProsetStore((s) => s.miniNmmOverrides);
+  const networkGraphOverrides = useProsetStore((s) => s.networkGraphOverrides);
   const ctVtOverrides = useProsetStore((s) => s.ctVtOverrides);
   const setTab = useProsetStore((s) => s.setTab);
 
@@ -39,43 +39,53 @@ export function MasterDataView() {
   const masterFallback = useMemo(() => buildUnifiedNetwork(inventoryCase), [inventoryCase]);
   const corridorFallback = useMemo(() => buildUnifiedNetwork(corridorCase), [corridorCase]);
 
-  const masterMiniNmm = useMemo(
+  const masterNetworkGraph = useMemo(
     () =>
-      getEffectiveMiniNmm(
+      getEffectiveNetworkGraph(
         INVENTORY_MASTER_CASE_ID,
-        miniNmmOverrides[INVENTORY_MASTER_CASE_ID],
+        networkGraphOverrides[INVENTORY_MASTER_CASE_ID],
         masterFallback
       ),
-    [masterFallback, miniNmmOverrides]
+    [masterFallback, networkGraphOverrides]
   );
 
-  const corridorMiniNmm = useMemo(
+  const corridorNetworkGraph = useMemo(
     () =>
       mergeMasterRelationsIntoCase(
-        getEffectiveMiniNmm(corridorCase.id, miniNmmOverrides[corridorCase.id], corridorFallback),
-        masterMiniNmm
+        getEffectiveNetworkGraph(corridorCase.id, networkGraphOverrides[corridorCase.id], corridorFallback),
+        masterNetworkGraph
       ),
-    [corridorCase.id, corridorFallback, masterMiniNmm, miniNmmOverrides]
+    [corridorCase.id, corridorFallback, masterNetworkGraph, networkGraphOverrides]
   );
 
-  const effectiveMiniNmm = corridorMiniNmm ?? masterMiniNmm;
+  const effectiveNetworkGraph = corridorNetworkGraph ?? masterNetworkGraph;
 
   const nodes = useMemo(
-    () => (effectiveMiniNmm ? networkNodesFromMiniNmm(effectiveMiniNmm) : []),
-    [effectiveMiniNmm]
+    () => (effectiveNetworkGraph ? networkNodesFromGraph(effectiveNetworkGraph) : []),
+    [effectiveNetworkGraph]
   );
   const lines = useMemo(
-    () => (effectiveMiniNmm ? networkLinesFromMiniNmm(effectiveMiniNmm) : []),
-    [effectiveMiniNmm]
+    () => (effectiveNetworkGraph ? networkLinesFromGraph(effectiveNetworkGraph) : []),
+    [effectiveNetworkGraph]
   );
   const relays = useMemo(
-    () => (effectiveMiniNmm ? relayAssetsFromMiniNmm(effectiveMiniNmm) : []),
-    [effectiveMiniNmm]
+    () => (effectiveNetworkGraph ? relayAssetsFromGraph(effectiveNetworkGraph) : []),
+    [effectiveNetworkGraph]
   );
-  const protectionFunctions = effectiveMiniNmm?.protectionFunctions ?? [];
+  const protectionFunctions = effectiveNetworkGraph?.protectionFunctions ?? [];
+
+  // Seed inventory plus any substation confirmed via the graph builder (Inbox)
+  // that isn't in the seed yet — otherwise a newly-confirmed GI (e.g. from
+  // buildGraphForUltg) would silently never appear as its own row here, even
+  // though it's already "modeled" in the effective network graph.
+  const allSubstationNodes = useMemo(() => {
+    const seedKeys = new Set(ULTG_INVENTORY_NODES.map((n) => normalizeStationName(n.name)));
+    const extra = nodes.filter((n) => !seedKeys.has(normalizeStationName(n.name)));
+    return [...ULTG_INVENTORY_NODES, ...extra];
+  }, [nodes]);
 
   const tabs: { id: MasterTab; label: string; count: number; icon: React.ReactNode }[] = [
-    { id: "substations", label: "GI/GIS", count: ULTG_INVENTORY_NODES.length, icon: <RadioTower className="w-3.5 h-3.5" /> },
+    { id: "substations", label: "GI/GIS", count: allSubstationNodes.length, icon: <RadioTower className="w-3.5 h-3.5" /> },
     { id: "relations", label: "Line Relations", count: lines.length, icon: <GitBranch className="w-3.5 h-3.5" /> },
     { id: "relays", label: "Relay & IED", count: relays.length, icon: <HardDrive className="w-3.5 h-3.5" /> },
     { id: "functions", label: "Protection Functions", count: protectionFunctions.length, icon: <ShieldCheck className="w-3.5 h-3.5" /> },
@@ -100,7 +110,7 @@ export function MasterDataView() {
           </div>
           <button
             type="button"
-            onClick={() => setTab("mini-nmm-editor")}
+            onClick={() => setTab("network-graph-editor")}
             className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md border border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"
           >
             <Pencil className="w-3.5 h-3.5" />
@@ -110,7 +120,7 @@ export function MasterDataView() {
 
         {/* Summary tiles */}
         <div className="mt-4 grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <SummaryTile label="GI/GIS" value={ULTG_INVENTORY_NODES.length} sub="master nodes" tone="blue" />
+          <SummaryTile label="GI/GIS" value={allSubstationNodes.length} sub="master nodes" tone="blue" />
           <SummaryTile label="Lines" value={lines.length} sub="modeled relations" tone="emerald" />
           <SummaryTile label="IED" value={relays.length} sub="relay assets" tone="amber" />
           <SummaryTile label="Functions" value={protectionFunctions.length} sub="DIST/LCD/OCR/GFR" tone="purple" />
@@ -144,7 +154,7 @@ export function MasterDataView() {
       {/* Tab content */}
       <section className="bg-white border border-slate-200 rounded-xl overflow-hidden">
         {activeTab === "substations" && (
-          <SubstationsTable nodes={ULTG_INVENTORY_NODES} corridorNodes={nodes} />
+          <SubstationsTable nodes={allSubstationNodes} corridorNodes={nodes} />
         )}
         {activeTab === "relations" && (
           <RelationsTable lines={lines} nodes={nodes} />
@@ -165,7 +175,7 @@ function SubstationsTable({
   corridorNodes,
 }: {
   nodes: typeof ULTG_INVENTORY_NODES;
-  corridorNodes: ReturnType<typeof networkNodesFromMiniNmm>;
+  corridorNodes: ReturnType<typeof networkNodesFromGraph>;
 }) {
   return (
     <>
@@ -225,8 +235,8 @@ function RelationsTable({
   lines,
   nodes,
 }: {
-  lines: ReturnType<typeof networkLinesFromMiniNmm>;
-  nodes: ReturnType<typeof networkNodesFromMiniNmm>;
+  lines: ReturnType<typeof networkLinesFromGraph>;
+  nodes: ReturnType<typeof networkNodesFromGraph>;
 }) {
   return (
     <>
@@ -303,7 +313,7 @@ function RelaysTable({
   relays,
   ctVtOverrides,
 }: {
-  relays: ReturnType<typeof relayAssetsFromMiniNmm>;
+  relays: ReturnType<typeof relayAssetsFromGraph>;
   ctVtOverrides: ReturnType<typeof useProsetStore.getState>["ctVtOverrides"];
 }) {
   return (
@@ -369,7 +379,7 @@ function FunctionsTable({
   relays,
 }: {
   functions: { id: string; relayIedId: string; function: string }[];
-  relays: ReturnType<typeof relayAssetsFromMiniNmm>;
+  relays: ReturnType<typeof relayAssetsFromGraph>;
 }) {
   return (
     <>

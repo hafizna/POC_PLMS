@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { AlertTriangle, CheckCircle2, FileSearch, Loader2, Plus, ScanText, Trash2, Upload } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Database, FileSearch, Loader2, Plus, ScanText, Trash2, Upload } from "lucide-react";
 import {
   NETWORK_CASES,
   REGISTRY_SOURCES,
@@ -11,18 +11,20 @@ import {
   filterPdfSourcesForNodes,
 } from "../../domain/pdf-source-registry";
 import { useProsetStore, type PdfTapPromotion, type SourceIntakeRecord } from "../../store/useProsetStore";
+import { buildBridgeExport } from "../../domain/bridge-export";
 import { buildUnifiedNetwork } from "../../domain/unified";
 import type { UnifiedNetwork } from "../../domain/unified";
 import {
-  getEffectiveMiniNmm,
-  networkLinesFromMiniNmm,
-  networkNodesFromMiniNmm,
-} from "../../domain/mini-nmm";
+  getEffectiveNetworkGraph,
+  networkLinesFromGraph,
+  networkNodesFromGraph,
+} from "../../domain/network-graph";
 import type { NetworkNode } from "../../domain/seed-network-registry";
 import { normalizeStationName } from "../../domain/normalization";
 import { extractPdfText, extractTapFields, type OcrProgress } from "../../lib/ocr";
 import { findFieldValue, getEffectiveCtVt, parseCtRatio, parseVtRatio } from "../../domain/instrument-transformers";
 import { CROSSCHECK_WORKBOOK_REGISTRY } from "../../domain/crosscheck-workbook-registry";
+import type { SourceSnapshot, StudyScenario } from "../../domain/engineering-data";
 
 const confidenceClass: Record<RegistryConfidence, string> = {
   high: "bg-emerald-50 text-emerald-700 border-emerald-200",
@@ -47,7 +49,9 @@ export function SourceIndexView() {
   const updateCtVtOverride = useProsetStore((s) => s.updateCtVtOverride);
   const ctVtOverrides = useProsetStore((s) => s.ctVtOverrides);
   const pdfTapPromotions = useProsetStore((s) => s.pdfTapPromotions);
-  const miniNmmOverrides = useProsetStore((s) => s.miniNmmOverrides);
+  const networkGraphOverrides = useProsetStore((s) => s.networkGraphOverrides);
+  const sourceSnapshots = useProsetStore((s) => s.sourceSnapshots);
+  const studyScenarios = useProsetStore((s) => s.studyScenarios);
   const activeCase =
     NETWORK_CASES.find((item) => item.id === activeCaseId) ?? NETWORK_CASES[0];
   const sources = REGISTRY_SOURCES.filter((s) => activeCase.sourceIds.includes(s.id));
@@ -55,16 +59,16 @@ export function SourceIndexView() {
   const pdfSources = useMemo(() => filterPdfSourcesForNodes(activeCase.nodes), [activeCase]);
   const stagedSources = sourceIntakeRecords.filter((record) => record.caseId === activeCase.id);
 
-  // Build available line list from effective mini-NMM (includes user-added
+  // Build available line list from effective network graph (includes user-added
   // relations) so promote picker offers all current lines, not just seed.
-  const effectiveMiniNmm = useMemo(() => {
-    const fallbackMiniNmm = buildUnifiedNetwork(activeCase);
-    return getEffectiveMiniNmm(activeCase.id, miniNmmOverrides[activeCase.id], fallbackMiniNmm);
-  }, [activeCase, miniNmmOverrides]);
+  const effectiveNetworkGraph = useMemo(() => {
+    const fallbackNetworkGraph = buildUnifiedNetwork(activeCase);
+    return getEffectiveNetworkGraph(activeCase.id, networkGraphOverrides[activeCase.id], fallbackNetworkGraph);
+  }, [activeCase, networkGraphOverrides]);
   const availableLines = useMemo(() => {
-    if (!effectiveMiniNmm) return [];
-    const nodes = networkNodesFromMiniNmm(effectiveMiniNmm);
-    const lines = networkLinesFromMiniNmm(effectiveMiniNmm);
+    if (!effectiveNetworkGraph) return [];
+    const nodes = networkNodesFromGraph(effectiveNetworkGraph);
+    const lines = networkLinesFromGraph(effectiveNetworkGraph);
     return lines.map((line) => {
       const from = nodes.find((n) => n.id === line.fromNodeId);
       const to = nodes.find((n) => n.id === line.toNodeId);
@@ -73,7 +77,7 @@ export function SourceIndexView() {
         label: `${from?.shortCode ?? "?"} - ${to?.shortCode ?? "?"} ${line.circuit}`,
       };
     });
-  }, [effectiveMiniNmm]);
+  }, [effectiveNetworkGraph]);
 
   return (
     <div className="space-y-4">
@@ -115,9 +119,20 @@ export function SourceIndexView() {
         promotions={pdfTapPromotions.filter((p) => p.caseId === activeCase.id)}
         onPromote={addPdfTapPromotion}
         onUnpromote={removePdfTapPromotion}
-        miniNmm={effectiveMiniNmm}
+        networkGraph={effectiveNetworkGraph}
         ctVtOverrides={ctVtOverrides}
         onUpdateCtVt={updateCtVtOverride}
+      />
+
+      <BridgeExportPanel
+        caseId={activeCase.id}
+        caseTitle={activeCase.title}
+        networkGraph={effectiveNetworkGraph}
+      />
+
+      <EngineeringSnapshotPanel
+        snapshots={sourceSnapshots}
+        scenarios={studyScenarios}
       />
 
       <LegacyCrosscheckWorkbookPanel />
@@ -195,7 +210,7 @@ export function SourceIndexView() {
               {SLD_SOURCE_INDEX.summary.fileCount} files | {SLD_SOURCE_INDEX.summary.stationCount} station folders | {SLD_SOURCE_INDEX.summary.byExtension[".pdf"] ?? 0} PDF | {SLD_SOURCE_INDEX.summary.byExtension[".vsd"] ?? 0} VSD
             </div>
           </div>
-          <span className="text-[10px] px-2 py-1 rounded border border-blue-200 bg-blue-50 text-blue-700">mini-NMM source</span>
+          <span className="text-[10px] px-2 py-1 rounded border border-blue-200 bg-blue-50 text-blue-700">network graph source</span>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -267,6 +282,98 @@ export function SourceIndexView() {
         </div>
       </section>
     </div>
+  );
+}
+
+function EngineeringSnapshotPanel({
+  snapshots,
+  scenarios,
+}: {
+  snapshots: SourceSnapshot[];
+  scenarios: StudyScenario[];
+}) {
+  return (
+    <section className="bg-white border border-blue-200 rounded-lg overflow-hidden">
+      <div className="border-b border-blue-200 px-4 py-3 bg-blue-50 flex items-start justify-between gap-3 flex-wrap">
+        <div className="flex items-start gap-2">
+          <Database className="w-4 h-4 text-blue-700 mt-0.5" />
+          <div>
+            <h3 className="text-xs uppercase tracking-wider font-semibold text-blue-900">
+              Versioned Engineering Sources
+            </h3>
+            <div className="text-[10px] text-blue-700 mt-0.5">
+              Satu file dapat menghasilkan beberapa logical snapshots. Status historical tidak
+              sama dengan current engineering truth.
+            </div>
+          </div>
+        </div>
+        <span className="text-[10px] px-2 py-1 rounded border border-blue-200 bg-white text-blue-700">
+          {snapshots.length} snapshots · {scenarios.length} scenarios
+        </span>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full text-xs">
+          <thead className="bg-white border-b border-slate-200 text-[10px] uppercase tracking-wider text-slate-500">
+            <tr>
+              <th className="text-left px-4 py-2 font-semibold">Snapshot</th>
+              <th className="text-left px-4 py-2 font-semibold">Dataset</th>
+              <th className="text-left px-4 py-2 font-semibold">Revision / effective</th>
+              <th className="text-left px-4 py-2 font-semibold">Provenance</th>
+              <th className="text-left px-4 py-2 font-semibold">State</th>
+            </tr>
+          </thead>
+          <tbody>
+            {snapshots.map((snapshot) => (
+              <tr key={snapshot.id} className="border-b border-slate-100 last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  <div className="font-semibold text-slate-900">{snapshot.label}</div>
+                  <div className="text-[10px] font-mono text-slate-400 mt-1">{snapshot.id}</div>
+                </td>
+                <td className="px-4 py-3 align-top">
+                  <div className="text-slate-700">{snapshot.kind}</div>
+                  <div className="text-[10px] text-slate-500 mt-1">
+                    {snapshot.sourcePartition ?? "whole source"} · {snapshot.recordCount ?? "?"} records
+                  </div>
+                </td>
+                <td className="px-4 py-3 align-top text-slate-700">
+                  <div>{snapshot.networkRevisionId ?? "not applicable"}</div>
+                  <div className="text-[10px] text-slate-500 mt-1">
+                    {snapshot.effectiveAt?.slice(0, 10) ??
+                      snapshot.effectivePeriodLabel ??
+                      "effective date unknown"}
+                  </div>
+                </td>
+                <td className="px-4 py-3 align-top">
+                  <div className="text-slate-700">{snapshot.sourceSystem}</div>
+                  <div className="text-[10px] font-mono text-slate-500 mt-1">
+                    {snapshot.checksum.algorithm}:{snapshot.checksum.value}
+                  </div>
+                  <div className="text-[10px] text-slate-400 mt-1">
+                    captured {snapshot.capturedAt.slice(0, 10)}
+                  </div>
+                </td>
+                <td className="px-4 py-3 align-top">
+                  <span
+                    className={`inline-flex text-[10px] px-2 py-0.5 rounded border ${
+                      snapshot.state === "historical"
+                        ? "border-amber-200 bg-amber-50 text-amber-700"
+                        : "border-emerald-200 bg-emerald-50 text-emerald-700"
+                    }`}
+                  >
+                    {snapshot.state}
+                  </span>
+                  {snapshot.notes[0] && (
+                    <div className="text-[10px] text-slate-500 mt-2 max-w-80">
+                      {snapshot.notes[0]}
+                    </div>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
   );
 }
 
@@ -416,6 +523,163 @@ const documentTypeOptions: { value: SourceIntakeRecord["documentType"]; label: s
   { value: "other", label: "Other" },
 ];
 
+function BridgeExportPanel({
+  caseId,
+  caseTitle,
+  networkGraph,
+}: {
+  caseId: string;
+  caseTitle: string;
+  networkGraph: UnifiedNetwork | undefined;
+}) {
+  const decisions = useProsetStore((s) => s.candidateDecisions);
+  const pdfTapPromotions = useProsetStore((s) => s.pdfTapPromotions);
+
+  const exportData = useMemo(() => {
+    if (!networkGraph) return null;
+    try {
+      return buildBridgeExport({ caseId, caseTitle, networkGraph, decisions, pdfTapPromotions });
+    } catch (err) {
+      console.error("Bridge export build failed", err);
+      return null;
+    }
+  }, [caseId, caseTitle, networkGraph, decisions, pdfTapPromotions]);
+
+  const handleDownload = () => {
+    if (!exportData) return;
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `plms-bridge-export-${caseId}-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleCopyToClipboard = async () => {
+    if (!exportData) return;
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(exportData, null, 2));
+    } catch (err) {
+      console.error("Clipboard copy failed", err);
+    }
+  };
+
+  if (!networkGraph) {
+    return null;
+  }
+
+  return (
+    <section className="bg-white border border-violet-200 rounded-lg overflow-hidden">
+      <div className="border-b border-violet-200 px-4 py-2 bg-violet-50 flex items-center justify-between gap-3">
+        <div>
+          <h3 className="text-xs uppercase tracking-wider font-semibold text-violet-800">
+            NMM Bridge Export
+          </h3>
+          <div className="text-[10px] text-violet-700 mt-0.5">
+            Structured JSON sesuai `docs/08_PLMS_CGMES_BRIDGE.md` di project NMM. Consume via{" "}
+            <span className="font-mono">python -m pln_nmm.cli plms-inspect</span>.
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleCopyToClipboard}
+            disabled={!exportData}
+            className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded border border-violet-300 bg-white text-violet-700 hover:bg-violet-100 disabled:opacity-50"
+          >
+            Copy JSON
+          </button>
+          <button
+            type="button"
+            onClick={handleDownload}
+            disabled={!exportData}
+            className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded border border-violet-500 bg-violet-600 text-white hover:bg-violet-700 disabled:opacity-50"
+          >
+            Download JSON
+          </button>
+        </div>
+      </div>
+
+      {exportData ? (
+        <div className="p-4">
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-2 mb-3">
+            <BridgeStatTile label="Substations" value={exportData.meta.sourceArtifactCounts.substations} />
+            <BridgeStatTile label="Busbars" value={exportData.meta.sourceArtifactCounts.busbars} />
+            <BridgeStatTile label="Bays" value={exportData.meta.sourceArtifactCounts.bays} />
+            <BridgeStatTile label="Line Relations" value={exportData.meta.sourceArtifactCounts.lineRelations} />
+            <BridgeStatTile label="IEDs" value={exportData.meta.sourceArtifactCounts.relayIeds} />
+            <BridgeStatTile label="Setting Records" value={exportData.meta.sourceArtifactCounts.protectionSettings} />
+            <BridgeStatTile label="LCD+DIST matched" value={exportData.meta.sourceArtifactCounts.lcdDistRecords} />
+            <BridgeStatTile label="OCR matched" value={exportData.meta.sourceArtifactCounts.ocrRecords} />
+            <BridgeStatTile label="PDF promotions" value={exportData.meta.sourceArtifactCounts.pdfTapPromotions} />
+            <BridgeStatTile label="Sources" value={exportData.sources.length} />
+          </div>
+
+          <div className="rounded-md border border-violet-100 bg-violet-50/50 p-3">
+            <div className="text-[10px] uppercase tracking-wider font-semibold text-violet-700 mb-1">
+              Confidence mix
+            </div>
+            <div className="flex items-center gap-2 text-[11px]">
+              <span className="px-2 py-0.5 rounded border border-emerald-300 bg-emerald-50 text-emerald-700">
+                high: {exportData.meta.confidenceMix.high}
+              </span>
+              <span className="px-2 py-0.5 rounded border border-amber-300 bg-amber-50 text-amber-700">
+                medium: {exportData.meta.confidenceMix.medium}
+              </span>
+              <span className="px-2 py-0.5 rounded border border-red-300 bg-red-50 text-red-700">
+                low: {exportData.meta.confidenceMix.low}
+              </span>
+            </div>
+          </div>
+
+          {exportData.meta.notes.length > 0 && (
+            <div className="mt-3 rounded-md border border-amber-100 bg-amber-50/40 p-3">
+              <div className="text-[10px] uppercase tracking-wider font-semibold text-amber-700 mb-1">
+                Notes untuk NMM consumer
+              </div>
+              <ul className="space-y-1">
+                {exportData.meta.notes.map((note, idx) => (
+                  <li key={idx} className="text-[11px] text-amber-900 flex gap-2">
+                    <span className="text-amber-500">-</span>
+                    <span>{note}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <details className="mt-3">
+            <summary className="text-[11px] text-violet-700 cursor-pointer hover:underline">
+              Preview first 100 lines of JSON
+            </summary>
+            <pre className="mt-2 max-h-72 overflow-auto text-[10px] bg-slate-900 text-slate-100 rounded p-3 font-mono">
+              {JSON.stringify(exportData, null, 2).split("\n").slice(0, 100).join("\n")}
+            </pre>
+          </details>
+        </div>
+      ) : (
+        <div className="p-4 text-xs text-slate-500">
+          Network Graph belum tersedia untuk case ini. Tambah substation/relation via Network Builder.
+        </div>
+      )}
+    </section>
+  );
+}
+
+function BridgeStatTile({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded border border-violet-200 bg-violet-50/50 px-2 py-1.5">
+      <div className="text-[9px] uppercase tracking-wider text-violet-600 font-medium">{label}</div>
+      <div className="text-sm font-semibold text-violet-900">{value}</div>
+    </div>
+  );
+}
+
 function SourceIntakePanel({
   caseId,
   records,
@@ -426,7 +690,7 @@ function SourceIntakePanel({
   promotions,
   onPromote,
   onUnpromote,
-  miniNmm,
+  networkGraph,
   ctVtOverrides,
   onUpdateCtVt,
 }: {
@@ -439,7 +703,7 @@ function SourceIntakePanel({
   promotions: PdfTapPromotion[];
   onPromote: (record: Omit<PdfTapPromotion, "id" | "promotedAt" | "actor" | "status"> & { status?: PdfTapPromotion["status"] }) => string;
   onUnpromote: (id: string) => void;
-  miniNmm?: UnifiedNetwork;
+  networkGraph?: UnifiedNetwork;
   ctVtOverrides: ReturnType<typeof useProsetStore.getState>["ctVtOverrides"];
   onUpdateCtVt: ReturnType<typeof useProsetStore.getState>["updateCtVtOverride"];
 }) {
@@ -620,7 +884,7 @@ function SourceIntakePanel({
 
         <div className="rounded-md border border-slate-200 overflow-hidden">
           <div className="px-3 py-2 bg-white border-b border-slate-200 text-[11px] text-slate-500">
-            Staged sources menjadi input review: buat station/relation di Mini-NMM Editor, lalu mapping setting diproses lewat Inbox.
+            Staged sources menjadi input review: buat station/relation di Network Builder, lalu mapping setting diproses lewat Inbox.
           </div>
           {records.length === 0 ? (
             <div className="px-3 py-8 text-center text-xs text-slate-500">
@@ -707,7 +971,7 @@ function SourceIntakePanel({
                       promotions={recordPromotions}
                       onPromote={onPromote}
                       onUnpromote={onUnpromote}
-                      miniNmm={miniNmm}
+                      networkGraph={networkGraph}
                       ctVtOverrides={ctVtOverrides}
                       onUpdateCtVt={onUpdateCtVt}
                     />
@@ -759,7 +1023,7 @@ function PromotePanel({
   promotions,
   onPromote,
   onUnpromote,
-  miniNmm,
+  networkGraph,
   ctVtOverrides,
   onUpdateCtVt,
 }: {
@@ -769,7 +1033,7 @@ function PromotePanel({
   promotions: PdfTapPromotion[];
   onPromote: (record: Omit<PdfTapPromotion, "id" | "promotedAt" | "actor" | "status"> & { status?: PdfTapPromotion["status"] }) => string;
   onUnpromote: (id: string) => void;
-  miniNmm?: UnifiedNetwork;
+  networkGraph?: UnifiedNetwork;
   ctVtOverrides: ReturnType<typeof useProsetStore.getState>["ctVtOverrides"];
   onUpdateCtVt: ReturnType<typeof useProsetStore.getState>["updateCtVtOverride"];
 }) {
@@ -787,7 +1051,7 @@ function PromotePanel({
       })),
       status: "imported",
     });
-    promoteInstrumentTransformers(lineId, record, miniNmm, ctVtOverrides, onUpdateCtVt);
+    promoteInstrumentTransformers(lineId, record, networkGraph, ctVtOverrides, onUpdateCtVt);
   };
 
   return (
@@ -850,19 +1114,19 @@ function PromotePanel({
 function promoteInstrumentTransformers(
   lineId: string,
   record: SourceIntakeRecord,
-  miniNmm: UnifiedNetwork | undefined,
+  networkGraph: UnifiedNetwork | undefined,
   ctVtOverrides: ReturnType<typeof useProsetStore.getState>["ctVtOverrides"],
   onUpdateCtVt: ReturnType<typeof useProsetStore.getState>["updateCtVtOverride"]
 ) {
-  if (!miniNmm || !record.extractedFields) return;
-  const relation = miniNmm.lineRelations.find((item) => item.id === lineId);
+  if (!networkGraph || !record.extractedFields) return;
+  const relation = networkGraph.lineRelations.find((item) => item.id === lineId);
   if (!relation) return;
 
   const ct = parseCtRatio(findFieldValue(record.extractedFields, /^CT/i), record.fileName);
   const vt = parseVtRatio(findFieldValue(record.extractedFields, /^(VT|PT)/i), record.fileName);
   if (!ct && !vt) return;
 
-  const relationIeds = miniNmm.relayIeds.filter(
+  const relationIeds = networkGraph.relayIeds.filter(
     (ied) => ied.bayId === relation.fromBayId || ied.bayId === relation.toBayId
   );
   for (const ied of relationIeds) {

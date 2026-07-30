@@ -7,6 +7,11 @@ import { useProsetStore } from "./store/useProsetStore";
 const HomeView = lazy(() =>
   import("./components/home/HomeView").then((m) => ({ default: m.HomeView }))
 );
+const ReferenceSettingView = lazy(() =>
+  import("./components/reference/ReferenceSettingView").then((m) => ({
+    default: m.ReferenceSettingView,
+  }))
+);
 const MasterDataView = lazy(() =>
   import("./components/master/MasterDataView").then((m) => ({ default: m.MasterDataView }))
 );
@@ -16,8 +21,8 @@ const StudyDashboardView = lazy(() =>
 const NetworkModelView = lazy(() =>
   import("./components/network/NetworkModelView").then((m) => ({ default: m.NetworkModelView }))
 );
-const MiniNmmEditorView = lazy(() =>
-  import("./components/network/MiniNmmEditorView").then((m) => ({ default: m.MiniNmmEditorView }))
+const NetworkGraphEditorView = lazy(() =>
+  import("./components/network/NetworkGraphEditorView").then((m) => ({ default: m.NetworkGraphEditorView }))
 );
 const SourceIndexView = lazy(() =>
   import("./components/network/SourceIndexView").then((m) => ({ default: m.SourceIndexView }))
@@ -31,8 +36,15 @@ const LineRegistryView = lazy(() =>
 const CalculationView = lazy(() =>
   import("./components/calculation/CalculationView").then((m) => ({ default: m.CalculationView }))
 );
-const ComparisonView = lazy(() =>
-  import("./components/comparison/ComparisonView").then((m) => ({ default: m.ComparisonView }))
+const ActualVerificationView = lazy(() =>
+  import("./components/verification/ActualVerificationView").then((m) => ({
+    default: m.ActualVerificationView,
+  }))
+);
+const VendorImportView = lazy(() =>
+  import("./components/import/VendorImportView").then((m) => ({
+    default: m.VendorImportView,
+  }))
 );
 const CoverageView = lazy(() =>
   import("./components/coverage/CoverageView").then((m) => ({ default: m.CoverageView }))
@@ -49,7 +61,9 @@ export function App() {
   return (
     <AppShell>
       <Suspense fallback={<LoadingFallback />}>
-        {tab === "home" ? (
+        {tab === "reference-setting" ? (
+          <ReferenceSettingView />
+        ) : tab === "home" ? (
           <HomeView />
         ) : tab === "master-data" ? (
           <MasterDataView />
@@ -57,8 +71,8 @@ export function App() {
           <StudyDashboardView />
         ) : tab === "network-model" ? (
           <NetworkModelView />
-        ) : tab === "mini-nmm-editor" ? (
-          <MiniNmmEditorView />
+        ) : tab === "network-graph-editor" ? (
+          <NetworkGraphEditorView />
         ) : tab === "source-index" ? (
           <SourceIndexView />
         ) : tab === "inbox" ? (
@@ -68,7 +82,9 @@ export function App() {
         ) : tab === "calculation" ? (
           <CalculationView />
         ) : tab === "comparison" ? (
-          <ComparisonView />
+          <ActualVerificationView />
+        ) : tab === "vendor-import" ? (
+          <VendorImportView />
         ) : tab === "coverage" ? (
           <CoverageView />
         ) : tab === "verified-report" ? (

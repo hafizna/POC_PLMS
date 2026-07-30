@@ -1,5 +1,5 @@
 // Aggregate the lifecycle status of a LineRelation across the multiple
-// sources that feed it (mini-NMM hand-curated seed, LCD+DIST imports,
+// sources that feed it (network graph hand-curated seed, LCD+DIST imports,
 // OCR/GFR imports, .set parser later). Each source carries its own
 // status and the user can promote them via the Inbox.
 
@@ -97,7 +97,7 @@ function rollupStatus(values: LifecycleStatus[]): LifecycleStatus {
 }
 
 // Build a per-line status object from all data sources visible for a case.
-// Mini-NMM seeded relations contribute the "seed" source. Each matched
+// Network Graph seeded relations contribute the "seed" source. Each matched
 // LCD+DIST or OCR candidate contributes a per-source row; the user's
 // inbox decision overrides the default `imported`.
 export function buildRelationStatuses(

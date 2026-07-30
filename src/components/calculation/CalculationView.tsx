@@ -21,12 +21,12 @@ import {
   promoteMatchedLcdDistCandidates,
 } from "../../domain/lcd-dist-import";
 import {
-  getEffectiveMiniNmm,
+  getEffectiveNetworkGraph,
   INVENTORY_MASTER_CASE_ID,
   mergeMasterRelationsIntoCase,
-  networkLinesFromMiniNmm,
-  networkNodesFromMiniNmm,
-} from "../../domain/mini-nmm";
+  networkLinesFromGraph,
+  networkNodesFromGraph,
+} from "../../domain/network-graph";
 import { buildUnifiedNetwork } from "../../domain/unified";
 import type { RelayIED } from "../../domain/unified";
 import {
@@ -35,6 +35,10 @@ import {
   DistanceCalculationInput,
   DistanceZoneResult,
 } from "../../lib/distance-calculation";
+import {
+  calculateLegacyCrosscheckBenchmark,
+  type LegacyBenchmarkRow,
+} from "../../lib/legacy-crosscheck-calculation";
 import { getEffectiveCtVt, parseCtRatio, parseVtRatio } from "../../domain/instrument-transformers";
 import {
   CALCULATION_TEMPLATES,
@@ -44,6 +48,14 @@ import {
 } from "../../domain/calculation-templates";
 import { getMathcadArtifactsForTemplate } from "../../domain/mathcad-template-registry";
 import { CROSSCHECK_WORKBOOK_REGISTRY } from "../../domain/crosscheck-workbook-registry";
+import {
+  buildP545InputContract,
+  createP545InputOverride,
+  type P545EngineeringInput,
+  type P545InputOverride,
+  type P545InputSection,
+  type P545InputStatus,
+} from "../../domain/p545-input-contract";
 import { OcrWorkbook } from "./OcrWorkbook";
 
 type InputKey = keyof DistanceCalculationInput;
@@ -51,7 +63,7 @@ type InputKey = keyof DistanceCalculationInput;
 export function CalculationView() {
   const activeLineId = useProsetStore((s) => s.activeNetworkLineId);
   const activeCaseId = useProsetStore((s) => s.activeNetworkCaseId);
-  const miniNmmOverrides = useProsetStore((s) => s.miniNmmOverrides);
+  const networkGraphOverrides = useProsetStore((s) => s.networkGraphOverrides);
   const ctVtOverrides = useProsetStore((s) => s.ctVtOverrides);
   const setActiveLine = useProsetStore((s) => s.setActiveNetworkLine);
   const addCalculationSnapshot = useProsetStore((s) => s.addCalculationSnapshot);
@@ -68,40 +80,40 @@ export function CalculationView() {
     NETWORK_CASES.find((item) => item.id === activeCaseId) ?? NETWORK_CASES[0];
   const inventoryCase =
     NETWORK_CASES.find((item) => item.id === INVENTORY_MASTER_CASE_ID) ?? activeCase;
-  const fallbackMiniNmm = useMemo(() => buildUnifiedNetwork(activeCase), [activeCase]);
-  const masterFallbackMiniNmm = useMemo(() => buildUnifiedNetwork(inventoryCase), [inventoryCase]);
-  const masterMiniNmm = useMemo(
+  const fallbackNetworkGraph = useMemo(() => buildUnifiedNetwork(activeCase), [activeCase]);
+  const masterFallbackNetworkGraph = useMemo(() => buildUnifiedNetwork(inventoryCase), [inventoryCase]);
+  const masterNetworkGraph = useMemo(
     () =>
-      getEffectiveMiniNmm(
+      getEffectiveNetworkGraph(
         INVENTORY_MASTER_CASE_ID,
-        miniNmmOverrides[INVENTORY_MASTER_CASE_ID],
-        masterFallbackMiniNmm
+        networkGraphOverrides[INVENTORY_MASTER_CASE_ID],
+        masterFallbackNetworkGraph
       ),
-    [miniNmmOverrides, masterFallbackMiniNmm]
+    [networkGraphOverrides, masterFallbackNetworkGraph]
   );
-  const miniNmm = useMemo(
+  const networkGraph = useMemo(
     () =>
       mergeMasterRelationsIntoCase(
-        getEffectiveMiniNmm(activeCase.id, miniNmmOverrides[activeCase.id], fallbackMiniNmm),
-        masterMiniNmm
+        getEffectiveNetworkGraph(activeCase.id, networkGraphOverrides[activeCase.id], fallbackNetworkGraph),
+        masterNetworkGraph
       ),
-    [activeCase.id, miniNmmOverrides, fallbackMiniNmm, masterMiniNmm]
+    [activeCase.id, networkGraphOverrides, fallbackNetworkGraph, masterNetworkGraph]
   );
   const nodes = useMemo(
-    () => (miniNmm ? networkNodesFromMiniNmm(miniNmm) : activeCase.nodes),
-    [activeCase.nodes, miniNmm]
+    () => (networkGraph ? networkNodesFromGraph(networkGraph) : activeCase.nodes),
+    [activeCase.nodes, networkGraph]
   );
   const lines = useMemo(
-    () => (miniNmm ? networkLinesFromMiniNmm(miniNmm) : activeCase.lines),
-    [activeCase.lines, miniNmm]
+    () => (networkGraph ? networkLinesFromGraph(networkGraph) : activeCase.lines),
+    [activeCase.lines, networkGraph]
   );
   const activeLine = lines.find((line) => line.id === activeLineId);
-  const relation = miniNmm?.lineRelations.find((r) => r.id === activeLineId);
+  const relation = networkGraph?.lineRelations.find((r) => r.id === activeLineId);
   const fromIed = relation
-    ? miniNmm?.relayIeds.find((i) => i.bayId === relation.fromBayId)
+    ? networkGraph?.relayIeds.find((i) => i.bayId === relation.fromBayId)
     : undefined;
   const toIed = relation
-    ? miniNmm?.relayIeds.find((i) => i.bayId === relation.toBayId)
+    ? networkGraph?.relayIeds.find((i) => i.bayId === relation.toBayId)
     : undefined;
   const calcIed: RelayIED | undefined = side === "from" ? fromIed : toIed;
   const promotedLine = useMemo(
@@ -126,7 +138,7 @@ export function CalculationView() {
 
   useEffect(() => {
     if (!activeLine || !fromNode || !toNode) return;
-    // Prefer per-IED CT/VT from mini-NMM (clean data) over the fused
+    // Prefer per-IED CT/VT from network graph (clean data) over the fused
     // "3000/5 at DKS, 3000/1 at DM" string on NetworkLine.
     const ct =
       getEffectiveCtVt(calcIed, ctVtOverrides).ct ??
@@ -321,7 +333,7 @@ export function CalculationView() {
               )}
             </div>
             <span className="text-blue-700">
-              Prefilled dari {calcIed ? "mini-NMM IED" : promotedLine ? "promoted LCD+DIST" : "registry"}.
+              Prefilled dari {calcIed ? "network graph IED" : promotedLine ? "promoted LCD+DIST" : "registry"}.
             </span>
             {savedSnapshotId && (
               <span className="text-emerald-700 bg-emerald-50 border border-emerald-200 rounded px-2 py-0.5">
@@ -373,6 +385,10 @@ export function CalculationView() {
           </div>
         )}
       </div>
+
+      {selectedTemplateId === "distance-line-150kv" && (
+        <P545PilotInputContractPanel />
+      )}
 
       {selectedTemplate.status !== "executable" ? (
         <div className="grid grid-cols-1 xl:grid-cols-[420px_1fr] gap-4">
@@ -832,6 +848,11 @@ function LegacyCrosscheckBenchmarkPanel() {
     outputs?: Record<string, number | string | null>;
   };
   const lines = distanceCase.selectedLines?.filter((line) => line.name) ?? [];
+  const benchmark = calculateLegacyCrosscheckBenchmark(registry);
+  const parityTone =
+    benchmark.summary.gapCount === 0 && benchmark.summary.missingCount === 0
+      ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+      : "border-amber-200 bg-amber-50 text-amber-900";
 
   return (
     <section className="bg-white border border-emerald-200 rounded-lg overflow-hidden">
@@ -902,8 +923,57 @@ function LegacyCrosscheckBenchmarkPanel() {
             <BenchmarkMetric label="OCR pickup" value={`${formatOutput(ocrGfrCase.outputs?.ocrPickupPrimaryA)} A`} />
             <BenchmarkMetric label="GFR pickup" value={`${formatOutput(ocrGfrCase.outputs?.gfrPickupPrimaryA)} A`} />
           </div>
-          <div className="mt-3 rounded border border-amber-100 bg-amber-50 px-3 py-2 text-[11px] text-amber-900">
-            Berikutnya: executable PLMS template perlu mode benchmark yang menghitung ulang dari input DB/IHS lalu menampilkan selisih terhadap output Excel ini.
+          <div className={`mt-3 rounded border px-3 py-2 text-[11px] ${parityTone}`}>
+            Benchmark Mode: PLMS menghitung ulang dari input DB/IHS/PROSES dan membandingkan hasilnya dengan output Excel.
+            {benchmark.summary.gapCount === 0
+              ? " Distance dan OCR/GFR benchmark sudah parity untuk case ini."
+              : ` Masih ada ${benchmark.summary.gapCount} gap yang perlu ditutup.`}
+          </div>
+        </div>
+      </div>
+
+      <div className="border-t border-emerald-100 bg-white">
+        <div className="px-4 py-3 flex items-center justify-between gap-3 flex-wrap">
+          <div>
+            <div className="text-xs font-semibold text-slate-900">PLMS vs Excel Parity</div>
+            <div className="text-[11px] text-slate-500 mt-0.5">
+              Formula benchmark mengikuti selector workbook: L1-L4, Z2/Z3 min-max cap, secondary factor CCC/PT, dan OCR/GFR pickup.
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-1.5 text-[10px]">
+            <span className="rounded border border-emerald-200 bg-emerald-50 px-2 py-1 text-emerald-700">
+              {benchmark.summary.matchCount} match
+            </span>
+            <span className="rounded border border-amber-200 bg-amber-50 px-2 py-1 text-amber-700">
+              {benchmark.summary.warnCount} warn
+            </span>
+            <span className="rounded border border-red-200 bg-red-50 px-2 py-1 text-red-700">
+              {benchmark.summary.gapCount} gap
+            </span>
+            <span className="rounded border border-slate-200 bg-slate-50 px-2 py-1 text-slate-600">
+              max {formatMaybeNumber(benchmark.summary.maxAbsDeltaPct)}%
+            </span>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 xl:grid-cols-[1.4fr_1fr] border-t border-slate-100">
+          <BenchmarkComparisonTable title="Distance" rows={benchmark.distanceRows} />
+          <div className="border-t xl:border-t-0 xl:border-l border-slate-100">
+            <BenchmarkComparisonTable title="OCR/GFR" rows={benchmark.ocrGfrRows} compact />
+            <div className="px-4 pb-4">
+              <div className="rounded border border-slate-200 bg-slate-50 px-3 py-2">
+                <div className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 mb-1">
+                  Formula trace
+                </div>
+                <div className="space-y-1">
+                  {benchmark.formulas.map((formula) => (
+                    <div key={formula.label} className="grid grid-cols-[52px_1fr] gap-2 text-[10px]">
+                      <span className="font-semibold text-slate-700">{formula.label}</span>
+                      <span className="font-mono text-slate-500">{formula.expression}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -929,6 +999,77 @@ function BenchmarkMetric({ label, value }: { label: string; value: string }) {
   );
 }
 
+function BenchmarkComparisonTable({
+  title,
+  rows,
+  compact = false,
+}: {
+  title: string;
+  rows: LegacyBenchmarkRow[];
+  compact?: boolean;
+}) {
+  return (
+    <div className="p-4">
+      <div className="text-xs font-semibold text-slate-700 mb-2">{title}</div>
+      <div className="overflow-x-auto rounded border border-slate-200">
+        <table className="w-full text-xs">
+          <thead className="bg-slate-50 text-[10px] uppercase tracking-wider text-slate-500">
+            <tr>
+              <th className="text-left px-2 py-2 font-medium">Output</th>
+              <th className="text-right px-2 py-2 font-medium">PLMS</th>
+              <th className="text-right px-2 py-2 font-medium">Excel</th>
+              <th className="text-right px-2 py-2 font-medium">Delta</th>
+              {!compact && <th className="text-right px-2 py-2 font-medium">Delta %</th>}
+              <th className="text-left px-2 py-2 font-medium">Status</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100 bg-white">
+            {rows.map((row) => (
+              <tr key={row.key}>
+                <td className="px-2 py-1.5 text-slate-700 whitespace-nowrap">
+                  {row.label}
+                  {row.unit ? <span className="text-slate-400"> ({row.unit})</span> : null}
+                </td>
+                <td className="px-2 py-1.5 text-right font-mono text-slate-900">{formatMaybeNumber(row.plms)}</td>
+                <td className="px-2 py-1.5 text-right font-mono text-slate-600">{formatMaybeNumber(row.excel)}</td>
+                <td className="px-2 py-1.5 text-right font-mono text-slate-600">{formatSigned(row.delta)}</td>
+                {!compact && (
+                  <td className="px-2 py-1.5 text-right font-mono text-slate-600">
+                    {row.deltaPct === null ? "-" : `${formatSigned(row.deltaPct)}%`}
+                  </td>
+                )}
+                <td className="px-2 py-1.5">
+                  <BenchmarkStatusBadge status={row.status} />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function BenchmarkStatusBadge({ status }: { status: LegacyBenchmarkRow["status"] }) {
+  const cls: Record<LegacyBenchmarkRow["status"], string> = {
+    match: "border-emerald-200 bg-emerald-50 text-emerald-700",
+    warn: "border-amber-200 bg-amber-50 text-amber-700",
+    gap: "border-red-200 bg-red-50 text-red-700",
+    missing: "border-slate-200 bg-slate-50 text-slate-500",
+  };
+  return (
+    <span className={`inline-flex rounded border px-1.5 py-0.5 text-[10px] ${cls[status]}`}>
+      {status}
+    </span>
+  );
+}
+
+function formatSigned(value: number | null | undefined) {
+  if (value === null || value === undefined || Number.isNaN(value)) return "-";
+  const formatted = formatMaybeNumber(Math.abs(value));
+  return value > 0 ? `+${formatted}` : value < 0 ? `-${formatted}` : formatted;
+}
+
 function formatMaybeNumber(value: number | null | undefined) {
   if (value === null || value === undefined || Number.isNaN(value)) return "-";
   return Number(value).toLocaleString("id-ID", { maximumFractionDigits: 3 });
@@ -938,6 +1079,385 @@ function formatOutput(value: number | string | null | undefined) {
   if (value === null || value === undefined || value === "") return "-";
   if (typeof value === "number") return formatMaybeNumber(value);
   return value;
+}
+
+const P545_SECTION_LABELS: Record<P545InputSection, string> = {
+  identity: "Relay identity",
+  line: "Protected line",
+  "instrument-transformer": "CT / VT",
+  "operating-limit": "Operating limits",
+  "fault-study": "Fault study",
+  "adjacent-network": "Adjacent network",
+};
+
+function P545PilotInputContractPanel() {
+  const sourceSnapshots = useProsetStore((state) => state.sourceSnapshots);
+  const studyScenarios = useProsetStore((state) => state.studyScenarios);
+  const activeStudyId = useProsetStore((state) => state.activeStudyId);
+  const activeStudy = useProsetStore((state) =>
+    state.studies.find((study) => study.id === state.activeStudyId)
+  );
+  const currentPersona = useProsetStore((state) => state.currentPersona);
+  const setStudyScenario = useProsetStore((state) => state.setStudyScenario);
+  const scenarioId = activeStudy?.scenarioId;
+  const [overrides, setOverrides] = useState<P545InputOverride[]>([]);
+  const [overrideKey, setOverrideKey] = useState("relay_model");
+  const [overrideValue, setOverrideValue] = useState("");
+  const [overrideReason, setOverrideReason] = useState("");
+  const [overrideError, setOverrideError] = useState("");
+  const contract = useMemo(
+    () =>
+      buildP545InputContract({
+        snapshots: sourceSnapshots,
+        scenarios: studyScenarios,
+        scenarioId,
+        overrides,
+      }),
+    [sourceSnapshots, studyScenarios, scenarioId, overrides]
+  );
+  const reviewableInputs = contract.inputs.filter(
+    (input) => input.status !== "resolved" && input.status !== "blocked"
+  );
+
+  useEffect(() => {
+    setOverrides([]);
+    setOverrideError("");
+  }, [scenarioId]);
+
+  useEffect(() => {
+    if (
+      reviewableInputs.length > 0 &&
+      !reviewableInputs.some((input) => input.key === overrideKey)
+    ) {
+      setOverrideKey(reviewableInputs[0].key);
+      setOverrideValue("");
+    }
+  }, [reviewableInputs, overrideKey]);
+
+  const applyOverride = () => {
+    try {
+      const override = createP545InputOverride({
+        contract,
+        inputKey: overrideKey,
+        rawValue: overrideValue,
+        reason: overrideReason,
+        actor: currentPersona,
+      });
+      setOverrides((current) => [
+        ...current.filter((item) => item.inputKey !== override.inputKey),
+        override,
+      ]);
+      setOverrideValue("");
+      setOverrideReason("");
+      setOverrideError("");
+    } catch (error) {
+      setOverrideError(error instanceof Error ? error.message : "Override is invalid.");
+    }
+  };
+
+  return (
+    <section className="bg-white border border-slate-200 rounded-lg overflow-hidden">
+      <div className="border-b border-slate-200 bg-slate-50 px-4 py-3 flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <h3 className="text-sm font-semibold text-slate-900">
+              P545 Pilot Input Contract
+            </h3>
+            <P545ContractStatusBadge status={contract.status} />
+            <span className="text-[10px] rounded border border-blue-200 bg-blue-50 text-blue-700 px-1.5 py-0.5">
+              MVP 2B.1
+            </span>
+          </div>
+          <p className="text-xs text-slate-600 mt-1 max-w-3xl">
+            Ciledug → Alam Sutera #1. Ini adalah gerbang input typed/unit-aware
+            sebelum formula P545 dipindahkan dari Mathcad; belum terhubung ke
+            tombol Save draft TAP.
+          </p>
+        </div>
+        <label className="flex flex-col gap-1 min-w-72">
+          <span className="text-[10px] uppercase tracking-wider text-slate-500">
+            Study scenario
+          </span>
+          <select
+            value={scenarioId ?? ""}
+            disabled={!activeStudyId}
+            onChange={(event) =>
+              activeStudyId &&
+              setStudyScenario(activeStudyId, event.target.value || null)
+            }
+            className="bg-white text-xs px-2 py-1.5 rounded border border-slate-300 focus:border-blue-500 focus:outline-none"
+          >
+            <option value="">No scenario — fault input blocked</option>
+            {studyScenarios.map((scenario) => (
+              <option key={scenario.id} value={scenario.id}>
+                {scenario.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      <div className="px-4 py-3 border-b border-slate-100">
+        <div className="flex flex-wrap gap-2">
+          <P545SummaryChip label="Resolved" value={contract.summary.resolved} tone="emerald" />
+          <P545SummaryChip label="Conflict" value={contract.summary.conflicts} tone="amber" />
+          <P545SummaryChip label="Missing" value={contract.summary.missing} tone="red" />
+          <P545SummaryChip label="Blocked" value={contract.summary.blocked} tone="slate" />
+          <P545SummaryChip label="Override" value={contract.summary.overridden} tone="blue" />
+        </div>
+        {contract.scenarioIssues.length > 0 && (
+          <div className="mt-3 grid grid-cols-1 lg:grid-cols-2 gap-2">
+            {contract.scenarioIssues.map((issue) => (
+              <div
+                key={`${issue.code}-${issue.message}`}
+                className={`rounded border px-2.5 py-2 text-[11px] ${
+                  issue.severity === "error"
+                    ? "border-red-200 bg-red-50 text-red-800"
+                    : "border-amber-200 bg-amber-50 text-amber-800"
+                }`}
+              >
+                <span className="font-semibold">{issue.code}</span>: {issue.message}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="p-4 grid grid-cols-1 xl:grid-cols-2 gap-3">
+        {(Object.keys(P545_SECTION_LABELS) as P545InputSection[]).map((section) => {
+          const inputs = contract.inputs.filter((input) => input.section === section);
+          if (inputs.length === 0) return null;
+          return (
+            <div key={section} className="rounded border border-slate-200 overflow-hidden">
+              <div className="bg-slate-50 border-b border-slate-200 px-3 py-2 flex items-center justify-between">
+                <h4 className="text-[10px] uppercase tracking-wider font-semibold text-slate-600">
+                  {P545_SECTION_LABELS[section]}
+                </h4>
+                <span className="text-[10px] text-slate-400">{inputs.length} input</span>
+              </div>
+              <div className="divide-y divide-slate-100">
+                {inputs.map((input) => (
+                  <P545InputRow
+                    key={input.key}
+                    input={input}
+                    onClearOverride={() =>
+                      setOverrides((current) =>
+                        current.filter((item) => item.inputKey !== input.key)
+                      )
+                    }
+                  />
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="border-t border-slate-200 bg-slate-50 px-4 py-3">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div>
+            <div className="text-xs font-semibold text-slate-800">
+              Engineer override
+            </div>
+            <div className="text-[11px] text-slate-500">
+              Kandidat asli tetap disimpan. Alasan minimal 8 karakter dan actor/timestamp dicatat.
+            </div>
+          </div>
+          <span className="text-[10px] text-slate-500">
+            Session draft · backend approval menyusul saat staging/dev
+          </span>
+        </div>
+        {reviewableInputs.length === 0 ? (
+          <div className="mt-2 text-xs text-emerald-700">
+            Tidak ada conflict/missing input yang dapat dioverride.
+          </div>
+        ) : (
+          <div className="mt-3 grid grid-cols-1 lg:grid-cols-[240px_180px_1fr_auto] gap-2">
+            <select
+              value={overrideKey}
+              onChange={(event) => {
+                setOverrideKey(event.target.value);
+                setOverrideValue("");
+                setOverrideError("");
+              }}
+              className="bg-white text-xs px-2 py-2 rounded border border-slate-300 focus:border-blue-500 focus:outline-none"
+            >
+              {reviewableInputs.map((input) => (
+                <option key={input.key} value={input.key}>
+                  {input.label} ({input.status})
+                </option>
+              ))}
+            </select>
+            <input
+              value={overrideValue}
+              onChange={(event) => setOverrideValue(event.target.value)}
+              placeholder="Selected value"
+              className="bg-white text-xs px-2 py-2 rounded border border-slate-300 focus:border-blue-500 focus:outline-none"
+            />
+            <input
+              value={overrideReason}
+              onChange={(event) => setOverrideReason(event.target.value)}
+              placeholder="Engineering reason and evidence..."
+              className="bg-white text-xs px-2 py-2 rounded border border-slate-300 focus:border-blue-500 focus:outline-none"
+            />
+            <button
+              type="button"
+              onClick={applyOverride}
+              className="rounded border border-blue-300 bg-blue-50 px-3 py-2 text-xs font-medium text-blue-700 hover:bg-blue-100"
+            >
+              Apply override
+            </button>
+          </div>
+        )}
+        {overrideError && (
+          <div className="mt-2 text-xs text-red-700">{overrideError}</div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function P545InputRow({
+  input,
+  onClearOverride,
+}: {
+  input: P545EngineeringInput;
+  onClearOverride: () => void;
+}) {
+  return (
+    <div className="px-3 py-2.5">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="text-xs font-medium text-slate-800">{input.label}</div>
+          <div className="text-[10px] text-slate-500 mt-0.5">{input.description}</div>
+        </div>
+        <div className="flex items-center gap-1.5 shrink-0">
+          <P545InputStatusBadge status={input.status} />
+          {input.status === "overridden" && (
+            <button
+              type="button"
+              onClick={onClearOverride}
+              className="text-[10px] text-blue-600 hover:underline"
+            >
+              clear
+            </button>
+          )}
+        </div>
+      </div>
+      {input.value !== null && (
+        <div className="mt-1.5 font-mono text-xs text-slate-900">
+          {formatP545Value(input.value)}{" "}
+          <span className="text-slate-400">{input.unit}</span>
+        </div>
+      )}
+      {input.issue && (
+        <div className="mt-1.5 text-[10px] text-amber-700">{input.issue}</div>
+      )}
+      {input.candidates.length > 0 && (
+        <div className="mt-2 space-y-1">
+          {input.candidates.map((candidate) => (
+            <div
+              key={candidate.id}
+              className="rounded border border-slate-100 bg-slate-50 px-2 py-1.5 text-[10px] text-slate-600"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-mono text-slate-800">
+                  {formatP545Value(candidate.value)} {candidate.unit}
+                </span>
+                <span>{formatP545Date(candidate.source.capturedAt)}</span>
+              </div>
+              <div className="mt-0.5 truncate" title={`${candidate.source.sourceRef} · ${candidate.source.locator}`}>
+                {candidate.source.label} · {candidate.source.locator}
+              </div>
+              {(candidate.source.snapshotId || candidate.source.scenarioId) && (
+                <div className="mt-0.5 text-slate-400 truncate">
+                  {candidate.source.snapshotId ?? "no snapshot"}
+                  {candidate.source.scenarioId ? ` · ${candidate.source.scenarioId}` : ""}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+      {input.override && (
+        <div className="mt-2 rounded border border-blue-200 bg-blue-50 px-2 py-1.5 text-[10px] text-blue-800">
+          {input.override.actor} · {formatP545Date(input.override.at)} · {input.override.reason}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function P545ContractStatusBadge({
+  status,
+}: {
+  status: "blocked" | "needs-review" | "ready";
+}) {
+  const cls = {
+    blocked: "border-red-200 bg-red-50 text-red-700",
+    "needs-review": "border-amber-200 bg-amber-50 text-amber-700",
+    ready: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  }[status];
+  return (
+    <span className={`text-[10px] rounded border px-1.5 py-0.5 ${cls}`}>
+      {status.replace("-", " ")}
+    </span>
+  );
+}
+
+function P545InputStatusBadge({ status }: { status: P545InputStatus }) {
+  const cls: Record<P545InputStatus, string> = {
+    resolved: "border-emerald-200 bg-emerald-50 text-emerald-700",
+    conflict: "border-amber-200 bg-amber-50 text-amber-700",
+    missing: "border-red-200 bg-red-50 text-red-700",
+    blocked: "border-slate-300 bg-slate-100 text-slate-600",
+    overridden: "border-blue-200 bg-blue-50 text-blue-700",
+  };
+  return (
+    <span className={`text-[10px] rounded border px-1.5 py-0.5 ${cls[status]}`}>
+      {status}
+    </span>
+  );
+}
+
+function P545SummaryChip({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: number;
+  tone: "emerald" | "amber" | "red" | "slate" | "blue";
+}) {
+  const cls = {
+    emerald: "border-emerald-200 bg-emerald-50 text-emerald-700",
+    amber: "border-amber-200 bg-amber-50 text-amber-700",
+    red: "border-red-200 bg-red-50 text-red-700",
+    slate: "border-slate-200 bg-slate-50 text-slate-600",
+    blue: "border-blue-200 bg-blue-50 text-blue-700",
+  }[tone];
+  return (
+    <span className={`text-[10px] rounded border px-2 py-1 ${cls}`}>
+      {label}: <span className="font-semibold">{value}</span>
+    </span>
+  );
+}
+
+function formatP545Value(value: number | string) {
+  return typeof value === "number"
+    ? value.toLocaleString("id-ID", { maximumFractionDigits: 7 })
+    : value;
+}
+
+function formatP545Date(value: string) {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime())
+    ? value
+    : date.toLocaleDateString("id-ID", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      });
 }
 
 function MathcadBridgePanel({ template }: { template: CalculationTemplate }) {

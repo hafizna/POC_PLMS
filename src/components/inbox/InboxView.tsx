@@ -7,6 +7,7 @@ import {
   ChevronRight,
   CheckCircle2,
   Inbox,
+  Network,
   Plus,
   Sparkles,
   Undo2,
@@ -29,13 +30,14 @@ import type { Bay, Busbar, LineRelation, LifecycleStatus, ProtectionFunctionId, 
 import { buildUnifiedNetwork } from "../../domain/unified";
 import { buildCaseScopePredicate } from "../../domain/matcher";
 import {
-  getEffectiveMiniNmm,
+  getEffectiveNetworkGraph,
   INVENTORY_MASTER_CASE_ID,
   mergeMasterRelationsIntoCase,
-  networkLinesFromMiniNmm,
-  networkNodesFromMiniNmm,
-} from "../../domain/mini-nmm";
+  networkLinesFromGraph,
+  networkNodesFromGraph,
+} from "../../domain/network-graph";
 import { looseTokenMatch, normalizeStationName } from "../../domain/normalization";
+import { buildGraphForUltg, type GraphBuildGroup } from "../../domain/graph-builder";
 import { useProsetStore } from "../../store/useProsetStore";
 
 const statusClass: Record<LifecycleStatus, string> = {
@@ -44,6 +46,7 @@ const statusClass: Record<LifecycleStatus, string> = {
   rejected: "bg-red-50 text-red-700 border-red-200",
   approved: "bg-emerald-50 text-emerald-700 border-emerald-200",
   issued: "bg-violet-50 text-violet-700 border-violet-200",
+  superseded: "bg-orange-50 text-orange-700 border-orange-200",
 };
 
 type CandidateRow = {
@@ -76,44 +79,40 @@ export function InboxView() {
   const decideCandidate = useProsetStore((s) => s.decideCandidate);
   const clearCandidateDecision = useProsetStore((s) => s.clearCandidateDecision);
   const selectLine = useProsetStore((s) => s.selectLine);
-  const addMiniNmmSubstation = useProsetStore((s) => s.addMiniNmmSubstation);
-  const addMiniNmmBusbar = useProsetStore((s) => s.addMiniNmmBusbar);
-  const addMiniNmmBay = useProsetStore((s) => s.addMiniNmmBay);
-  const addMiniNmmTerminal = useProsetStore((s) => s.addMiniNmmTerminal);
-  const addMiniNmmRelation = useProsetStore((s) => s.addMiniNmmRelation);
-  const miniNmmOverride = useProsetStore((s) => s.miniNmmOverrides[activeCaseId]);
-  const masterMiniNmmOverride = useProsetStore((s) => s.miniNmmOverrides[INVENTORY_MASTER_CASE_ID]);
+  const addNetworkGraphRelationBundle = useProsetStore((s) => s.addNetworkGraphRelationBundle);
+  const networkGraphOverride = useProsetStore((s) => s.networkGraphOverrides[activeCaseId]);
+  const masterNetworkGraphOverride = useProsetStore((s) => s.networkGraphOverrides[INVENTORY_MASTER_CASE_ID]);
 
   const activeCase =
     NETWORK_CASES.find((item) => item.id === activeCaseId) ?? NETWORK_CASES[0];
   const inventoryCase =
     NETWORK_CASES.find((item) => item.id === INVENTORY_MASTER_CASE_ID) ?? activeCase;
-  const fallbackMiniNmm = useMemo(() => buildUnifiedNetwork(activeCase), [activeCase]);
-  const masterFallbackMiniNmm = useMemo(() => buildUnifiedNetwork(inventoryCase), [inventoryCase]);
-  const masterMiniNmm = useMemo(
+  const fallbackNetworkGraph = useMemo(() => buildUnifiedNetwork(activeCase), [activeCase]);
+  const masterFallbackNetworkGraph = useMemo(() => buildUnifiedNetwork(inventoryCase), [inventoryCase]);
+  const masterNetworkGraph = useMemo(
     () =>
-      getEffectiveMiniNmm(
+      getEffectiveNetworkGraph(
         INVENTORY_MASTER_CASE_ID,
-        masterMiniNmmOverride,
-        masterFallbackMiniNmm
+        masterNetworkGraphOverride,
+        masterFallbackNetworkGraph
       ),
-    [masterMiniNmmOverride, masterFallbackMiniNmm]
+    [masterNetworkGraphOverride, masterFallbackNetworkGraph]
   );
-  const effectiveMiniNmm = useMemo(
+  const effectiveNetworkGraph = useMemo(
     () =>
       mergeMasterRelationsIntoCase(
-        getEffectiveMiniNmm(activeCase.id, miniNmmOverride, fallbackMiniNmm),
-        masterMiniNmm
+        getEffectiveNetworkGraph(activeCase.id, networkGraphOverride, fallbackNetworkGraph),
+        masterNetworkGraph
       ),
-    [activeCase.id, miniNmmOverride, fallbackMiniNmm, masterMiniNmm]
+    [activeCase.id, networkGraphOverride, fallbackNetworkGraph, masterNetworkGraph]
   );
   const effectiveNodes = useMemo(
-    () => (effectiveMiniNmm ? networkNodesFromMiniNmm(effectiveMiniNmm) : activeCase.nodes),
-    [activeCase.nodes, effectiveMiniNmm]
+    () => (effectiveNetworkGraph ? networkNodesFromGraph(effectiveNetworkGraph) : activeCase.nodes),
+    [activeCase.nodes, effectiveNetworkGraph]
   );
   const effectiveLines = useMemo(
-    () => (effectiveMiniNmm ? networkLinesFromMiniNmm(effectiveMiniNmm) : activeCase.lines),
-    [activeCase.lines, effectiveMiniNmm]
+    () => (effectiveNetworkGraph ? networkLinesFromGraph(effectiveNetworkGraph) : activeCase.lines),
+    [activeCase.lines, effectiveNetworkGraph]
   );
 
   const lcdCandidates = useMemo(
@@ -141,7 +140,7 @@ export function InboxView() {
       }),
     [effectiveNodes, effectiveLines]
   );
-  // STRICT scope: only records where local substation appears in mini-NMM
+  // STRICT scope: only records where local substation appears in network graph
   // (i.e. matchStatus is matched | ambiguous | needs_relation | needs_substation).
   // Records with `unmatched` status are silently dropped — they're not about
   // any line in our coverage neighborhood.
@@ -167,7 +166,7 @@ export function InboxView() {
         .map((record) => {
           // Re-use the same OCR matcher result so drift rows know whether the
           // record has a LineRelation in the active case. Clickable drift =>
-          // selectLine + Comparison tab; unmatched => guide to Mini-NMM Editor.
+          // selectLine + Comparison tab; unmatched => guide to Network Builder.
           const candidate = ocrCandidates.find((c) => c.recordId === record.id);
           return {
             record,
@@ -271,8 +270,8 @@ export function InboxView() {
   // engineer knows these were auto-promoted from import data, not curated.
 
   const findSubByHint = (hint: string | undefined): UnifiedSubstation | undefined => {
-    if (!hint || !effectiveMiniNmm) return undefined;
-    return effectiveMiniNmm.substations.find((s) =>
+    if (!hint || !effectiveNetworkGraph) return undefined;
+    return effectiveNetworkGraph.substations.find((s) =>
       looseTokenMatch(s.normalizedName, hint)
     );
   };
@@ -331,10 +330,12 @@ export function InboxView() {
     if (!fromSub || !toSub) return;
     const { bays, relation } = buildQuickRelation(row, fromSub, toSub);
     const terminals = buildQuickTerminals(activeCase.id, fromSub, toSub, bays);
-    for (const busbar of terminals.busbarsToAdd) addMiniNmmBusbar(activeCase.id, busbar);
-    for (const bay of bays) addMiniNmmBay(activeCase.id, bay);
-    for (const terminal of terminals.terminalsToAdd) addMiniNmmTerminal(activeCase.id, terminal);
-    addMiniNmmRelation(activeCase.id, relation);
+    addNetworkGraphRelationBundle(activeCase.id, {
+      busbars: terminals.busbarsToAdd,
+      bays,
+      terminals: terminals.terminalsToAdd,
+      relation,
+    });
     decideCandidate(
       row.candidateId,
       "reviewed",
@@ -364,13 +365,15 @@ export function InboxView() {
       kind: "GIS",
       normalizedName: row.remoteStationHint,
     };
-    addMiniNmmSubstation(activeCase.id, newSub);
     const { bays, relation } = buildQuickRelation(row, fromSub, newSub);
     const terminals = buildQuickTerminals(activeCase.id, fromSub, newSub, bays);
-    for (const busbar of terminals.busbarsToAdd) addMiniNmmBusbar(activeCase.id, busbar);
-    for (const bay of bays) addMiniNmmBay(activeCase.id, bay);
-    for (const terminal of terminals.terminalsToAdd) addMiniNmmTerminal(activeCase.id, terminal);
-    addMiniNmmRelation(activeCase.id, relation);
+    addNetworkGraphRelationBundle(activeCase.id, {
+      substations: [newSub],
+      busbars: terminals.busbarsToAdd,
+      bays,
+      terminals: terminals.terminalsToAdd,
+      relation,
+    });
     decideCandidate(
       row.candidateId,
       "reviewed",
@@ -388,7 +391,7 @@ export function InboxView() {
     const busbarsToAdd: Busbar[] = [];
     const terminalsToAdd: Terminal[] = [];
     const ensureBusbar = (sub: UnifiedSubstation) => {
-      const existing = effectiveMiniNmm?.busbars.find((b) => b.substationId === sub.id);
+      const existing = effectiveNetworkGraph?.busbars.find((b) => b.substationId === sub.id);
       if (existing) return existing;
       const busbar: Busbar = {
         id: `bb_${sub.id}_quick_main_${caseId}`,
@@ -431,7 +434,7 @@ export function InboxView() {
             <div>
               <h2 className="text-sm font-semibold text-slate-900">Status Ringkas</h2>
               <p className="text-xs text-slate-500 mt-0.5 max-w-3xl">
-                Ringkasan apa yang butuh perhatian engineer. Urutan kerja: drift fungsional dulu, lalu validasi mapping ambigu, terakhir approve import baru.
+                Ringkasan apa yang butuh perhatian engineer. Mapping yang salah bisa di-reset, dipilih ulang manual, atau dibuatkan relation baru dari kandidat import/SLD.
               </p>
             </div>
           </div>
@@ -459,7 +462,7 @@ export function InboxView() {
           <Tile
             label="Coverage Expansion"
             value={counts.expansion}
-            sub="Substation belum di mini-NMM"
+            sub="Substation belum di network graph"
             icon={<Plus className="w-4 h-4 text-blue-600" />}
             tone="blue"
           />
@@ -472,9 +475,13 @@ export function InboxView() {
           />
         </div>
         <p className="text-[11px] text-slate-500 mt-3 max-w-3xl">
-          Default view tampilkan record yang local-side substation-nya ada di mini-NMM (matched, ambiguous, atau butuh relation). Records dengan remote substation di luar mini-NMM (e.g. line ke GI yang belum dimodelkan) di-hide; toggle "Show Coverage Expansion" untuk grow mini-NMM dari data import.
+          Default view tampilkan record yang local-side substation-nya ada di network graph (matched, ambiguous, atau butuh relation). Records dengan remote substation di luar network graph (e.g. line ke GI yang belum dimodelkan) di-hide; toggle "Show Coverage Expansion" untuk grow network graph dari data import.
         </p>
       </section>
+
+      {/* Graph Builder: per-GI topology confirmation, upstream of the
+          per-record sections below. */}
+      <GraphBuilderSection />
 
       {/* Section 1: Functional Drift */}
       <PrioritySection
@@ -565,7 +572,7 @@ export function InboxView() {
                               }}
                               className="inline-flex items-center gap-1 text-[10px] px-1.5 py-1 rounded border border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100"
                             >
-                              Map di Mini-NMM
+                              Map di Network Graph
                               <ArrowRight className="w-3 h-3" />
                             </button>
                           </div>
@@ -635,7 +642,7 @@ export function InboxView() {
       {/* Section 3: Needs Relation */}
       <PrioritySection
         title="Needs Relation"
-        subtitle="Both substations exist di mini-NMM tapi line relation belum ada. One-click [+ Add Relation]."
+        subtitle="Both substations exist di network graph tapi line relation belum ada. One-click [+ Add Relation]."
         count={needsRelation.length}
         tone="amber"
         icon={<AlertTriangle className="w-4 h-4" />}
@@ -695,7 +702,7 @@ export function InboxView() {
             {showExpansion ? <ChevronDown className="w-4 h-4 text-slate-500" /> : <ChevronRight className="w-4 h-4 text-slate-500" />}
             <div>
               <div className="text-sm font-semibold text-slate-700">Coverage Expansion</div>
-              <div className="text-[11px] text-slate-500">Records yang remote substation-nya belum di mini-NMM. One-click [+ Add Substation + Relation] untuk tumbuh.</div>
+              <div className="text-[11px] text-slate-500">Records yang remote substation-nya belum di network graph. One-click [+ Add Substation + Relation] untuk tumbuh.</div>
             </div>
           </div>
           <span className="text-sm font-semibold px-2.5 py-0.5 rounded border border-blue-200 bg-blue-50 text-blue-700">
@@ -945,7 +952,7 @@ function ManualMapPicker({
   if (availableLines.length === 0) {
     return (
       <div className="text-[10px] text-amber-700 italic">
-        Tidak ada line di case ini. Tambah Line Relation di Mini-NMM Editor dulu.
+        Tidak ada line di case ini. Tambah Line Relation di Network Builder dulu.
       </div>
     );
   }
@@ -1024,6 +1031,236 @@ function PrioritySection({
 function EmptyState({ message }: { message: string }) {
   return (
     <div className="px-4 py-6 text-center text-xs text-slate-500">{message}</div>
+  );
+}
+
+// Per-GI graph builder confirmation. Unlike the per-record sections below
+// (Functional Drift, Pending Mapping, etc. — one Inbox item per bay/row),
+// this reviews one substation at a time: all of its anchored bays and line
+// relations (from digsilentLineDb, scoped by the SLD folder index) plus
+// overlay matches from LCD+DIST/OCR, confirmed or rejected in one action.
+function GraphBuilderSection() {
+  const activeCaseId = useProsetStore((s) => s.activeNetworkCaseId);
+  const decisions = useProsetStore((s) => s.graphBuildDecisions);
+  const confirmGroup = useProsetStore((s) => s.confirmGraphBuildGroup);
+  const rejectGroup = useProsetStore((s) => s.rejectGraphBuildGroup);
+  const clearDecision = useProsetStore((s) => s.clearGraphBuildDecision);
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const [showDecided, setShowDecided] = useState(false);
+  // Stations the reviewer has actually opened at least once. Confirm is
+  // gated on this — committing 10+ bays/relations for a GI in one click
+  // shouldn't be possible from the collapsed row alone; the reviewer must
+  // have seen what's inside first.
+  const [reviewedStationIds, setReviewedStationIds] = useState<Set<string>>(new Set());
+
+  const result = useMemo(() => buildGraphForUltg(), []);
+
+  const pendingGroups = result.groups.filter((g) => !decisions[g.station.id]);
+  const decidedGroups = result.groups.filter((g) => decisions[g.station.id]);
+  const needsManualCount = pendingGroups.filter((g) => g.needsManualTopology).length;
+  const totalUnmatchedOverlays = result.groups.reduce(
+    (sum, g) => sum + g.overlays.filter((o) => o.matchStatus === "unmatched").length,
+    0
+  );
+
+  return (
+    <PrioritySection
+      title="Graph Builder — Konfirmasi Topology per GI"
+      subtitle="Anchor dari digsilentLineDb (di-scope oleh folder SLD ULTG), overlay dari LCD+DIST/OCR. Satu keputusan mencakup seluruh bay & relasi GI tersebut, bukan per baris."
+      count={pendingGroups.length}
+      tone={needsManualCount > 0 ? "amber" : "blue"}
+      icon={<Network className="w-4 h-4" />}
+    >
+      <div className="px-4 py-2 flex items-center justify-between gap-3 border-b border-slate-100 flex-wrap">
+        <p className="text-[11px] text-slate-500 max-w-2xl">
+          {needsManualCount} dari {result.groups.length} GI belum punya anchor topology eksplisit (butuh review manual/SLD).
+          {" "}
+          {totalUnmatchedOverlays} baris setting-doc (LCD+DIST/OCR) di seluruh ULTG ini belum ter-match ke bay anchor manapun.
+        </p>
+        <label className="text-[11px] text-slate-600 flex items-center gap-1.5 shrink-0">
+          <input type="checkbox" checked={showDecided} onChange={(e) => setShowDecided(e.target.checked)} />
+          tampilkan yang sudah diputuskan
+        </label>
+      </div>
+      {pendingGroups.length === 0 && decidedGroups.length === 0 ? (
+        <EmptyState message="Tidak ada GI dalam scope SLD untuk case ini." />
+      ) : (
+        <div className="divide-y divide-slate-100">
+          {pendingGroups.map((group) => (
+            <GraphBuildGroupRow
+              key={group.station.id}
+              group={group}
+              expanded={expanded === group.station.id}
+              reviewed={reviewedStationIds.has(group.station.id)}
+              onToggle={() =>
+                setExpanded((cur) => {
+                  const next = cur === group.station.id ? null : group.station.id;
+                  if (next) {
+                    setReviewedStationIds((prev) => new Set(prev).add(group.station.id));
+                  }
+                  return next;
+                })
+              }
+              onConfirm={() =>
+                confirmGroup(activeCaseId, {
+                  substation: group.station,
+                  bays: group.bays,
+                  relations: group.lineRelations,
+                })
+              }
+              onReject={() => rejectGroup(group.station.id)}
+            />
+          ))}
+          {showDecided &&
+            decidedGroups.map((group) => {
+              const decision = decisions[group.station.id];
+              return (
+                <div key={group.station.id} className="px-4 py-2.5 flex items-center justify-between gap-3 text-xs">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span
+                      className={`px-1.5 py-0.5 rounded border text-[10px] font-medium shrink-0 ${
+                        decision.status === "confirmed"
+                          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                          : "bg-slate-50 text-slate-600 border-slate-200"
+                      }`}
+                    >
+                      {decision.status === "confirmed" ? "Confirmed" : "Rejected"}
+                    </span>
+                    <span className="font-medium text-slate-800 truncate">{group.station.name}</span>
+                    <span className="text-slate-400 truncate">
+                      {group.bays.length} bay, {group.lineRelations.length} relasi
+                    </span>
+                  </div>
+                  <button
+                    className="text-[11px] text-slate-500 hover:text-slate-800 flex items-center gap-1 shrink-0"
+                    onClick={() => clearDecision(group.station.id)}
+                  >
+                    <Undo2 className="w-3 h-3" /> Reset
+                  </button>
+                </div>
+              );
+            })}
+        </div>
+      )}
+    </PrioritySection>
+  );
+}
+
+function GraphBuildGroupRow({
+  group,
+  expanded,
+  reviewed,
+  onToggle,
+  onConfirm,
+  onReject,
+}: {
+  group: GraphBuildGroup;
+  expanded: boolean;
+  reviewed: boolean;
+  onToggle: () => void;
+  onConfirm: () => void;
+  onReject: () => void;
+}) {
+  const unmatchedOverlays = group.overlays.filter((o) => o.matchStatus === "unmatched");
+  return (
+    <div className="px-4 py-3">
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <button className="flex items-start gap-2 text-left min-w-0" onClick={onToggle}>
+          {expanded ? (
+            <ChevronDown className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
+          ) : (
+            <ChevronRight className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
+          )}
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-medium text-sm text-slate-900">{group.station.name}</span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded border bg-slate-50 text-slate-600 border-slate-200">
+                {group.station.kind}
+              </span>
+              {group.needsManualTopology ? (
+                <span className="text-[10px] px-1.5 py-0.5 rounded border bg-amber-50 text-amber-700 border-amber-200">
+                  Perlu topology manual
+                </span>
+              ) : (
+                <span className="text-[10px] px-1.5 py-0.5 rounded border bg-emerald-50 text-emerald-700 border-emerald-200">
+                  Anchor: digsilentLineDb
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-slate-500 mt-0.5">
+              {group.bays.length} bay, {group.lineRelations.length} relasi
+              {unmatchedOverlays.length > 0 && `, ${unmatchedOverlays.length} setting-doc row belum ter-match`}
+            </p>
+          </div>
+        </button>
+        <div className="flex flex-col items-end gap-1 shrink-0">
+          <div className="flex items-center gap-2">
+            <button
+              className="text-xs px-2.5 py-1 rounded border border-red-200 text-red-700 hover:bg-red-50 flex items-center gap-1"
+              onClick={onReject}
+            >
+              <XCircle className="w-3.5 h-3.5" /> Reject
+            </button>
+            <button
+              className="text-xs px-2.5 py-1 rounded border border-emerald-300 bg-emerald-600 text-white hover:bg-emerald-700 flex items-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:border-slate-300"
+              onClick={onConfirm}
+              disabled={!reviewed || (group.bays.length === 0 && group.lineRelations.length === 0)}
+              title={!reviewed ? "Buka detail GI ini dulu sebelum confirm" : undefined}
+            >
+              <CheckCircle2 className="w-3.5 h-3.5" /> Confirm GI
+            </button>
+          </div>
+          {!reviewed && (group.bays.length > 0 || group.lineRelations.length > 0) && (
+            <span className="text-[10px] text-slate-400">Buka detail dulu untuk bisa confirm</span>
+          )}
+        </div>
+      </div>
+
+      {expanded && (
+        <div className="mt-3 ml-6 space-y-2">
+          {group.lineRelations.length > 0 && (
+            <div className="text-xs">
+              <p className="text-[10px] uppercase tracking-wide text-slate-400 font-medium mb-1">Line relations</p>
+              <ul className="space-y-0.5">
+                {group.lineRelations.map((rel) => (
+                  <li key={rel.id} className="text-slate-600 flex items-center gap-1.5">
+                    <ArrowRight className="w-3 h-3 text-slate-300 shrink-0" />
+                    <span className="font-mono text-[11px]">{rel.digsilentName}</span>
+                    <span className="text-slate-400">
+                      #{rel.circuit} · X={rel.lineXOhm?.toFixed(3)}Ω
+                      {rel.physicalLengthKm != null && ` · ${rel.physicalLengthKm}km`}
+                      {rel.outOfService && " · OUT OF SERVICE"}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {unmatchedOverlays.length > 0 && (
+            <div className="text-xs">
+              <p className="text-[10px] uppercase tracking-wide text-slate-400 font-medium mb-1">
+                Setting-doc rows belum ter-match ke bay anchor
+              </p>
+              <ul className="space-y-0.5">
+                {unmatchedOverlays.map((o, i) => (
+                  <li key={`${o.sourceId}_${i}`} className="text-slate-600">
+                    <span className="text-[10px] px-1 py-0.5 rounded bg-slate-100 text-slate-500 mr-1.5">
+                      {o.sourceKind === "lcd-dist-import" ? "LCD+DIST" : "OCR/GFR"}
+                    </span>
+                    {o.substationRaw} / {o.bayRaw}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {group.needsManualTopology && (
+            <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1.5">
+              GI ini tidak punya entri eksplisit di digsilentLineDb (mungkin GI baru pasca-2021, atau butuh alias/disambiguasi manual). Confirm akan menyimpan substation ini tanpa relasi topology — lengkapi manual via Network Builder.
+            </p>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 

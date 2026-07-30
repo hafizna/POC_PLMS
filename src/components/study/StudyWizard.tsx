@@ -2,10 +2,10 @@ import { useMemo, useState } from "react";
 import { AlertCircle, ArrowRight, CheckCircle2, FileSpreadsheet, Search, X } from "lucide-react";
 import { useProsetStore } from "../../store/useProsetStore";
 import {
-  getEffectiveMiniNmm,
+  getEffectiveNetworkGraph,
   INVENTORY_MASTER_CASE_ID,
   mergeMasterRelationsIntoCase,
-} from "../../domain/mini-nmm";
+} from "../../domain/network-graph";
 import { buildUnifiedNetwork } from "../../domain/unified";
 import { NETWORK_CASES } from "../../domain/seed-network-registry";
 import { CROSSCHECK_WORKBOOK_REGISTRY } from "../../domain/crosscheck-workbook-registry";
@@ -24,41 +24,41 @@ export function StudyWizard({ onClose }: { onClose: () => void }) {
   const [description, setDescription] = useState("");
   
   const createStudy = useProsetStore((s) => s.createStudy);
-  const miniNmmOverrides = useProsetStore((s) => s.miniNmmOverrides);
+  const networkGraphOverrides = useProsetStore((s) => s.networkGraphOverrides);
 
   const inventoryCase =
     NETWORK_CASES.find((item) => item.id === INVENTORY_MASTER_CASE_ID) ?? NETWORK_CASES[0];
   const corridorCase =
     NETWORK_CASES.find((item) => item.id === "case_dks_dm_pik_mkb") ?? inventoryCase;
-  const corridorFallbackMiniNmm = useMemo(() => buildUnifiedNetwork(corridorCase), [corridorCase]);
-  const masterFallbackMiniNmm = useMemo(() => buildUnifiedNetwork(inventoryCase), [inventoryCase]);
-  const masterMiniNmm = useMemo(
+  const corridorFallbackNetworkGraph = useMemo(() => buildUnifiedNetwork(corridorCase), [corridorCase]);
+  const masterFallbackNetworkGraph = useMemo(() => buildUnifiedNetwork(inventoryCase), [inventoryCase]);
+  const masterNetworkGraph = useMemo(
     () =>
-      getEffectiveMiniNmm(
+      getEffectiveNetworkGraph(
         INVENTORY_MASTER_CASE_ID,
-        miniNmmOverrides[INVENTORY_MASTER_CASE_ID],
-        masterFallbackMiniNmm
+        networkGraphOverrides[INVENTORY_MASTER_CASE_ID],
+        masterFallbackNetworkGraph
     ),
-    [masterFallbackMiniNmm, miniNmmOverrides]
+    [masterFallbackNetworkGraph, networkGraphOverrides]
   );
-  const workingMiniNmm = useMemo(
+  const workingNetworkGraph = useMemo(
     () =>
       mergeMasterRelationsIntoCase(
-        getEffectiveMiniNmm(
+        getEffectiveNetworkGraph(
           corridorCase.id,
-          miniNmmOverrides[corridorCase.id],
-          corridorFallbackMiniNmm
+          networkGraphOverrides[corridorCase.id],
+          corridorFallbackNetworkGraph
         ),
-        masterMiniNmm
+        masterNetworkGraph
       ),
-    [corridorCase.id, corridorFallbackMiniNmm, masterMiniNmm, miniNmmOverrides]
+    [corridorCase.id, corridorFallbackNetworkGraph, masterNetworkGraph, networkGraphOverrides]
   );
 
   const candidateBays = useMemo(() => {
-    if (!workingMiniNmm) return [];
-    return workingMiniNmm.bays.map((bay) => {
-      const sub = workingMiniNmm.substations.find((s) => s.id === bay.substationId);
-      const relation = workingMiniNmm.lineRelations.find(
+    if (!workingNetworkGraph) return [];
+    return workingNetworkGraph.bays.map((bay) => {
+      const sub = workingNetworkGraph.substations.find((s) => s.id === bay.substationId);
+      const relation = workingNetworkGraph.lineRelations.find(
         (r) => r.fromBayId === bay.id || r.toBayId === bay.id
       );
       const remoteSubId =
@@ -67,20 +67,35 @@ export function StudyWizard({ onClose }: { onClose: () => void }) {
           : relation?.toBayId === bay.id
             ? relation.fromSubstationId
             : undefined;
-      const remoteSub = workingMiniNmm.substations.find((s) => s.id === remoteSubId);
-      
+      const remoteSub = workingNetworkGraph.substations.find((s) => s.id === remoteSubId);
+
+      // A relation can exist (confirmed from the graph builder) while its
+      // far-side substation hasn't been confirmed yet — the graph builder
+      // reviews one GI at a time, so a line relation lands in the override
+      // as soon as its local side is confirmed, before the remote GI is.
+      // Distinguish that from "no relation at all" instead of collapsing
+      // both into "unmapped", which reads as if nothing was mapped.
+      let relationLabel: string;
+      if (!relation) {
+        relationLabel = "unmapped";
+      } else if (remoteSub) {
+        relationLabel = `${sub?.shortCode} - ${remoteSub.shortCode}`;
+      } else {
+        relationLabel = "menunggu GI lawan di-confirm";
+      }
+
       return {
         bayId: bay.id,
         substationId: sub?.id ?? "",
         substationName: sub?.name ?? bay.substationId,
         substationCode: sub?.shortCode ?? "",
         bayName: bay.rawName,
-        relationLabel: remoteSub ? `${sub?.shortCode} - ${remoteSub.shortCode}` : "unmapped",
+        relationLabel,
         hasRelation: !!relation,
         relationId: relation?.id,
       };
     });
-  }, [workingMiniNmm]);
+  }, [workingNetworkGraph]);
 
   const filteredCandidates = useMemo(() => {
     const q = search.toLowerCase();
@@ -96,12 +111,12 @@ export function StudyWizard({ onClose }: { onClose: () => void }) {
 
   // Auto-suggest neighbor substations based on line relations
   const suggestedSubstations = useMemo(() => {
-    if (!selectedSubject || !workingMiniNmm) return [];
+    if (!selectedSubject || !workingNetworkGraph) return [];
     const subs = new Set<string>();
     subs.add(selectedSubject.substationId);
     
     // Find remote sub for the selected bay
-    const primaryRelation = workingMiniNmm.lineRelations.find(
+    const primaryRelation = workingNetworkGraph.lineRelations.find(
       (r) => r.fromBayId === selectedSubject.bayId || r.toBayId === selectedSubject.bayId
     );
     
@@ -114,7 +129,7 @@ export function StudyWizard({ onClose }: { onClose: () => void }) {
         ? primaryRelation.toSubstationId 
         : primaryRelation.fromSubstationId;
         
-      const neighborRelations = workingMiniNmm.lineRelations.filter(
+      const neighborRelations = workingNetworkGraph.lineRelations.filter(
         (r) => r.fromSubstationId === remoteSubId || r.toSubstationId === remoteSubId
       );
       
@@ -125,10 +140,10 @@ export function StudyWizard({ onClose }: { onClose: () => void }) {
     }
     
     return Array.from(subs).map(id => {
-      const sub = workingMiniNmm.substations.find(s => s.id === id);
+      const sub = workingNetworkGraph.substations.find(s => s.id === id);
       return { id, code: sub?.shortCode ?? id, name: sub?.name ?? id };
     });
-  }, [selectedSubject, workingMiniNmm]);
+  }, [selectedSubject, workingNetworkGraph]);
 
   const handleCreate = () => {
     if (!studyName || !selectedSubject) return;

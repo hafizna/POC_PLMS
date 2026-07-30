@@ -183,7 +183,10 @@ export function extractTapFields(text: string): ExtractedField[] {
 
   // Distance zone reach
   for (const zone of ["Z1", "Z2", "Z3"]) {
-    const re = new RegExp(`${zone}\\s*(?:Ph[\\s-]*Ph|reach)?[\\s:=]*(\\d+(?:[.,]\\d+)?)\\s*(?:ohm|Ω|Ohm)?`, "i");
+    const re = new RegExp(
+      `${zone}\\s*(?:(?:Ph|Phase)(?:[.\\s-]*(?:Ph|Phase))?[.\\s-]*)?(?:reach)?[\\s:=]*(\\d+(?:[.,]\\d+)?)\\s*(?:ohm|Ω)?`,
+      "i"
+    );
     const m = norm.match(re);
     if (m) {
       out.push({ field: `${zone} reach`, value: m[1].replace(",", "."), unit: "ohm" });
@@ -192,7 +195,10 @@ export function extractTapFields(text: string): ExtractedField[] {
 
   // Time delays
   for (const zone of ["t1", "t2", "t3", "tZ1", "tZ2", "tZ3"]) {
-    const re = new RegExp(`${zone}[\\s:=]*(\\d+(?:[.,]\\d+)?)\\s*s\\b`, "i");
+    const re = new RegExp(
+      `${zone}\\s*(?:(?:Ph|Gnd|Ground)[.\\s-]*)?(?:delay|time)?[\\s:=]*(\\d+(?:[.,]\\d+)?)\\s*s\\b`,
+      "i"
+    );
     const m = norm.match(re);
     if (m) {
       out.push({ field: `${zone} delay`, value: m[1].replace(",", "."), unit: "s" });
@@ -200,18 +206,34 @@ export function extractTapFields(text: string): ExtractedField[] {
   }
 
   // OCR pickup / TMS / curve
-  const ocPickup = norm.match(/I\s*>[\s:=]*(\d+(?:[.,]\d+)?)\s*A?\b/i);
+  const ocPickup =
+    norm.match(
+      /Ip\s*>\s*Pickup[\s:=]*(?:\d+(?:[.,]\d+)?\s*x\s*In\s*)?(\d+(?:[.,]\d+)?)\s*A\s*\((?:sekunder|secondary)\)/i
+    ) ??
+    norm.match(/(?:I|Ip)\s*>[\s:=]*(\d+(?:[.,]\d+)?)\s*A?\b/i);
   if (ocPickup) out.push({ field: "OC pickup (I>)", value: ocPickup[1].replace(",", "."), unit: "A" });
 
-  const tms = norm.match(/TMS[\s:=]*(\d+(?:[.,]\d+)?)\b/i);
+  const tms =
+    norm.match(/Ip\s*Time\s*Dial[\s:=]*(\d+(?:[.,]\d+)?)\b/i) ??
+    norm.match(/TMS[\s:=]*(\d+(?:[.,]\d+)?)\b/i);
   if (tms) out.push({ field: "OC TMS", value: tms[1].replace(",", ".") });
 
   const curve = norm.match(/(?:curve|characteristic)[\s:=]*(IEC\s*(?:SI|VI|EI)|ANSI\s*\w+|DT)\b/i);
   if (curve) out.push({ field: "OC curve", value: curve[1].toUpperCase().replace(/\s+/g, " ") });
 
   // Ground fault
-  const gfPickup = norm.match(/Ie\s*>[\s:=]*(\d+(?:[.,]\d+)?)\s*A?\b/i);
+  const gfPickup =
+    norm.match(
+      /IEp?\s*>\s*Pickup[\s:=]*(?:\d+(?:[.,]\d+)?\s*x\s*In\s*)?(\d+(?:[.,]\d+)?)\s*A\s*\((?:sekunder|secondary)\)/i
+    ) ??
+    norm.match(/IEp?\s*>[\s:=]*(\d+(?:[.,]\d+)?)\s*A?\b/i);
   if (gfPickup) out.push({ field: "GF pickup (Ie>)", value: gfPickup[1].replace(",", "."), unit: "A" });
+
+  const gfTms = norm.match(
+    /IEp?\s*Time\s*Dial[\s:=]*(\d+(?:[.,]\d+)?)\b/i
+  );
+  if (gfTms)
+    out.push({ field: "GF TMS", value: gfTms[1].replace(",", ".") });
 
   // CT/VT ratio
   const ctRatio = norm.match(/CT(?:\s*ratio)?[\s:=]*(\d{2,5})\s*[\/:]\s*(\d{1,2})\b/i);

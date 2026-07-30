@@ -1,5 +1,15 @@
 # Implementasi L1-L5 Corridor Selector & TAP Production
 
+## Update 2026-07-30 — MVP 2B.1 P545 Input Contract
+
+- Menambahkan `plms.p545-input-contract.v1` untuk pilot Ciledug → Alam Sutera #1.
+- Input memiliki tipe, unit primary/secondary yang eksplisit, source reference, locator, capture timestamp, snapshot/scenario id bila tersedia, dan status `resolved/conflict/missing/blocked/overridden`.
+- Fault lookup wajib melalui `StudyScenario`; tanpa scenario, input gangguan diblokir.
+- Konflik relay MiCOM P543 vs label XMCD P545 serta `Ihs3f` Mathcad 26,24 kA vs historical IHS 33,22 kA dipertahankan sebagai kandidat terpisah.
+- CCC 1.428 A dan rating konduktor 1.860 A dimodelkan sebagai dua parameter berbeda, bukan false conflict.
+- Calculation UI menampilkan source/gap matrix dan justified override session dengan actor/timestamp; formula calculation belum dijalankan pada slice ini.
+- Regression: `npm run test:p545-input-contract`.
+
 ## Ringkasan Implementasi
 
 Berdasarkan file Excel "Aplikasi Crosscheck Setting Relay [DigSILENT_ 9 Maret 2021, IHS 1-2021]", telah diimplementasikan:

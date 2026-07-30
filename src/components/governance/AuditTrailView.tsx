@@ -9,19 +9,23 @@ const actionClass: Record<AuditEvent["action"], string> = {
   study_created: "bg-emerald-50 text-emerald-700 border-emerald-200",
   study_deleted: "bg-red-50 text-red-700 border-red-200",
   study_selected: "bg-indigo-50 text-indigo-700 border-indigo-200",
+  study_scenario_selected: "bg-blue-50 text-blue-700 border-blue-200",
+  engineering_change_set_created: "bg-violet-50 text-violet-700 border-violet-200",
   line_selected: "bg-indigo-50 text-indigo-700 border-indigo-200",
   zone_updated: "bg-amber-50 text-amber-700 border-amber-200",
   relay_reset: "bg-slate-50 text-slate-600 border-slate-200",
   reset_edits: "bg-red-50 text-red-700 border-red-200",
-  mini_nmm_add: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  mini_nmm_remove: "bg-orange-50 text-orange-700 border-orange-200",
-  mini_nmm_reset: "bg-red-50 text-red-700 border-red-200",
+  network_graph_add: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  network_graph_remove: "bg-orange-50 text-orange-700 border-orange-200",
+  network_graph_reset: "bg-red-50 text-red-700 border-red-200",
   ct_vt_update: "bg-cyan-50 text-cyan-700 border-cyan-200",
   ct_vt_clear: "bg-slate-50 text-slate-600 border-slate-200",
   pdf_tap_promote: "bg-violet-50 text-violet-700 border-violet-200",
   pdf_tap_unpromote: "bg-slate-50 text-slate-600 border-slate-200",
   calculation_snapshot_add: "bg-emerald-50 text-emerald-700 border-emerald-200",
   calculation_snapshot_remove: "bg-slate-50 text-slate-600 border-slate-200",
+  reference_verification_staged: "bg-indigo-50 text-indigo-700 border-indigo-200",
+  vendor_import_staged: "bg-blue-50 text-blue-700 border-blue-200",
 };
 
 export function AuditTrailView() {
@@ -59,7 +63,7 @@ export function AuditTrailView() {
         <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
           <SummaryTile label="Total events" value={events.length} />
           <SummaryTile label="Candidate decisions" value={events.filter((e) => e.action === "candidate_decision").length} />
-          <SummaryTile label="Mini-NMM changes" value={events.filter((e) => e.action.startsWith("mini_nmm")).length} />
+          <SummaryTile label="Network Graph changes" value={events.filter((e) => e.action.startsWith("network_graph")).length} />
           <SummaryTile label="Zone edits" value={events.filter((e) => e.action === "zone_updated").length} />
         </div>
       </section>

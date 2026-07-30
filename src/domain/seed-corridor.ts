@@ -1,6 +1,7 @@
 import { Topology, Corridor, Substation, LineSegment, Relay, Zone, LoadEncroachment } from "./types";
 import { GTACSR_410 } from "./conductors";
-import { MINI_NMM_NETWORK_LINES, MINI_NMM_NETWORK_NODES } from "./mini-nmm";
+import { NETWORK_GRAPH_LINES, NETWORK_GRAPH_NODES } from "./network-graph";
+import type { NetworkLine, NetworkNode } from "./seed-network-registry";
 import { promoteMatchedLcdDistCandidates, LCD_DIST_REGISTRY } from "./lcd-dist-import";
 
 // =============================================================================
@@ -41,9 +42,42 @@ function deriveMagnitudeZones(
   return [mk("Z1", z1, 0), mk("Z2", z2, z2Delay), mk("Z3", z3, z3Delay)];
 }
 
-const orderedNodes = ["dks", "dm", "pik", "mkb"];
+// Derives the linear node order for the demo corridor by walking
+// NETWORK_GRAPH_LINES from one end, instead of a hand-maintained id list
+// (previously ["dks", "dm", "pik", "mkb"] — ids invented by the old
+// generateCorridorNmm generator, meaningless once the seed switched to
+// graph-builder's real DIgSILENT-anchored ids like "sub_durikosambi").
+// Assumes the demo corridor is a simple chain (each node has at most 2
+// line-neighbors) — true for the current DKSBI-DNMGT-PINKA-MB seed, but
+// this walk will silently stop early if a future seed branches instead of
+// chaining; it doesn't attempt to pick a "best" path through a branch.
+function deriveLinearNodeOrder(nodes: NetworkNode[], lines: NetworkLine[]): string[] {
+  if (nodes.length === 0) return [];
+  const neighborsOf = (nodeId: string) =>
+    lines
+      .filter((l) => l.fromNodeId === nodeId || l.toNodeId === nodeId)
+      .map((l) => (l.fromNodeId === nodeId ? l.toNodeId : l.fromNodeId));
 
-const subs: Substation[] = MINI_NMM_NETWORK_NODES.map(n => ({
+  // Start from a node with only one neighbor (an end of the chain), if one
+  // exists; otherwise start from the first node (e.g. a single-line case).
+  const start = nodes.find((n) => new Set(neighborsOf(n.id)).size <= 1) ?? nodes[0];
+
+  const order: string[] = [start.id];
+  const visited = new Set([start.id]);
+  let current = start.id;
+  for (let i = 1; i < nodes.length; i++) {
+    const next = neighborsOf(current).find((id) => !visited.has(id));
+    if (!next) break;
+    order.push(next);
+    visited.add(next);
+    current = next;
+  }
+  return order;
+}
+
+const orderedNodes = deriveLinearNodeOrder(NETWORK_GRAPH_NODES, NETWORK_GRAPH_LINES);
+
+const subs: Substation[] = NETWORK_GRAPH_NODES.map(n => ({
   id: n.id,
   name: n.name,
   short_code: n.shortCode,
@@ -53,8 +87,8 @@ const subs: Substation[] = MINI_NMM_NETWORK_NODES.map(n => ({
 
 const promoted = promoteMatchedLcdDistCandidates(
   LCD_DIST_REGISTRY.records,
-  MINI_NMM_NETWORK_NODES,
-  MINI_NMM_NETWORK_LINES
+  NETWORK_GRAPH_NODES,
+  NETWORK_GRAPH_LINES
 );
 
 const segs: LineSegment[] = [];
@@ -66,7 +100,7 @@ for (let i = 0; i < orderedNodes.length - 1; i++) {
   const rightNodeId = orderedNodes[i+1];
   
   // Find the line that connects these two nodes (in any direction)
-  const line = MINI_NMM_NETWORK_LINES.find(l => 
+  const line = NETWORK_GRAPH_LINES.find(l =>
     (l.fromNodeId === leftNodeId && l.toNodeId === rightNodeId) ||
     (l.fromNodeId === rightNodeId && l.toNodeId === leftNodeId)
   );
@@ -87,8 +121,8 @@ for (let i = 0; i < orderedNodes.length - 1; i++) {
 
   // Now find the relays for left and right ends
   const matchingRecords = promoted.filter(p => p.matchedLineId === line.id);
-  const leftNode = MINI_NMM_NETWORK_NODES.find(n => n.id === leftNodeId);
-  const rightNode = MINI_NMM_NETWORK_NODES.find(n => n.id === rightNodeId);
+  const leftNode = NETWORK_GRAPH_NODES.find(n => n.id === leftNodeId);
+  const rightNode = NETWORK_GRAPH_NODES.find(n => n.id === rightNodeId);
 
   const leftRecord = matchingRecords.find(p => leftNode && p.substation.toUpperCase().includes(leftNode.name.toUpperCase()));
   const rightRecord = matchingRecords.find(p => rightNode && p.substation.toUpperCase().includes(rightNode.name.toUpperCase()));
@@ -176,12 +210,16 @@ export const TOPOLOGY: Topology = {
   relays: relays,
 };
 
+const corridorLabel = orderedNodes
+  .map((id) => NETWORK_GRAPH_NODES.find((n) => n.id === id)?.shortCode ?? id)
+  .join(" - ");
+
 export const CORRIDORS: Corridor[] = [
   {
     id: "corr_dks_dm_pik_mkb",
-    label: "DKS - DM - PIK - MKB (Dynamic)",
+    label: `${corridorLabel} (Dynamic)`,
     ordered_segment_ids: orderedSegmentIds,
-    start_substation_id: "dks",
+    start_substation_id: orderedNodes[0] ?? "",
     axis_unit_label: "ohm-X",
   }
 ];

@@ -22,6 +22,26 @@ export function normalizeStationName(value: string | null | undefined): string {
     .trim();
 }
 
+// Identity key for substations — unlike normalizeStationName, this keeps the
+// GI/GIS/GITET/GISTET token. Two sites can share a base name (e.g. after a
+// GI-to-GIS migration where the old GI's outgoing bay stays live because
+// there's no room to move the tower) yet remain distinct physical locations.
+// Collapsing that token would silently merge two real substations into one
+// node. Use this wherever code decides "are these the same substation"
+// (dedup checks, cross-network substation matching). Keep using
+// normalizeStationName for fuzzy search/candidate matching (e.g. inferring a
+// remote endpoint from free-text bay names), where token-stripping is the
+// intended behavior.
+export function normalizeSubstationIdentity(value: string | null | undefined): string {
+  if (!value) return "";
+  return value
+    .toLowerCase()
+    .replace(VOLTAGE_TOKEN, " ")
+    .replace(PUNCTUATION, " ")
+    .replace(COLLAPSE_SPACES, " ")
+    .trim();
+}
+
 // Bay names typically encode the remote endpoint, e.g.
 // "PHT 150kV DAAN MOGOT#1" -> remote "daan mogot", circuit "1".
 export function normalizeBayName(value: string | null | undefined): string {

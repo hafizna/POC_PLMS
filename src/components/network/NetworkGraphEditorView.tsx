@@ -1,16 +1,16 @@
 import { Pencil } from "lucide-react";
 import { NETWORK_CASES } from "../../domain/seed-network-registry";
-import { getEffectiveMiniNmm } from "../../domain/mini-nmm";
+import { getEffectiveNetworkGraph } from "../../domain/network-graph";
 import { useProsetStore } from "../../store/useProsetStore";
-import { MiniNmmEditor } from "./MiniNmmEditor";
+import { NetworkGraphEditor } from "./NetworkGraphEditor";
 
-export function MiniNmmEditorView() {
+export function NetworkGraphEditorView() {
   const activeCaseId = useProsetStore((s) => s.activeNetworkCaseId);
   const setActiveCase = useProsetStore((s) => s.setActiveNetworkCase);
   const activeCase =
     NETWORK_CASES.find((item) => item.id === activeCaseId) ?? NETWORK_CASES[0];
-  const override = useProsetStore((s) => s.miniNmmOverrides[activeCase.id]);
-  const miniNmm = getEffectiveMiniNmm(activeCase.id, override);
+  const override = useProsetStore((s) => s.networkGraphOverrides[activeCase.id]);
+  const networkGraph = getEffectiveNetworkGraph(activeCase.id, override);
 
   return (
     <div className="space-y-4">
@@ -42,11 +42,11 @@ export function MiniNmmEditorView() {
         </div>
       </section>
 
-      {miniNmm ? (
-        <MiniNmmEditor caseId={activeCase.id} miniNmm={miniNmm} override={override} />
+      {networkGraph ? (
+        <NetworkGraphEditor caseId={activeCase.id} networkGraph={networkGraph} override={override} />
       ) : (
         <section className="bg-white border border-dashed border-slate-300 rounded-lg p-6 text-center text-sm text-slate-500">
-          Case ini belum punya mini-NMM seed. Tambah substation di seed code, atau pilih case lain.
+          Case ini belum punya network graph seed. Tambah substation di seed code, atau pilih case lain.
         </section>
       )}
     </div>

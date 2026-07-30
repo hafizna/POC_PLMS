@@ -1,72 +1,70 @@
-import { useProsetStore } from "../../store/useProsetStore";
-import { Zap, RotateCcw, User, Activity } from "lucide-react";
-import { NETWORK_CASES } from "../../domain/seed-network-registry";
+import { RotateCcw, User, Zap } from "lucide-react";
+import { useProsetStore, type Tab } from "../../store/useProsetStore";
+
+const TAB_LABELS: Record<Tab, string> = {
+  "reference-setting": "Reference Setting",
+  home: "Legacy Home",
+  "master-data": "Data Teknis",
+  "study-dashboard": "Bay List",
+  "network-model": "Working Network",
+  "network-graph-editor": "Network Builder",
+  "source-index": "Dokumen Sumber",
+  inbox: "Mapping Inbox",
+  "line-registry": "Setting Register",
+  calculation: "Calculation POC",
+  comparison: "Actual Comparison",
+  "vendor-import": "Vendor Import",
+  coverage: "Coverage Check",
+  "verified-report": "Verified Report",
+  "audit-trail": "Audit Trail",
+};
 
 export function TopBar() {
-  const persona = useProsetStore((s) => s.currentPersona);
-  const setPersona = useProsetStore((s) => s.setPersona);
-  const resetAll = useProsetStore((s) => s.resetAll);
-  const activeLineId = useProsetStore((s) => s.activeNetworkLineId);
-  const selectLine = useProsetStore((s) => s.selectLine);
-
-  // Find owning case + endpoints for the active line. Persistent across tabs
-  // so engineer always knows which line they're working on.
-  const activeContext = (() => {
-    if (!activeLineId || activeLineId === "unknown") return null;
-    const owningCase = NETWORK_CASES.find((c) =>
-      c.lines.some((l) => l.id === activeLineId)
-    );
-    if (!owningCase) return null;
-    const line = owningCase.lines.find((l) => l.id === activeLineId)!;
-    const from = owningCase.nodes.find((n) => n.id === line.fromNodeId);
-    const to = owningCase.nodes.find((n) => n.id === line.toNodeId);
-    return {
-      label: `${from?.shortCode ?? "?"} - ${to?.shortCode ?? "?"} ${line.circuit}`,
-      caseId: owningCase.id,
-    };
-  })();
+  const tab = useProsetStore((state) => state.currentTab);
+  const persona = useProsetStore((state) => state.currentPersona);
+  const setPersona = useProsetStore((state) => state.setPersona);
+  const resetAll = useProsetStore((state) => state.resetAll);
 
   return (
-    <header className="bg-slate-900 text-white px-6 py-3 flex items-center justify-between">
-      <div className="flex items-center gap-3">
-        <Zap className="w-6 h-6 text-amber-400" strokeWidth={2.5} />
-        <div>
-          <div className="font-bold tracking-tight text-lg leading-none">PLMS</div>
-          <div className="text-[10px] text-slate-400 uppercase tracking-wider">
-            Protection Lifecycle Management System
+    <header className="flex min-h-16 items-center justify-between gap-4 bg-slate-950 px-4 py-3 text-white sm:px-6">
+      <div className="flex min-w-0 items-center gap-3">
+        <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-amber-400 text-slate-950">
+          <Zap className="h-5 w-5" strokeWidth={2.5} />
+        </div>
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="font-bold tracking-tight">PLMS</span>
+            <span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-emerald-300">
+              MVP 1A–1C
+            </span>
+          </div>
+          <div className="truncate text-[11px] text-slate-400">
+            Protection Lifecycle Management System · {TAB_LABELS[tab]}
           </div>
         </div>
-        <span className="ml-2 text-[10px] uppercase tracking-wider px-2 py-0.5 bg-amber-500/20 text-amber-300 rounded">
-          POC v0.1
-        </span>
-
-        <div className="ml-4 pl-4 border-l border-slate-700 flex items-center gap-2">
-          <Activity className="w-3.5 h-3.5 text-blue-400" />
-          <span className="text-[10px] uppercase tracking-wider text-slate-400">
-            Working on:
-          </span>
-          <LinePicker activeLineId={activeContext ? activeLineId! : ""} onSelect={selectLine} activeLabel={activeContext?.label} />
-        </div>
       </div>
-      <div className="flex items-center gap-4">
+
+      <div className="flex items-center gap-3">
         <button
+          type="button"
           onClick={() => {
-            if (confirm("Reset all parameter overrides to seeded values?")) {
+            if (confirm("Reset seluruh override dan state lokal ke nilai awal?")) {
               resetAll();
             }
           }}
-          className="text-xs text-slate-300 hover:text-white flex items-center gap-1.5"
-          title="Reset all unsaved parameter changes"
+          className="hidden items-center gap-1.5 text-xs text-slate-300 transition-colors hover:text-white sm:flex"
+          title="Reset local state"
         >
-          <RotateCcw className="w-3.5 h-3.5" />
-          Reset edits
+          <RotateCcw className="h-3.5 w-3.5" />
+          Reset
         </button>
         <div className="flex items-center gap-2">
-          <User className="w-4 h-4 text-slate-400" />
+          <User className="hidden h-4 w-4 text-slate-500 sm:block" />
           <select
             value={persona}
-            onChange={(e) => setPersona(e.target.value as typeof persona)}
-            className="bg-slate-800 text-white text-sm px-3 py-1.5 rounded border border-slate-700 focus:border-blue-500 focus:outline-none"
+            onChange={(event) => setPersona(event.target.value as typeof persona)}
+            className="max-w-36 rounded-md border border-slate-700 bg-slate-900 px-2.5 py-1.5 text-xs text-white outline-none focus:border-blue-500"
+            aria-label="Persona"
           >
             <option>Engineer</option>
             <option>Asisten Manajer</option>
@@ -75,40 +73,5 @@ export function TopBar() {
         </div>
       </div>
     </header>
-  );
-}
-
-function LinePicker({
-  activeLineId,
-  activeLabel,
-  onSelect,
-}: {
-  activeLineId: string;
-  activeLabel?: string;
-  onSelect: (id: string) => void;
-}) {
-  return (
-    <select
-      value={activeLineId}
-      onChange={(e) => {
-        if (e.target.value) onSelect(e.target.value);
-      }}
-      className="bg-slate-800 text-white text-xs px-2 py-1 rounded border border-slate-700 focus:border-blue-500 focus:outline-none min-w-44"
-    >
-      <option value="" disabled>
-        {activeLabel ?? "Pilih line..."}
-      </option>
-      {NETWORK_CASES.flatMap((c) =>
-        c.lines.map((line) => {
-          const f = c.nodes.find((n) => n.id === line.fromNodeId);
-          const t = c.nodes.find((n) => n.id === line.toNodeId);
-          return (
-            <option key={line.id} value={line.id}>
-              {c.title} | {f?.shortCode} - {t?.shortCode} {line.circuit}
-            </option>
-          );
-        })
-      )}
-    </select>
   );
 }

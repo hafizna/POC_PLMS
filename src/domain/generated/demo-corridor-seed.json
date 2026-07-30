@@ -1,0 +1,255 @@
+{
+  "caseId": "case_dks_dm_pik_mkb",
+  "substations": [
+    {
+      "id": "sub_durikosambi",
+      "name": "GI DURIKOSAMBI",
+      "shortCode": "DKSBI",
+      "voltageKv": 150,
+      "kind": "GI",
+      "normalizedName": "durikosambi"
+    },
+    {
+      "id": "sub_daan_mogot",
+      "name": "DAAN MOGOT GIS",
+      "shortCode": "DNMGT",
+      "voltageKv": 150,
+      "kind": "GIS",
+      "normalizedName": "daan mogot"
+    },
+    {
+      "id": "sub_pantai_indah_kapuk",
+      "name": "GIS PANTAI INDAH KAPUK",
+      "shortCode": "PINKA",
+      "voltageKv": 150,
+      "kind": "GIS",
+      "normalizedName": "pantai indah kapuk"
+    },
+    {
+      "id": "sub_m_karang_baru",
+      "name": "GIS MUARAKARANG BARU",
+      "shortCode": "MB",
+      "voltageKv": 150,
+      "kind": "GIS",
+      "normalizedName": "muarakarang baru"
+    }
+  ],
+  "busbars": [],
+  "bays": [
+    {
+      "id": "bay_sub_durikosambi_sub_daan_mogot_1",
+      "substationId": "sub_durikosambi",
+      "rawName": "PHT 150kV DAAN MOGOT GIS#1 (terminal I-5)",
+      "normalizedName": "daan mogot",
+      "remoteEndpointHint": "daan mogot",
+      "circuit": "1",
+      "kind": "line"
+    },
+    {
+      "id": "bay_sub_durikosambi_sub_daan_mogot_2",
+      "substationId": "sub_durikosambi",
+      "rawName": "PHT 150kV DAAN MOGOT GIS#2 (terminal II-5)",
+      "normalizedName": "daan mogot",
+      "remoteEndpointHint": "daan mogot",
+      "circuit": "2",
+      "kind": "line"
+    },
+    {
+      "id": "bay_sub_daan_mogot_sub_durikosambi_1",
+      "substationId": "sub_daan_mogot",
+      "rawName": "PHT 150kV GI DURIKOSAMBI#1 (terminal I-5)",
+      "normalizedName": "durikosambi",
+      "remoteEndpointHint": "durikosambi",
+      "circuit": "1",
+      "kind": "line"
+    },
+    {
+      "id": "bay_sub_daan_mogot_sub_durikosambi_2",
+      "substationId": "sub_daan_mogot",
+      "rawName": "PHT 150kV GI DURIKOSAMBI#2 (terminal II-5)",
+      "normalizedName": "durikosambi",
+      "remoteEndpointHint": "durikosambi",
+      "circuit": "2",
+      "kind": "line"
+    },
+    {
+      "id": "bay_sub_daan_mogot_sub_pantai_indah_kapuk_1",
+      "substationId": "sub_daan_mogot",
+      "rawName": "PHT 150kV GIS PANTAI INDAH KAPUK#1 (terminal II-5)",
+      "normalizedName": "pantai indah kapuk",
+      "remoteEndpointHint": "pantai indah kapuk",
+      "circuit": "1",
+      "kind": "line"
+    },
+    {
+      "id": "bay_sub_daan_mogot_sub_pantai_indah_kapuk_2",
+      "substationId": "sub_daan_mogot",
+      "rawName": "PHT 150kV GIS PANTAI INDAH KAPUK#2 (terminal I-5)",
+      "normalizedName": "pantai indah kapuk",
+      "remoteEndpointHint": "pantai indah kapuk",
+      "circuit": "2",
+      "kind": "line"
+    },
+    {
+      "id": "bay_sub_pantai_indah_kapuk_sub_daan_mogot_1",
+      "substationId": "sub_pantai_indah_kapuk",
+      "rawName": "PHT 150kV DAAN MOGOT GIS#1 (terminal I-5)",
+      "normalizedName": "daan mogot",
+      "remoteEndpointHint": "daan mogot",
+      "circuit": "1",
+      "kind": "line"
+    },
+    {
+      "id": "bay_sub_pantai_indah_kapuk_sub_daan_mogot_2",
+      "substationId": "sub_pantai_indah_kapuk",
+      "rawName": "PHT 150kV DAAN MOGOT GIS#2 (terminal II-5)",
+      "normalizedName": "daan mogot",
+      "remoteEndpointHint": "daan mogot",
+      "circuit": "2",
+      "kind": "line"
+    },
+    {
+      "id": "bay_sub_pantai_indah_kapuk_sub_m_karang_baru_1",
+      "substationId": "sub_pantai_indah_kapuk",
+      "rawName": "PHT 150kV GIS MUARAKARANG BARU#1 (terminal I-5)",
+      "normalizedName": "muarakarang baru",
+      "remoteEndpointHint": "muarakarang baru",
+      "circuit": "1",
+      "kind": "line"
+    },
+    {
+      "id": "bay_sub_m_karang_baru_sub_pantai_indah_kapuk_1",
+      "substationId": "sub_m_karang_baru",
+      "rawName": "PHT 150kV GIS PANTAI INDAH KAPUK#1 (terminal II-5)",
+      "normalizedName": "pantai indah kapuk",
+      "remoteEndpointHint": "pantai indah kapuk",
+      "circuit": "1",
+      "kind": "line"
+    }
+  ],
+  "terminals": [],
+  "lineRelations": [
+    {
+      "id": "anchor_line_359",
+      "fromBayId": "bay_sub_durikosambi_sub_daan_mogot_1",
+      "toBayId": "bay_sub_daan_mogot_sub_durikosambi_1",
+      "fromSubstationId": "sub_durikosambi",
+      "toSubstationId": "sub_daan_mogot",
+      "circuit": "1",
+      "voltageKv": 150,
+      "r1Ohm": 0.3948,
+      "x1Ohm": 2.5914,
+      "r0Ohm": 0.7097999,
+      "x0Ohm": 7.774199,
+      "currentRatingKa": 2.514,
+      "lineXOhm": 2.5914,
+      "physicalLengthKm": 2.1,
+      "protectionFunctionIds": [],
+      "sourceIds": [
+        "digsilent-line-db"
+      ],
+      "confidence": "high",
+      "status": "imported",
+      "digsilentName": "DAAN MOGOT - DURIKOSAMBI 1",
+      "outOfService": false
+    },
+    {
+      "id": "anchor_line_360",
+      "fromBayId": "bay_sub_daan_mogot_sub_durikosambi_2",
+      "toBayId": "bay_sub_durikosambi_sub_daan_mogot_2",
+      "fromSubstationId": "sub_daan_mogot",
+      "toSubstationId": "sub_durikosambi",
+      "circuit": "2",
+      "voltageKv": 150,
+      "r1Ohm": 0.3948,
+      "x1Ohm": 2.5914,
+      "r0Ohm": 0.7097999,
+      "x0Ohm": 7.774199,
+      "currentRatingKa": 2.514,
+      "lineXOhm": 2.5914,
+      "physicalLengthKm": 2.1,
+      "protectionFunctionIds": [],
+      "sourceIds": [
+        "digsilent-line-db"
+      ],
+      "confidence": "high",
+      "status": "imported",
+      "digsilentName": "DAAN MOGOT - DURIKOSAMBI 2",
+      "outOfService": false
+    },
+    {
+      "id": "anchor_line_361",
+      "fromBayId": "bay_sub_pantai_indah_kapuk_sub_daan_mogot_1",
+      "toBayId": "bay_sub_daan_mogot_sub_pantai_indah_kapuk_1",
+      "fromSubstationId": "sub_pantai_indah_kapuk",
+      "toSubstationId": "sub_daan_mogot",
+      "circuit": "1",
+      "voltageKv": 150,
+      "r1Ohm": 0.8648,
+      "x1Ohm": 5.6764,
+      "r0Ohm": 1.5548,
+      "x0Ohm": 17.0292,
+      "currentRatingKa": 2.514,
+      "lineXOhm": 5.6764,
+      "physicalLengthKm": 4.6,
+      "protectionFunctionIds": [],
+      "sourceIds": [
+        "digsilent-line-db"
+      ],
+      "confidence": "high",
+      "status": "imported",
+      "digsilentName": "DAAN MOGOT - PIK 1",
+      "outOfService": false
+    },
+    {
+      "id": "anchor_line_362",
+      "fromBayId": "bay_sub_daan_mogot_sub_pantai_indah_kapuk_2",
+      "toBayId": "bay_sub_pantai_indah_kapuk_sub_daan_mogot_2",
+      "fromSubstationId": "sub_daan_mogot",
+      "toSubstationId": "sub_pantai_indah_kapuk",
+      "circuit": "2",
+      "voltageKv": 150,
+      "r1Ohm": 0.8648,
+      "x1Ohm": 5.6764,
+      "r0Ohm": 1.5548,
+      "x0Ohm": 17.0292,
+      "currentRatingKa": 2.514,
+      "lineXOhm": 5.6764,
+      "physicalLengthKm": 4.6,
+      "protectionFunctionIds": [],
+      "sourceIds": [
+        "digsilent-line-db"
+      ],
+      "confidence": "high",
+      "status": "imported",
+      "digsilentName": "DAAN MOGOT - PIK 2",
+      "outOfService": false
+    },
+    {
+      "id": "anchor_line_804",
+      "fromBayId": "bay_sub_pantai_indah_kapuk_sub_m_karang_baru_1",
+      "toBayId": "bay_sub_m_karang_baru_sub_pantai_indah_kapuk_1",
+      "fromSubstationId": "sub_pantai_indah_kapuk",
+      "toSubstationId": "sub_m_karang_baru",
+      "circuit": "1",
+      "voltageKv": 150,
+      "r1Ohm": 0.8835999,
+      "x1Ohm": 5.799799,
+      "r0Ohm": 1.5886,
+      "x0Ohm": 17.3994,
+      "currentRatingKa": 2.514,
+      "lineXOhm": 5.799799,
+      "physicalLengthKm": 4.7,
+      "protectionFunctionIds": [],
+      "sourceIds": [
+        "digsilent-line-db"
+      ],
+      "confidence": "high",
+      "status": "imported",
+      "digsilentName": "MKRBU-PIK",
+      "outOfService": false
+    }
+  ],
+  "relayIeds": [],
+  "protectionFunctions": []
+}

@@ -2,13 +2,13 @@ import { useMemo } from "react";
 import { FileCheck2, Printer, TriangleAlert } from "lucide-react";
 import { NETWORK_CASES } from "../../domain/seed-network-registry";
 import {
-  getEffectiveMiniNmm,
+  getEffectiveNetworkGraph,
   INVENTORY_MASTER_CASE_ID,
   mergeMasterRelationsIntoCase,
-  networkLinesFromMiniNmm,
-  networkNodesFromMiniNmm,
-  relayAssetsFromMiniNmm,
-} from "../../domain/mini-nmm";
+  networkLinesFromGraph,
+  networkNodesFromGraph,
+  relayAssetsFromGraph,
+} from "../../domain/network-graph";
 import {
   LCD_DIST_REGISTRY,
   promoteMatchedLcdDistCandidates,
@@ -24,7 +24,7 @@ import { ctRatioText, getEffectiveCtVt, vtRatioText } from "../../domain/instrum
 export function VerifiedReportView() {
   const activeCaseId = useProsetStore((s) => s.activeNetworkCaseId);
   const activeLineId = useProsetStore((s) => s.activeNetworkLineId);
-  const miniNmmOverrides = useProsetStore((s) => s.miniNmmOverrides);
+  const networkGraphOverrides = useProsetStore((s) => s.networkGraphOverrides);
   const ctVtOverrides = useProsetStore((s) => s.ctVtOverrides);
   const comparisonBays = useProsetStore((s) => s.comparisonBays);
   const topology = useProsetStore((s) => s.topology);
@@ -36,36 +36,36 @@ export function VerifiedReportView() {
     NETWORK_CASES.find((item) => item.id === activeCaseId) ?? NETWORK_CASES[0];
   const inventoryCase =
     NETWORK_CASES.find((item) => item.id === INVENTORY_MASTER_CASE_ID) ?? activeCase;
-  const fallbackMiniNmm = useMemo(() => buildUnifiedNetwork(activeCase), [activeCase]);
-  const masterFallbackMiniNmm = useMemo(() => buildUnifiedNetwork(inventoryCase), [inventoryCase]);
-  const masterMiniNmm = useMemo(
+  const fallbackNetworkGraph = useMemo(() => buildUnifiedNetwork(activeCase), [activeCase]);
+  const masterFallbackNetworkGraph = useMemo(() => buildUnifiedNetwork(inventoryCase), [inventoryCase]);
+  const masterNetworkGraph = useMemo(
     () =>
-      getEffectiveMiniNmm(
+      getEffectiveNetworkGraph(
         INVENTORY_MASTER_CASE_ID,
-        miniNmmOverrides[INVENTORY_MASTER_CASE_ID],
-        masterFallbackMiniNmm
+        networkGraphOverrides[INVENTORY_MASTER_CASE_ID],
+        masterFallbackNetworkGraph
       ),
-    [masterFallbackMiniNmm, miniNmmOverrides]
+    [masterFallbackNetworkGraph, networkGraphOverrides]
   );
-  const miniNmm = useMemo(
+  const networkGraph = useMemo(
     () =>
       mergeMasterRelationsIntoCase(
-        getEffectiveMiniNmm(activeCase.id, miniNmmOverrides[activeCase.id], fallbackMiniNmm),
-        masterMiniNmm
+        getEffectiveNetworkGraph(activeCase.id, networkGraphOverrides[activeCase.id], fallbackNetworkGraph),
+        masterNetworkGraph
       ),
-    [activeCase.id, fallbackMiniNmm, masterMiniNmm, miniNmmOverrides]
+    [activeCase.id, fallbackNetworkGraph, masterNetworkGraph, networkGraphOverrides]
   );
   const nodes = useMemo(
-    () => (miniNmm ? networkNodesFromMiniNmm(miniNmm) : activeCase.nodes),
-    [activeCase.nodes, miniNmm]
+    () => (networkGraph ? networkNodesFromGraph(networkGraph) : activeCase.nodes),
+    [activeCase.nodes, networkGraph]
   );
   const lines = useMemo(
-    () => (miniNmm ? networkLinesFromMiniNmm(miniNmm) : activeCase.lines),
-    [activeCase.lines, miniNmm]
+    () => (networkGraph ? networkLinesFromGraph(networkGraph) : activeCase.lines),
+    [activeCase.lines, networkGraph]
   );
   const relays = useMemo(
-    () => (miniNmm ? relayAssetsFromMiniNmm(miniNmm) : activeCase.relays),
-    [activeCase.relays, miniNmm]
+    () => (networkGraph ? relayAssetsFromGraph(networkGraph) : activeCase.relays),
+    [activeCase.relays, networkGraph]
   );
   const activeLine = lines.find((line) => line.id === activeLineId) ?? lines[0];
   const from = activeLine ? nodes.find((node) => node.id === activeLine.fromNodeId) : undefined;
@@ -76,9 +76,9 @@ export function VerifiedReportView() {
       )
     : undefined;
   const comparisonBayId = activeLine ? findComparisonBayIdForLine(activeLine.id) : null;
-  const relation = activeLine ? miniNmm?.lineRelations.find((item) => item.id === activeLine.id) : undefined;
-  const fromIed = relation ? miniNmm?.relayIeds.find((item) => item.bayId === relation.fromBayId) : undefined;
-  const toIed = relation ? miniNmm?.relayIeds.find((item) => item.bayId === relation.toBayId) : undefined;
+  const relation = activeLine ? networkGraph?.lineRelations.find((item) => item.id === activeLine.id) : undefined;
+  const fromIed = relation ? networkGraph?.relayIeds.find((item) => item.bayId === relation.fromBayId) : undefined;
+  const toIed = relation ? networkGraph?.relayIeds.find((item) => item.bayId === relation.toBayId) : undefined;
   const fromCtVt = getEffectiveCtVt(fromIed, ctVtOverrides);
   const toCtVt = getEffectiveCtVt(toIed, ctVtOverrides);
   const ctEvidence =

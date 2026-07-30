@@ -4,44 +4,77 @@ import {
   LineRelation,
   ProtectionFunction,
   RelayIED,
+  RemoteBusBranch,
   Terminal,
+  Transformer,
   UnifiedNetwork,
   UnifiedSubstation,
   classifyProtectionFunction,
 } from "./unified";
 import type { NetworkLine, NetworkNode, RelayAsset } from "./seed-network-registry";
-import { generateCorridorNmm } from "./nmm-generator";
+import { normalizeSubstationIdentity } from "./normalization";
+import demoCorridorSeed from "./generated/demo-corridor-seed.json";
 
 export const INVENTORY_MASTER_CASE_ID = "case_ultg_dks_inventory";
 
-export const MINI_NMM_DKS_PIK = generateCorridorNmm();
+// Seed corridor for the demo Studies (DKSBI-DNMGT and DNMGT-PINKA — see
+// DEFAULT_STUDIES in useProsetStore.ts): precomputed by
+// scripts/generate-demo-corridor-seed.ts from the same anchor pipeline as
+// the Inbox graph builder (digsilentLineDb + SLD scope), not a
+// hand-maintained generator, so its substation ids/shortCodes (DKSBI, DNMGT,
+// PINKA, ...) are the real DIgSILENT-convention codes rather than invented
+// ones. Precomputed (rather than calling buildGraphForUltg() here directly)
+// because graph-builder.ts pulls in crosscheck-workbook-registry.json
+// (1.2 MB) — this module is imported almost everywhere in the app, so doing
+// that at module scope nearly doubled the main bundle. Re-run
+// `npm run generate:demo-seed` if the demo corridor's station selection
+// changes or digsilentLineDb is re-indexed.
+export const NETWORK_GRAPH_DKS_PIK: UnifiedNetwork = demoCorridorSeed as UnifiedNetwork;
 
-export const MINI_NMM_BY_CASE: Record<string, UnifiedNetwork> = {
-  [MINI_NMM_DKS_PIK.caseId]: MINI_NMM_DKS_PIK,
+export const NETWORK_GRAPH_BY_CASE: Record<string, UnifiedNetwork> = {
+  [NETWORK_GRAPH_DKS_PIK.caseId]: NETWORK_GRAPH_DKS_PIK,
 };
 
-export function getMiniNmm(caseId: string): UnifiedNetwork | undefined {
-  return MINI_NMM_BY_CASE[caseId];
+export function getNetworkGraph(caseId: string): UnifiedNetwork | undefined {
+  return NETWORK_GRAPH_BY_CASE[caseId];
 }
 
-export type MiniNmmOverrideShape = {
+// Overrides a base entity by id rather than appending alongside it — needed
+// for cases where an override must supersede a seed/anchor entity (e.g. a
+// LineRelation retired to status "superseded" after a GI insertion project
+// physically cuts it into two new segments). A plain concat would leave both
+// the old and new entity in the array under the same id, since nothing else
+// in the effective-graph pipeline dedupes by id downstream.
+function upsertById<T extends { id: string }>(base: T[], overrides: T[]): T[] {
+  const next = [...base];
+  for (const item of overrides) {
+    const index = next.findIndex((existing) => existing.id === item.id);
+    if (index >= 0) next[index] = item;
+    else next.push(item);
+  }
+  return next;
+}
+
+export type NetworkGraphOverrideShape = {
   substations: UnifiedSubstation[];
   busbars?: Busbar[];
   bays: Bay[];
   terminals?: Terminal[];
   relations: LineRelation[];
   ieds: RelayIED[];
+  transformers?: Transformer[];
+  remoteBusBranches?: RemoteBusBranch[];
 };
 
-// Merge user-added entities (from store) on top of the seeded mini-NMM.
+// Merge user-added entities (from store) on top of the seeded network graph.
 // Returns a new UnifiedNetwork or undefined if no seed exists for the case
 // AND no overrides are provided.
-export function getEffectiveMiniNmm(
+export function getEffectiveNetworkGraph(
   caseId: string,
-  override?: MiniNmmOverrideShape,
+  override?: NetworkGraphOverrideShape,
   fallbackBase?: UnifiedNetwork
 ): UnifiedNetwork | undefined {
-  const seed = MINI_NMM_BY_CASE[caseId] ?? fallbackBase;
+  const seed = NETWORK_GRAPH_BY_CASE[caseId] ?? fallbackBase;
   const ov = override ?? {
     substations: [],
     busbars: [],
@@ -95,22 +128,24 @@ export function getEffectiveMiniNmm(
 
   return {
     caseId,
-    substations: [...base.substations, ...ov.substations],
-    busbars: [...base.busbars, ...(ov.busbars ?? [])],
-    bays: [...base.bays, ...ov.bays],
-    terminals: [...base.terminals, ...(ov.terminals ?? [])],
-    lineRelations: [...base.lineRelations, ...ov.relations],
-    relayIeds: [...base.relayIeds, ...ov.ieds],
+    substations: upsertById(base.substations, ov.substations),
+    busbars: upsertById(base.busbars, ov.busbars ?? []),
+    bays: upsertById(base.bays, ov.bays),
+    terminals: upsertById(base.terminals, ov.terminals ?? []),
+    lineRelations: upsertById(base.lineRelations, ov.relations),
+    relayIeds: upsertById(base.relayIeds, ov.ieds),
     protectionFunctions,
+    transformers: upsertById(base.transformers ?? [], ov.transformers ?? []),
+    remoteBusBranches: upsertById(base.remoteBusBranches ?? [], ov.remoteBusBranches ?? []),
   };
 }
 
 // =============================================================================
 // Adapters: derive legacy NetworkNode/NetworkLine/RelayAsset shape from the
-// unified mini-NMM.
+// unified network graph.
 // =============================================================================
 
-export function networkNodesFromMiniNmm(network: UnifiedNetwork): NetworkNode[] {
+export function networkNodesFromGraph(network: UnifiedNetwork): NetworkNode[] {
   return network.substations.map((sub) => ({
     id: sub.id,
     name: sub.name,
@@ -121,7 +156,7 @@ export function networkNodesFromMiniNmm(network: UnifiedNetwork): NetworkNode[] 
   }));
 }
 
-export function networkLinesFromMiniNmm(network: UnifiedNetwork): NetworkLine[] {
+export function networkLinesFromGraph(network: UnifiedNetwork): NetworkLine[] {
   return network.lineRelations.map((relation) => {
     const fromBay = network.bays.find((b) => b.id === relation.fromBayId);
     const toBay = network.bays.find((b) => b.id === relation.toBayId);
@@ -162,6 +197,11 @@ export function networkLinesFromMiniNmm(network: UnifiedNetwork): NetworkLine[] 
       vtRatio,
       relayMain,
       protectionFunctions: uniquePfs.length > 0 ? uniquePfs : ["Network"],
+      r1Ohm: relation.r1Ohm,
+      x1Ohm: relation.x1Ohm ?? relation.lineXOhm,
+      r0Ohm: relation.r0Ohm,
+      x0Ohm: relation.x0Ohm,
+      currentRatingKa: relation.currentRatingKa,
       lineXOhm: relation.lineXOhm,
       physicalLengthKm: relation.physicalLengthKm,
       sourceIds: relation.sourceIds,
@@ -170,12 +210,12 @@ export function networkLinesFromMiniNmm(network: UnifiedNetwork): NetworkLine[] 
       confidence: relation.confidence,
       notes: isSldDraft
         ? "Draft relation promoted from SLD endpoint candidate; bay, IED, CT/PT, and line data still need validation."
-        : "Dynamically generated from mini-NMM registry records.",
+        : "Dynamically generated from network graph registry records.",
     };
   });
 }
 
-export function relayAssetsFromMiniNmm(network: UnifiedNetwork): RelayAsset[] {
+export function relayAssetsFromGraph(network: UnifiedNetwork): RelayAsset[] {
   return network.relayIeds.flatMap((ied) => {
     const bay = network.bays.find((b) => b.id === ied.bayId);
     if (!bay) return [];
@@ -214,8 +254,8 @@ export function mergeMasterRelationsIntoCase(
     const masterTo = masterNetwork.substations.find((s) => s.id === masterRelation.toSubstationId);
     if (!masterFrom || !masterTo) continue;
 
-    const caseFrom = findCaseSubstation(caseNetwork, masterFrom.normalizedName);
-    const caseTo = findCaseSubstation(caseNetwork, masterTo.normalizedName);
+    const caseFrom = findCaseSubstation(caseNetwork, masterFrom.name);
+    const caseTo = findCaseSubstation(caseNetwork, masterTo.name);
     if (!caseFrom || !caseTo) continue;
 
     const candidateKey = normalizedEndpointKey(
@@ -273,8 +313,9 @@ function normalizedEndpointKey(from: string, to: string, circuit: string) {
   return [[from, to].sort().join("__"), circuit || "1"].join("__ckt_");
 }
 
-function findCaseSubstation(network: UnifiedNetwork, normalizedName: string) {
-  return network.substations.find((sub) => sub.normalizedName === normalizedName);
+function findCaseSubstation(network: UnifiedNetwork, rawName: string) {
+  const identity = normalizeSubstationIdentity(rawName);
+  return network.substations.find((sub) => normalizeSubstationIdentity(sub.name) === identity);
 }
 
 function fallbackBay(from: UnifiedSubstation, to: UnifiedSubstation, circuit: string): Bay {
@@ -289,8 +330,8 @@ function fallbackBay(from: UnifiedSubstation, to: UnifiedSubstation, circuit: st
   };
 }
 
-export const MINI_NMM_NETWORK_NODES: NetworkNode[] = networkNodesFromMiniNmm(MINI_NMM_DKS_PIK);
+export const NETWORK_GRAPH_NODES: NetworkNode[] = networkNodesFromGraph(NETWORK_GRAPH_DKS_PIK);
 
-export const MINI_NMM_NETWORK_LINES: NetworkLine[] = networkLinesFromMiniNmm(MINI_NMM_DKS_PIK);
+export const NETWORK_GRAPH_LINES: NetworkLine[] = networkLinesFromGraph(NETWORK_GRAPH_DKS_PIK);
 
-export const MINI_NMM_RELAY_ASSETS: RelayAsset[] = relayAssetsFromMiniNmm(MINI_NMM_DKS_PIK);
+export const NETWORK_GRAPH_RELAY_ASSETS: RelayAsset[] = relayAssetsFromGraph(NETWORK_GRAPH_DKS_PIK);

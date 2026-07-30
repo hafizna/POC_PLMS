@@ -10,6 +10,7 @@ import {
   Plus,
   RadioTower,
   RotateCcw,
+  X,
   XCircle,
 } from "lucide-react";
 import {
@@ -23,19 +24,20 @@ import {
   PDF_SOURCE_REGISTRY,
   filterPdfSourcesForNodes,
   getEndpointCandidatesForNodes,
+  type PdfSourceRecord,
 } from "../../domain/pdf-source-registry";
 import {
-  getEffectiveMiniNmm,
+  getEffectiveNetworkGraph,
   INVENTORY_MASTER_CASE_ID,
   mergeMasterRelationsIntoCase,
-  networkLinesFromMiniNmm,
-  networkNodesFromMiniNmm,
-  relayAssetsFromMiniNmm,
-} from "../../domain/mini-nmm";
+  networkLinesFromGraph,
+  networkNodesFromGraph,
+  relayAssetsFromGraph,
+} from "../../domain/network-graph";
 import { useProsetStore } from "../../store/useProsetStore";
 import type { NetworkNode } from "../../domain/seed-network-registry";
-import { normalizeStationName } from "../../domain/normalization";
-import type { Bay, LineRelation, UnifiedNetwork, UnifiedSubstation } from "../../domain/unified";
+import { looseTokenMatch, normalizeStationName } from "../../domain/normalization";
+import type { Bay, LifecycleStatus, LineRelation, UnifiedNetwork, UnifiedSubstation } from "../../domain/unified";
 import { buildUnifiedNetwork } from "../../domain/unified";
 
 type EndpointFilter = "actionable" | "existing" | "expansion" | "ignored";
@@ -62,44 +64,44 @@ function isStudyCase(item: NetworkCase) {
 
 export function NetworkModelView() {
   const [endpointFilter, setEndpointFilter] = useState<EndpointFilter>("actionable");
+  const [selectedSldStation, setSelectedSldStation] = useState<string | null>(null);
   const activeCaseId = useProsetStore((s) => s.activeNetworkCaseId);
   const setActiveCase = useProsetStore((s) => s.setActiveNetworkCase);
   const setTab = useProsetStore((s) => s.setTab);
   const decisions = useProsetStore((s) => s.candidateDecisions);
   const decideCandidate = useProsetStore((s) => s.decideCandidate);
   const clearCandidateDecision = useProsetStore((s) => s.clearCandidateDecision);
-  const addBay = useProsetStore((s) => s.addMiniNmmBay);
-  const addRelation = useProsetStore((s) => s.addMiniNmmRelation);
+  const addNetworkGraphRelationBundle = useProsetStore((s) => s.addNetworkGraphRelationBundle);
   const activeCase =
     NETWORK_CASES.find((item) => item.id === activeCaseId) ?? NETWORK_CASES[0];
   const inventoryCase =
     NETWORK_CASES.find((item) => item.id === INVENTORY_MASTER_CASE_ID) ?? activeCase;
-  const miniNmmOverride = useProsetStore((s) => s.miniNmmOverrides[activeCase.id]);
-  const masterMiniNmmOverride = useProsetStore((s) => s.miniNmmOverrides[INVENTORY_MASTER_CASE_ID]);
-  const fallbackMiniNmm = useMemo(() => buildUnifiedNetwork(activeCase), [activeCase]);
-  const masterFallbackMiniNmm = useMemo(() => buildUnifiedNetwork(inventoryCase), [inventoryCase]);
-  const masterMiniNmm = getEffectiveMiniNmm(
+  const networkGraphOverride = useProsetStore((s) => s.networkGraphOverrides[activeCase.id]);
+  const masterNetworkGraphOverride = useProsetStore((s) => s.networkGraphOverrides[INVENTORY_MASTER_CASE_ID]);
+  const fallbackNetworkGraph = useMemo(() => buildUnifiedNetwork(activeCase), [activeCase]);
+  const masterFallbackNetworkGraph = useMemo(() => buildUnifiedNetwork(inventoryCase), [inventoryCase]);
+  const masterNetworkGraph = getEffectiveNetworkGraph(
     INVENTORY_MASTER_CASE_ID,
-    masterMiniNmmOverride,
-    masterFallbackMiniNmm
+    masterNetworkGraphOverride,
+    masterFallbackNetworkGraph
   );
-  const baseMiniNmm = getEffectiveMiniNmm(activeCase.id, miniNmmOverride, fallbackMiniNmm);
-  const miniNmm = mergeMasterRelationsIntoCase(baseMiniNmm, masterMiniNmm);
-  const localRelationCount = baseMiniNmm?.lineRelations.length ?? 0;
-  const masterRelationCount = masterMiniNmm?.lineRelations.length ?? 0;
+  const baseNetworkGraph = getEffectiveNetworkGraph(activeCase.id, networkGraphOverride, fallbackNetworkGraph);
+  const networkGraph = mergeMasterRelationsIntoCase(baseNetworkGraph, masterNetworkGraph);
+  const localRelationCount = baseNetworkGraph?.lineRelations.length ?? 0;
+  const masterRelationCount = masterNetworkGraph?.lineRelations.length ?? 0;
   const bridgedRelationCount =
-    miniNmm?.lineRelations.filter((relation) => relation.sourceIds.includes("master-inventory")).length ?? 0;
+    networkGraph?.lineRelations.filter((relation) => relation.sourceIds.includes("master-inventory")).length ?? 0;
   const nodes = useMemo(
-    () => (miniNmm ? networkNodesFromMiniNmm(miniNmm) : activeCase.nodes),
-    [activeCase.nodes, miniNmm]
+    () => (networkGraph ? networkNodesFromGraph(networkGraph) : activeCase.nodes),
+    [activeCase.nodes, networkGraph]
   );
   const lines = useMemo(
-    () => (miniNmm ? networkLinesFromMiniNmm(miniNmm) : activeCase.lines),
-    [activeCase.lines, miniNmm]
+    () => (networkGraph ? networkLinesFromGraph(networkGraph) : activeCase.lines),
+    [activeCase.lines, networkGraph]
   );
   const relays = useMemo(
-    () => (miniNmm ? relayAssetsFromMiniNmm(miniNmm) : activeCase.relays),
-    [activeCase.relays, miniNmm]
+    () => (networkGraph ? relayAssetsFromGraph(networkGraph) : activeCase.relays),
+    [activeCase.relays, networkGraph]
   );
   const sources = REGISTRY_SOURCES.filter((s) => activeCase.sourceIds.includes(s.id));
   const avgCompleteness = Math.round(
@@ -112,9 +114,16 @@ export function NetworkModelView() {
   const pdfSources = filterPdfSourcesForNodes(nodes);
   const endpointCandidates = getEndpointCandidatesForNodes(nodes);
   const endpointRows = useMemo(
-    () => buildEndpointReviewRows(endpointCandidates, miniNmm, decisions),
-    [endpointCandidates, miniNmm, decisions]
+    () => buildEndpointReviewRows(endpointCandidates, networkGraph, decisions),
+    [endpointCandidates, networkGraph, decisions]
   );
+  const sldRemodelRows = useMemo(
+    () => buildSldRemodelRows(sldStationRows, endpointRows, pdfSources),
+    [sldStationRows, endpointRows, pdfSources]
+  );
+  const selectedSldRemodelRow = selectedSldStation
+    ? sldRemodelRows.find((row) => row.stationFolder === selectedSldStation)
+    : undefined;
   const filteredEndpointRows = endpointRows.filter((row) => {
     if (endpointFilter === "ignored") return row.status === "rejected";
     if (row.status === "rejected") return false;
@@ -131,21 +140,40 @@ export function NetworkModelView() {
 
   const promoteEndpoint = (row: EndpointReviewRow) => {
     const targetCaseId = INVENTORY_MASTER_CASE_ID;
-    const targetMiniNmm = masterMiniNmm ?? miniNmm;
-    const targetLocalSub = findSubstationByName(targetMiniNmm, row.localStation);
-    const targetRemoteSub = findSubstationByName(targetMiniNmm, row.remoteStation);
-    if (!targetMiniNmm || !targetLocalSub || !targetRemoteSub || row.relationExists) return;
+    const targetNetworkGraph = masterNetworkGraph ?? networkGraph;
+    const targetLocalSub = findSubstationByName(targetNetworkGraph, row.localStation);
+    const targetRemoteSub = findSubstationByName(targetNetworkGraph, row.remoteStation);
+    if (!targetNetworkGraph || !targetLocalSub || !targetRemoteSub || row.relationExists) return;
     const { relation, bays } = createRelationFromEndpoint(
       { ...row, localSub: targetLocalSub, remoteSub: targetRemoteSub },
-      targetMiniNmm
+      targetNetworkGraph
     );
-    for (const bay of bays) addBay(targetCaseId, bay);
-    addRelation(targetCaseId, relation);
+    addNetworkGraphRelationBundle(targetCaseId, {
+      bays,
+      terminals: [],
+      relation,
+    });
     decideCandidate(row.candidateId, "reviewed", `Promoted SLD endpoint from ${row.sourceFileName}`);
   };
 
   return (
     <div className="space-y-4">
+      {selectedSldRemodelRow && (
+        <SldRemodelDrawer
+          row={selectedSldRemodelRow}
+          onClose={() => setSelectedSldStation(null)}
+          onOpenSources={() => {
+            setSelectedSldStation(null);
+            setTab("source-index");
+          }}
+          onReviewEndpoints={(filter) => {
+            setEndpointFilter(filter);
+            setSelectedSldStation(null);
+          }}
+          onPromoteEndpoint={promoteEndpoint}
+        />
+      )}
+
       <section className="bg-white border border-slate-200 rounded-lg p-4">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
@@ -313,25 +341,25 @@ export function NetworkModelView() {
         </div>
       </section>
 
-      {miniNmm && (
+      {networkGraph && (
         <section className="bg-white border border-slate-200 rounded-lg overflow-hidden">
           <div className="border-b border-slate-200 px-4 py-2 bg-slate-50 flex items-center justify-between gap-3">
             <div>
               <h3 className="text-xs uppercase tracking-wider font-semibold text-slate-600">
-                Mini-NMM (Substation -&gt; Busbar -&gt; Bay -&gt; Terminal -&gt; Relation -&gt; IED)
+                Network Graph (Substation -&gt; Busbar -&gt; Bay -&gt; Terminal -&gt; Relation -&gt; IED)
               </h3>
               <div className="text-[10px] text-slate-500 mt-0.5">
-                Single source of truth untuk koridor ini. Edit di src/domain/mini-nmm.ts.
+                Single source of truth untuk koridor ini. Edit di src/domain/network-graph.ts.
               </div>
             </div>
             <span className="text-[10px] px-2 py-1 rounded border border-blue-200 bg-blue-50 text-blue-700">
-              {miniNmm.substations.length} subs | {miniNmm.busbars.length} bus | {miniNmm.bays.length} bays | {miniNmm.lineRelations.length} relations | {miniNmm.relayIeds.length} IED
+              {networkGraph.substations.length} subs | {networkGraph.busbars.length} bus | {networkGraph.bays.length} bays | {networkGraph.lineRelations.length} relations | {networkGraph.relayIeds.length} IED
             </span>
           </div>
           <div className="divide-y divide-slate-100">
-            {miniNmm.substations.map((sub) => {
-              const subBusbars = miniNmm.busbars.filter((b) => b.substationId === sub.id);
-              const subBays = miniNmm.bays.filter((b) => b.substationId === sub.id);
+            {networkGraph.substations.map((sub) => {
+              const subBusbars = networkGraph.busbars.filter((b) => b.substationId === sub.id);
+              const subBays = networkGraph.bays.filter((b) => b.substationId === sub.id);
               return (
                 <div key={sub.id} className="px-4 py-3">
                   <div className="flex items-center gap-2 flex-wrap">
@@ -341,11 +369,11 @@ export function NetworkModelView() {
                   </div>
                   <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
                     {subBays.map((bay) => {
-                      const term = miniNmm.terminals.find((t) => t.bayId === bay.id);
+                      const term = networkGraph.terminals.find((t) => t.bayId === bay.id);
                       const busbar = subBusbars.find((b) => b.id === term?.busbarId);
-                      const ied = miniNmm.relayIeds.find((r) => r.bayId === bay.id);
-                      const fnIds = miniNmm.protectionFunctions.filter((p) => p.relayIedId === ied?.id).map((p) => p.function);
-                      const relation = miniNmm.lineRelations.find((r) => r.fromBayId === bay.id || r.toBayId === bay.id);
+                      const ied = networkGraph.relayIeds.find((r) => r.bayId === bay.id);
+                      const fnIds = networkGraph.protectionFunctions.filter((p) => p.relayIedId === ied?.id).map((p) => p.function);
+                      const relation = networkGraph.lineRelations.find((r) => r.fromBayId === bay.id || r.toBayId === bay.id);
                       return (
                         <div key={bay.id} className="border border-slate-200 rounded-md p-2 bg-slate-50">
                           <div className="text-xs font-semibold text-slate-800 truncate">{bay.rawName}</div>
@@ -380,9 +408,117 @@ export function NetworkModelView() {
       <section className="bg-white border border-slate-200 rounded-lg overflow-hidden">
         <div className="border-b border-slate-200 px-4 py-2 bg-slate-50 flex items-center justify-between gap-3">
           <div>
+            <h3 className="text-xs uppercase tracking-wider font-semibold text-slate-600">SLD Remodel Library per GI</h3>
+            <div className="text-[10px] text-slate-500 mt-0.5">
+              Station-level rebuild plan dari SLD source: source drawing, endpoint skeleton, relation yang sudah modeled, dan kandidat restore/remap.
+            </div>
+          </div>
+          <span className="text-[10px] px-2 py-1 rounded border border-blue-200 bg-blue-50 text-blue-700">
+            {sldRemodelRows.length} GI/GIS in scope
+          </span>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 divide-y md:divide-y-0 border-b border-slate-100">
+          {sldRemodelRows.slice(0, 6).map((row) => (
+            <div key={row.stationFolder} className="p-4 border-b md:border-r border-slate-100">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="text-sm font-semibold text-slate-900 truncate">{row.stationFolder}</div>
+                  <div className="text-[10px] text-slate-500 mt-0.5 truncate">{row.latestFileName}</div>
+                </div>
+                <SldRemodelBadge row={row} />
+              </div>
+              <div className="mt-3 grid grid-cols-4 gap-2">
+                <SldMetric label="SLD" value={row.singleLineCount} />
+                <SldMetric label="Endpoints" value={row.endpointCount} />
+                <SldMetric label="Modeled" value={row.modeledCount} />
+                <SldMetric label="Ready" value={row.readyCount} tone={row.readyCount > 0 ? "emerald" : "slate"} />
+              </div>
+              <div className="mt-2 grid grid-cols-4 gap-2">
+                <SldMetric label="PDF" value={row.pdfCount} />
+                <SldMetric label="VSD" value={row.vsdCount} />
+                <SldMetric label="Bays" value={row.bayHintCount} tone={row.bayHintCount > 0 ? "emerald" : "slate"} />
+                <SldMetric label="Eq docs" value={row.equipmentDocCount} tone={row.equipmentDocCount > 0 ? "emerald" : "slate"} />
+              </div>
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {row.validationTypes.map((type) => (
+                  <span
+                    key={`${row.stationFolder}-${type}`}
+                    className="text-[10px] px-1.5 py-0.5 rounded border border-cyan-200 bg-cyan-50 text-cyan-700"
+                  >
+                    {type.replace("validation_", "").toUpperCase()}
+                  </span>
+                ))}
+                {row.scannedCount > 0 && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded border border-amber-200 bg-amber-50 text-amber-700">
+                    {row.scannedCount} needs OCR
+                  </span>
+                )}
+                {row.validationTypes.length === 0 && row.scannedCount === 0 && (
+                  <span className="text-[10px] text-slate-400">No CT/PMS/PMT validation doc in this GI scope</span>
+                )}
+              </div>
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {row.sampleEndpoints.slice(0, 4).map((endpoint) => (
+                  <span
+                    key={`${row.stationFolder}-${endpoint}`}
+                    className="text-[10px] px-1.5 py-0.5 rounded border border-slate-200 bg-slate-50 text-slate-600"
+                  >
+                    {endpoint}
+                  </span>
+                ))}
+                {row.sampleEndpoints.length === 0 && (
+                  <span className="text-[10px] text-slate-400">No endpoint text extracted yet</span>
+                )}
+              </div>
+              {row.sampleBays.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {row.sampleBays.map((bay) => (
+                    <span
+                      key={`${row.stationFolder}-${bay}`}
+                      className="text-[10px] px-1.5 py-0.5 rounded border border-emerald-200 bg-emerald-50 text-emerald-700"
+                    >
+                      {bay}
+                    </span>
+                  ))}
+                </div>
+              )}
+              <div className="mt-3 flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setEndpointFilter(row.readyCount > 0 ? "actionable" : row.modeledCount > 0 ? "existing" : "expansion")}
+                  className="text-[11px] px-2 py-1 rounded border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100"
+                >
+                  Review endpoints
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTab("source-index")}
+                  className="text-[11px] px-2 py-1 rounded border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                >
+                  Source files
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedSldStation(row.stationFolder)}
+                  className="text-[11px] px-2 py-1 rounded border border-slate-300 bg-slate-50 text-slate-700 hover:bg-slate-100"
+                >
+                  Details
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="px-4 py-2 bg-slate-50 text-[11px] text-slate-600">
+          SLD remodel saat ini memakai text-layer endpoint skeleton plus validation evidence CT/PMS/PMT. Untuk scanned/Visio-only SLD, step berikutnya adalah OCR/shape extraction agar bay, busbar, PMS/PMT, dan CT/VT bisa direkonstruksi sampai level perangkat.
+        </div>
+      </section>
+
+      <section className="bg-white border border-slate-200 rounded-lg overflow-hidden">
+        <div className="border-b border-slate-200 px-4 py-2 bg-slate-50 flex items-center justify-between gap-3">
+          <div>
             <h3 className="text-xs uppercase tracking-wider font-semibold text-slate-600">SLD Endpoint Candidates</h3>
             <div className="text-[10px] text-slate-500 mt-0.5">
-              Unique GI/GIS-to-GI/GIS skeleton extracted from SLD PDF text layer. Promote only reviewed endpoints.
+              Unique GI/GIS-to-GI/GIS skeleton extracted from SLD PDF text layer. Jika relation user-added terhapus, candidate SLD tetap tersedia untuk restore/remap.
             </div>
           </div>
           <span className="text-[10px] px-2 py-1 rounded border border-blue-200 bg-blue-50 text-blue-700">
@@ -450,7 +586,7 @@ export function NetworkModelView() {
                           onClick={() => clearCandidateDecision(row.candidateId)}
                         />
                       ) : row.relationExists ? (
-                        <span className="text-[10px] text-slate-400">Already in mini-NMM</span>
+                        <span className="text-[10px] text-slate-400">Already in network graph</span>
                       ) : (
                         <>
                           <SmallEndpointButton
@@ -505,13 +641,54 @@ type EndpointReviewRow = {
   evidence: string;
   sourceFileName: string;
   sourceCount: number;
-  status: "imported" | "reviewed" | "rejected" | "approved" | "issued";
-  decision?: { status: "imported" | "reviewed" | "rejected" | "approved" | "issued"; decidedAt?: string; note?: string };
+  status: LifecycleStatus;
+  decision?: { status: LifecycleStatus; decidedAt?: string; note?: string };
+};
+
+type SldRemodelRow = {
+  stationFolder: string;
+  stationKey: string;
+  latestFileName: string;
+  pdfCount: number;
+  vsdCount: number;
+  singleLineCount: number;
+  endpointCount: number;
+  modeledCount: number;
+  readyCount: number;
+  expansionCount: number;
+  highConfidenceCount: number;
+  equipmentDocCount: number;
+  bayHintCount: number;
+  scannedCount: number;
+  textLayerCount: number;
+  validationTypes: string[];
+  sampleEndpoints: string[];
+  sampleBays: string[];
+  sourceFiles: SldRemodelSourceFile[];
+  pdfDocuments: SldRemodelPdfDocument[];
+  endpoints: EndpointReviewRow[];
+  status: "ready" | "modeled" | "needs-source" | "needs-station";
+};
+
+type SldRemodelSourceFile = {
+  fileName: string;
+  extension: string;
+  kind: string;
+  lastModified: string;
+};
+
+type SldRemodelPdfDocument = {
+  fileName: string;
+  documentType: string;
+  extractionStatus: string;
+  bayHints: string[];
+  stationHints: string[];
+  textPreview: string;
 };
 
 function buildEndpointReviewRows(
   candidates: ReturnType<typeof getEndpointCandidatesForNodes>,
-  miniNmm: UnifiedNetwork | undefined,
+  networkGraph: UnifiedNetwork | undefined,
   decisions: ReturnType<typeof useProsetStore.getState>["candidateDecisions"]
 ): EndpointReviewRow[] {
   const groups = new Map<string, typeof candidates>();
@@ -526,11 +703,11 @@ function buildEndpointReviewRows(
   return Array.from(groups.entries())
     .map(([key, items]) => {
       const best = [...items].sort((a, b) => confidenceRank(b.confidence) - confidenceRank(a.confidence))[0];
-      const localSub = findSubstationByName(miniNmm, best.localStation);
-      const remoteSub = findSubstationByName(miniNmm, best.remoteStation);
+      const localSub = findSubstationByName(networkGraph, best.localStation);
+      const remoteSub = findSubstationByName(networkGraph, best.remoteStation);
       const matchedRelation =
         localSub && remoteSub
-          ? miniNmm?.lineRelations.find(
+          ? networkGraph?.lineRelations.find(
           (relation) =>
             [relation.fromSubstationId, relation.toSubstationId].includes(localSub.id) &&
             [relation.fromSubstationId, relation.toSubstationId].includes(remoteSub.id)
@@ -563,7 +740,107 @@ function buildEndpointReviewRows(
     });
 }
 
-function createRelationFromEndpoint(row: EndpointReviewRow, miniNmm: UnifiedNetwork) {
+function buildSldRemodelRows(
+  sldRows: ReturnType<typeof getCaseSldStationRows>,
+  endpointRows: EndpointReviewRow[],
+  pdfSources: PdfSourceRecord[]
+): SldRemodelRow[] {
+  return sldRows
+    .map((sldRow) => {
+      const stationKey = normalizeStationName(sldRow.stationFolder);
+      const stationEndpoints = endpointRows.filter((endpoint) =>
+        endpointTouchesStation(endpoint, stationKey)
+      );
+      const stationPdfSources = pdfSources.filter((source) => sourceTouchesStation(source, stationKey));
+      const equipmentSources = stationPdfSources.filter((source) =>
+        source.documentType.startsWith("validation_")
+      );
+      const bayHints = uniqueStrings(equipmentSources.flatMap((source) => source.bayHints));
+      const activeEndpoints = stationEndpoints.filter((endpoint) => endpoint.status !== "rejected");
+      const sampleEndpoints = activeEndpoints
+        .slice(0, 4)
+        .map((endpoint) => `${endpoint.localStation} - ${endpoint.remoteStation}`);
+      const readyCount = activeEndpoints.filter((endpoint) => endpoint.readyToPromote).length;
+      const modeledCount = activeEndpoints.filter((endpoint) => endpoint.relationExists).length;
+      const expansionCount = activeEndpoints.filter(
+        (endpoint) => !endpoint.readyToPromote && !endpoint.relationExists
+      ).length;
+      const highConfidenceCount = activeEndpoints.filter((endpoint) => endpoint.confidence === "high").length;
+      const status =
+        readyCount > 0
+          ? "ready"
+          : modeledCount > 0
+            ? "modeled"
+            : sldRow.singleLineCount > 0 || equipmentSources.length > 0
+              ? "needs-station"
+              : "needs-source";
+
+      return {
+        stationFolder: sldRow.stationFolder,
+        stationKey,
+        latestFileName: sldRow.latestFileName,
+        pdfCount: sldRow.pdfCount,
+        vsdCount: sldRow.vsdCount,
+        singleLineCount: sldRow.singleLineCount,
+        endpointCount: activeEndpoints.length,
+        modeledCount,
+        readyCount,
+        expansionCount,
+        highConfidenceCount,
+        equipmentDocCount: equipmentSources.length,
+        bayHintCount: bayHints.length,
+        scannedCount: stationPdfSources.filter((source) => source.extractionStatus === "scanned_needs_ocr").length,
+        textLayerCount: stationPdfSources.filter((source) => source.extractionStatus === "text_layer").length,
+        validationTypes: uniqueStrings(equipmentSources.map((source) => source.documentType)).sort(),
+        sampleEndpoints,
+        sampleBays: bayHints.slice(0, 4),
+        sourceFiles: sldRow.sourceFiles,
+        pdfDocuments: stationPdfSources
+          .map((source) => ({
+            fileName: source.fileName,
+            documentType: source.documentType,
+            extractionStatus: source.extractionStatus,
+            bayHints: source.bayHints,
+            stationHints: source.stationHints,
+            textPreview: source.textPreview,
+          }))
+          .sort((a, b) => a.documentType.localeCompare(b.documentType) || a.fileName.localeCompare(b.fileName)),
+        endpoints: activeEndpoints,
+        status,
+      } satisfies SldRemodelRow;
+    })
+    .sort((a, b) => {
+      const readyDelta = b.readyCount - a.readyCount;
+      if (readyDelta !== 0) return readyDelta;
+      const modeledDelta = b.modeledCount - a.modeledCount;
+      if (modeledDelta !== 0) return modeledDelta;
+      return a.stationFolder.localeCompare(b.stationFolder);
+    });
+}
+
+function sourceTouchesStation(source: PdfSourceRecord, stationKey: string) {
+  if (!stationKey) return false;
+  const sourceKeys = [
+    source.stationFolder,
+    source.localStationHint,
+    source.fileName,
+    ...source.stationHints,
+  ].map((value) => normalizeStationName(value));
+  return sourceKeys.some((sourceKey) => looseTokenMatch(stationKey, sourceKey));
+}
+
+function endpointTouchesStation(endpoint: EndpointReviewRow, stationKey: string) {
+  if (!stationKey) return false;
+  const localKey = normalizeStationName(endpoint.localStation);
+  const remoteKey = normalizeStationName(endpoint.remoteStation);
+  return looseTokenMatch(stationKey, localKey) || looseTokenMatch(stationKey, remoteKey);
+}
+
+function uniqueStrings(values: string[]) {
+  return Array.from(new Set(values.map((value) => value.trim()).filter(Boolean)));
+}
+
+function createRelationFromEndpoint(row: EndpointReviewRow, networkGraph: UnifiedNetwork) {
   const localSub = row.localSub!;
   const remoteSub = row.remoteSub!;
   const circuit = "1";
@@ -602,9 +879,9 @@ function createRelationFromEndpoint(row: EndpointReviewRow, miniNmm: UnifiedNetw
   return { relation, bays: [localBay, remoteBay] };
 }
 
-function findSubstationByName(miniNmm: UnifiedNetwork | undefined, name: string) {
+function findSubstationByName(networkGraph: UnifiedNetwork | undefined, name: string) {
   const key = normalizeStationName(name);
-  return miniNmm?.substations.find((sub) => {
+  return networkGraph?.substations.find((sub) => {
     const subKey = normalizeStationName(sub.name);
     return subKey === key || subKey.includes(key) || key.includes(subKey);
   });
@@ -612,6 +889,243 @@ function findSubstationByName(miniNmm: UnifiedNetwork | undefined, name: string)
 
 function confidenceRank(confidence: string) {
   return { high: 3, medium: 2, low: 1 }[confidence as "high" | "medium" | "low"] ?? 0;
+}
+
+function SldRemodelDrawer({
+  row,
+  onClose,
+  onOpenSources,
+  onReviewEndpoints,
+  onPromoteEndpoint,
+}: {
+  row: SldRemodelRow;
+  onClose: () => void;
+  onOpenSources: () => void;
+  onReviewEndpoints: (filter: EndpointFilter) => void;
+  onPromoteEndpoint: (row: EndpointReviewRow) => void;
+}) {
+  const readyEndpoints = row.endpoints.filter((endpoint) => endpoint.readyToPromote);
+  const existingEndpoints = row.endpoints.filter((endpoint) => endpoint.relationExists);
+  const expansionEndpoints = row.endpoints.filter((endpoint) => !endpoint.readyToPromote && !endpoint.relationExists);
+
+  return (
+    <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/40">
+      <button
+        type="button"
+        aria-label="Close SLD detail"
+        className="absolute inset-0 cursor-default"
+        onClick={onClose}
+      />
+      <aside className="relative h-full w-full max-w-3xl overflow-y-auto bg-white shadow-xl">
+        <div className="sticky top-0 z-10 border-b border-slate-200 bg-white px-5 py-4">
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-base font-semibold text-slate-900">{row.stationFolder}</h3>
+                <SldRemodelBadge row={row} />
+              </div>
+              <div className="text-xs text-slate-500 mt-1 truncate">{row.latestFileName}</div>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded border border-slate-200 bg-white p-1.5 text-slate-500 hover:bg-slate-50"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+
+        <div className="space-y-4 p-5">
+          <section className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            <SldMetric label="SLD" value={row.singleLineCount} />
+            <SldMetric label="PDF" value={row.pdfCount} />
+            <SldMetric label="VSD" value={row.vsdCount} />
+            <SldMetric label="Bays" value={row.bayHintCount} tone={row.bayHintCount > 0 ? "emerald" : "slate"} />
+            <SldMetric label="Endpoints" value={row.endpointCount} />
+            <SldMetric label="Modeled" value={row.modeledCount} />
+            <SldMetric label="Ready" value={row.readyCount} tone={row.readyCount > 0 ? "emerald" : "slate"} />
+            <SldMetric label="Eq docs" value={row.equipmentDocCount} tone={row.equipmentDocCount > 0 ? "emerald" : "slate"} />
+          </section>
+
+          <section className="rounded-lg border border-slate-200 overflow-hidden">
+            <div className="border-b border-slate-200 bg-slate-50 px-4 py-2 flex items-center justify-between gap-2">
+              <div>
+                <div className="text-xs font-semibold uppercase tracking-wider text-slate-600">Endpoint Candidates</div>
+                <div className="text-[11px] text-slate-500 mt-0.5">Restore/remap source for this GI/GIS.</div>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <SmallEndpointButton
+                  label="Ready"
+                  icon={<CheckCircle2 className="w-3.5 h-3.5" />}
+                  onClick={() => onReviewEndpoints("actionable")}
+                  disabled={readyEndpoints.length === 0}
+                />
+                <SmallEndpointButton
+                  label="Existing"
+                  icon={<GitBranch className="w-3.5 h-3.5" />}
+                  onClick={() => onReviewEndpoints("existing")}
+                  disabled={existingEndpoints.length === 0}
+                />
+              </div>
+            </div>
+            <div className="divide-y divide-slate-100">
+              {row.endpoints.length === 0 && (
+                <div className="px-4 py-6 text-sm text-slate-500">Belum ada endpoint text-layer untuk station ini.</div>
+              )}
+              {row.endpoints.slice(0, 8).map((endpoint) => (
+                <div key={endpoint.candidateId} className="px-4 py-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="text-sm font-semibold text-slate-900">
+                        {endpoint.localStation} - {endpoint.remoteStation}
+                      </div>
+                      <div className="mt-1 flex flex-wrap gap-1.5">
+                        <EndpointConfidenceBadge confidence={endpoint.confidence} />
+                        <EndpointStateBadge row={endpoint} />
+                        <span className="text-[10px] px-1.5 py-0.5 rounded border border-slate-200 bg-slate-50 text-slate-500">
+                          {endpoint.sourceCount} source{endpoint.sourceCount === 1 ? "" : "s"}
+                        </span>
+                      </div>
+                    </div>
+                    <SmallEndpointButton
+                      label="Promote"
+                      icon={<Plus className="w-3.5 h-3.5" />}
+                      onClick={() => onPromoteEndpoint(endpoint)}
+                      disabled={!endpoint.readyToPromote}
+                    />
+                  </div>
+                  <div className="mt-2 text-xs text-slate-600 line-clamp-2">{endpoint.evidence || "-"}</div>
+                </div>
+              ))}
+            </div>
+            {expansionEndpoints.length > 0 && (
+              <div className="border-t border-slate-100 bg-amber-50 px-4 py-2 text-[11px] text-amber-800">
+                {expansionEndpoints.length} endpoint masih butuh station match sebelum bisa dipromote.
+              </div>
+            )}
+          </section>
+
+          <section className="rounded-lg border border-slate-200 overflow-hidden">
+            <div className="border-b border-slate-200 bg-slate-50 px-4 py-2">
+              <div className="text-xs font-semibold uppercase tracking-wider text-slate-600">Source Files</div>
+              <div className="text-[11px] text-slate-500 mt-0.5">SLD and validation evidence in this station scope.</div>
+            </div>
+            <div className="divide-y divide-slate-100">
+              {row.sourceFiles.slice(0, 10).map((file) => (
+                <div key={`${file.fileName}-${file.extension}`} className="px-4 py-2 flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="text-xs font-medium text-slate-800 truncate">{file.fileName}</div>
+                    <div className="text-[10px] text-slate-400 mt-0.5">{formatDate(file.lastModified)}</div>
+                  </div>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded border border-slate-200 bg-slate-50 text-slate-600">
+                    {file.kind.replace(/_/g, " ")} {file.extension}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="rounded-lg border border-slate-200 overflow-hidden">
+            <div className="border-b border-slate-200 bg-slate-50 px-4 py-2">
+              <div className="text-xs font-semibold uppercase tracking-wider text-slate-600">Equipment Evidence</div>
+              <div className="text-[11px] text-slate-500 mt-0.5">Bay hints and CT/PMS/PMT validation documents from PDF registry.</div>
+            </div>
+            <div className="divide-y divide-slate-100">
+              {row.pdfDocuments.length === 0 && (
+                <div className="px-4 py-6 text-sm text-slate-500">Belum ada PDF evidence untuk station ini.</div>
+              )}
+              {row.pdfDocuments.slice(0, 8).map((document) => (
+                <div key={`${document.documentType}-${document.fileName}`} className="px-4 py-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="text-xs font-semibold text-slate-900 truncate">{document.fileName}</div>
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        <span className="text-[10px] px-1.5 py-0.5 rounded border border-blue-200 bg-blue-50 text-blue-700">
+                          {document.documentType.replace(/_/g, " ")}
+                        </span>
+                        <PdfStatusBadge status={document.extractionStatus} />
+                      </div>
+                    </div>
+                  </div>
+                  {document.bayHints.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      {document.bayHints.slice(0, 5).map((bay) => (
+                        <span key={`${document.fileName}-${bay}`} className="text-[10px] px-1.5 py-0.5 rounded border border-emerald-200 bg-emerald-50 text-emerald-700">
+                          {bay}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  <div className="mt-2 text-xs text-slate-600 line-clamp-2">
+                    {document.textPreview || "No text preview available."}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <div className="flex items-center justify-end gap-2 border-t border-slate-200 pt-4">
+            <button
+              type="button"
+              onClick={onOpenSources}
+              className="text-xs px-3 py-1.5 rounded border border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+            >
+              Open Source Documents
+            </button>
+            <button
+              type="button"
+              onClick={() => onReviewEndpoints(row.readyCount > 0 ? "actionable" : row.modeledCount > 0 ? "existing" : "expansion")}
+              className="text-xs px-3 py-1.5 rounded border border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100"
+            >
+              Review Endpoint Table
+            </button>
+          </div>
+        </div>
+      </aside>
+    </div>
+  );
+}
+
+function SldRemodelBadge({ row }: { row: SldRemodelRow }) {
+  const labels: Record<SldRemodelRow["status"], string> = {
+    ready: "ready to promote",
+    modeled: "modeled",
+    "needs-source": "needs SLD extraction",
+    "needs-station": "needs station match",
+  };
+  const styles: Record<SldRemodelRow["status"], string> = {
+    ready: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    modeled: "bg-blue-50 text-blue-700 border-blue-200",
+    "needs-source": "bg-slate-50 text-slate-600 border-slate-200",
+    "needs-station": "bg-amber-50 text-amber-700 border-amber-200",
+  };
+  return (
+    <span className={`inline-flex text-[10px] uppercase tracking-wider border rounded px-2 py-0.5 ${styles[row.status]}`}>
+      {labels[row.status]}
+    </span>
+  );
+}
+
+function SldMetric({
+  label,
+  value,
+  tone = "slate",
+}: {
+  label: string;
+  value: number;
+  tone?: "slate" | "emerald";
+}) {
+  const toneClass =
+    tone === "emerald"
+      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+      : "border-slate-200 bg-white text-slate-600";
+  return (
+    <span className={`inline-flex items-center gap-1 rounded border px-2 py-1 text-[11px] ${toneClass}`}>
+      <span className="font-semibold">{value}</span>
+      {label}
+    </span>
+  );
 }
 
 function EndpointFilterButton({
@@ -707,9 +1221,12 @@ function getCaseSldStationRows(nodes: NetworkNode[]) {
     fileCount: number;
     extensions: Set<string>;
     kinds: Set<string>;
+    pdfCount: number;
+    vsdCount: number;
     singleLineCount: number;
     latestFileName: string;
     latestModified: string;
+    sourceFiles: SldRemodelSourceFile[];
   }>();
   for (const file of files) {
     const existing = rows.get(file.stationFolder);
@@ -718,13 +1235,24 @@ function getCaseSldStationRows(nodes: NetworkNode[]) {
       fileCount: 0,
       extensions: new Set<string>(),
       kinds: new Set<string>(),
+      pdfCount: 0,
+      vsdCount: 0,
       singleLineCount: 0,
       latestFileName: file.fileName,
       latestModified: file.lastModified,
+      sourceFiles: [],
     };
     current.fileCount += 1;
     current.extensions.add(file.extension);
     current.kinds.add(file.kind);
+    current.sourceFiles.push({
+      fileName: file.fileName,
+      extension: file.extension,
+      kind: file.kind,
+      lastModified: file.lastModified,
+    });
+    if (file.extension === ".pdf") current.pdfCount += 1;
+    if (file.extension === ".vsd") current.vsdCount += 1;
     if (file.kind === "single_line") current.singleLineCount += 1;
     if (file.lastModified > current.latestModified) {
       current.latestFileName = file.fileName;

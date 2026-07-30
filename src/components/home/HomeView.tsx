@@ -10,10 +10,10 @@ import {
 } from "lucide-react";
 import { NETWORK_CASES, ULTG_INVENTORY_NODES } from "../../domain/seed-network-registry";
 import {
-  getEffectiveMiniNmm,
+  getEffectiveNetworkGraph,
   INVENTORY_MASTER_CASE_ID,
   mergeMasterRelationsIntoCase,
-} from "../../domain/mini-nmm";
+} from "../../domain/network-graph";
 import { buildUnifiedNetwork } from "../../domain/unified";
 import { useProsetStore, type Study, type Tab } from "../../store/useProsetStore";
 import { normalizeStationName } from "../../domain/normalization";
@@ -25,7 +25,7 @@ export function HomeView() {
   const setActiveStudy = useProsetStore((s) => s.setActiveStudy);
   const setTab = useProsetStore((s) => s.setTab);
   const selectLine = useProsetStore((s) => s.selectLine);
-  const miniNmmOverrides = useProsetStore((s) => s.miniNmmOverrides);
+  const networkGraphOverrides = useProsetStore((s) => s.networkGraphOverrides);
 
   const [showCreateModal, setShowCreateModal] = useState(false);
 
@@ -34,18 +34,18 @@ export function HomeView() {
   const corridorCase = NETWORK_CASES.find((c) => c.id === "case_dks_dm_pik_mkb") ?? inventoryCase;
   const masterFallback = useMemo(() => buildUnifiedNetwork(inventoryCase), [inventoryCase]);
   const corridorFallback = useMemo(() => buildUnifiedNetwork(corridorCase), [corridorCase]);
-  const masterMiniNmm = useMemo(
-    () => getEffectiveMiniNmm(INVENTORY_MASTER_CASE_ID, miniNmmOverrides[INVENTORY_MASTER_CASE_ID], masterFallback),
-    [masterFallback, miniNmmOverrides]
+  const masterNetworkGraph = useMemo(
+    () => getEffectiveNetworkGraph(INVENTORY_MASTER_CASE_ID, networkGraphOverrides[INVENTORY_MASTER_CASE_ID], masterFallback),
+    [masterFallback, networkGraphOverrides]
   );
-  const corridorMiniNmm = useMemo(
+  const corridorNetworkGraph = useMemo(
     () => mergeMasterRelationsIntoCase(
-      getEffectiveMiniNmm(corridorCase.id, miniNmmOverrides[corridorCase.id], corridorFallback),
-      masterMiniNmm
+      getEffectiveNetworkGraph(corridorCase.id, networkGraphOverrides[corridorCase.id], corridorFallback),
+      masterNetworkGraph
     ),
-    [corridorCase.id, corridorFallback, masterMiniNmm, miniNmmOverrides]
+    [corridorCase.id, corridorFallback, masterNetworkGraph, networkGraphOverrides]
   );
-  const effectiveNmm = corridorMiniNmm ?? masterMiniNmm;
+  const effectiveNmm = corridorNetworkGraph ?? masterNetworkGraph;
   const totalRelations = effectiveNmm?.lineRelations.length ?? 0;
   const totalIEDs = effectiveNmm?.relayIeds.length ?? 0;
   const allInventoryGIs = ULTG_INVENTORY_NODES.length;

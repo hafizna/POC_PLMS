@@ -2,13 +2,13 @@ import { useMemo } from "react";
 import { Calculator, GitCompareArrows, Route } from "lucide-react";
 import { NETWORK_CASES, RegistryConfidence } from "../../domain/seed-network-registry";
 import {
-  getEffectiveMiniNmm,
+  getEffectiveNetworkGraph,
   INVENTORY_MASTER_CASE_ID,
   mergeMasterRelationsIntoCase,
-  networkLinesFromMiniNmm,
-  networkNodesFromMiniNmm,
-  relayAssetsFromMiniNmm,
-} from "../../domain/mini-nmm";
+  networkLinesFromGraph,
+  networkNodesFromGraph,
+  relayAssetsFromGraph,
+} from "../../domain/network-graph";
 import {
   LCD_DIST_REGISTRY,
   promoteMatchedLcdDistCandidates,
@@ -27,12 +27,13 @@ const confidenceClass: Record<RegistryConfidence, string> = {
   missing: "bg-red-50 text-red-700 border-red-200",
 };
 
-const statusClass = {
+const statusClass: Record<LifecycleStatus, string> = {
   imported: "bg-slate-50 text-slate-600 border-slate-200",
   reviewed: "bg-blue-50 text-blue-700 border-blue-200",
   rejected: "bg-red-50 text-red-700 border-red-200",
   approved: "bg-emerald-50 text-emerald-700 border-emerald-200",
   issued: "bg-violet-50 text-violet-700 border-violet-200",
+  superseded: "bg-orange-50 text-orange-700 border-orange-200",
 };
 
 const promotionClass: Record<LifecycleStatus, string> = {
@@ -41,6 +42,7 @@ const promotionClass: Record<LifecycleStatus, string> = {
   rejected: "bg-red-50 text-red-700 border-red-200",
   approved: "bg-emerald-50 text-emerald-700 border-emerald-200",
   issued: "bg-violet-50 text-violet-700 border-violet-200",
+  superseded: "bg-orange-50 text-orange-700 border-orange-200",
 };
 
 // Same function may have multiple promotions (LCD+DIST + OCR can both touch
@@ -51,6 +53,7 @@ function dedupePromotions<
   const rank: Record<LifecycleStatus, number> = {
     imported: 0,
     rejected: 0,
+    superseded: 0,
     reviewed: 1,
     approved: 2,
     issued: 3,
@@ -76,31 +79,31 @@ export function LineRegistryView() {
     NETWORK_CASES.find((item) => item.id === activeCaseId) ?? NETWORK_CASES[0];
   const inventoryCase =
     NETWORK_CASES.find((item) => item.id === INVENTORY_MASTER_CASE_ID) ?? activeCase;
-  const miniNmmOverride = useProsetStore((s) => s.miniNmmOverrides[activeCase.id]);
-  const masterMiniNmmOverride = useProsetStore((s) => s.miniNmmOverrides[INVENTORY_MASTER_CASE_ID]);
-  const fallbackMiniNmm = useMemo(() => buildUnifiedNetwork(activeCase), [activeCase]);
-  const masterFallbackMiniNmm = useMemo(() => buildUnifiedNetwork(inventoryCase), [inventoryCase]);
-  const masterMiniNmm = getEffectiveMiniNmm(
+  const networkGraphOverride = useProsetStore((s) => s.networkGraphOverrides[activeCase.id]);
+  const masterNetworkGraphOverride = useProsetStore((s) => s.networkGraphOverrides[INVENTORY_MASTER_CASE_ID]);
+  const fallbackNetworkGraph = useMemo(() => buildUnifiedNetwork(activeCase), [activeCase]);
+  const masterFallbackNetworkGraph = useMemo(() => buildUnifiedNetwork(inventoryCase), [inventoryCase]);
+  const masterNetworkGraph = getEffectiveNetworkGraph(
     INVENTORY_MASTER_CASE_ID,
-    masterMiniNmmOverride,
-    masterFallbackMiniNmm
+    masterNetworkGraphOverride,
+    masterFallbackNetworkGraph
   );
-  const baseMiniNmm = getEffectiveMiniNmm(activeCase.id, miniNmmOverride, fallbackMiniNmm);
-  const effectiveMiniNmm = mergeMasterRelationsIntoCase(baseMiniNmm, masterMiniNmm);
-  const localRelationCount = baseMiniNmm?.lineRelations.length ?? 0;
+  const baseNetworkGraph = getEffectiveNetworkGraph(activeCase.id, networkGraphOverride, fallbackNetworkGraph);
+  const effectiveNetworkGraph = mergeMasterRelationsIntoCase(baseNetworkGraph, masterNetworkGraph);
+  const localRelationCount = baseNetworkGraph?.lineRelations.length ?? 0;
   const bridgedRelationCount =
-    effectiveMiniNmm?.lineRelations.filter((relation) => relation.sourceIds.includes("master-inventory")).length ?? 0;
+    effectiveNetworkGraph?.lineRelations.filter((relation) => relation.sourceIds.includes("master-inventory")).length ?? 0;
   const nodes = useMemo(
-    () => (effectiveMiniNmm ? networkNodesFromMiniNmm(effectiveMiniNmm) : activeCase.nodes),
-    [activeCase.nodes, effectiveMiniNmm]
+    () => (effectiveNetworkGraph ? networkNodesFromGraph(effectiveNetworkGraph) : activeCase.nodes),
+    [activeCase.nodes, effectiveNetworkGraph]
   );
   const lines = useMemo(
-    () => (effectiveMiniNmm ? networkLinesFromMiniNmm(effectiveMiniNmm) : activeCase.lines),
-    [activeCase.lines, effectiveMiniNmm]
+    () => (effectiveNetworkGraph ? networkLinesFromGraph(effectiveNetworkGraph) : activeCase.lines),
+    [activeCase.lines, effectiveNetworkGraph]
   );
   const relays = useMemo(
-    () => (effectiveMiniNmm ? relayAssetsFromMiniNmm(effectiveMiniNmm) : activeCase.relays),
-    [activeCase.relays, effectiveMiniNmm]
+    () => (effectiveNetworkGraph ? relayAssetsFromGraph(effectiveNetworkGraph) : activeCase.relays),
+    [activeCase.relays, effectiveNetworkGraph]
   );
 
   // Reuse promoted import data for "import-backed" badge.
@@ -199,12 +202,12 @@ export function LineRegistryView() {
                 const compareBay = findComparisonBayIdForLine(line.id);
                 const relationStatus = relationStatuses.get(line.id);
                 const isActive = line.id === activeLineId;
-                const relation = effectiveMiniNmm?.lineRelations.find((item) => item.id === line.id);
+                const relation = effectiveNetworkGraph?.lineRelations.find((item) => item.id === line.id);
                 const fromIed = relation
-                  ? effectiveMiniNmm?.relayIeds.find((ied) => ied.bayId === relation.fromBayId)
+                  ? effectiveNetworkGraph?.relayIeds.find((ied) => ied.bayId === relation.fromBayId)
                   : undefined;
                 const toIed = relation
-                  ? effectiveMiniNmm?.relayIeds.find((ied) => ied.bayId === relation.toBayId)
+                  ? effectiveNetworkGraph?.relayIeds.find((ied) => ied.bayId === relation.toBayId)
                   : undefined;
                 const fromCtVt = getEffectiveCtVt(fromIed, ctVtOverrides);
                 const toCtVt = getEffectiveCtVt(toIed, ctVtOverrides);
@@ -336,7 +339,7 @@ export function LineRegistryView() {
           <LineDetailPanel
             line={activeLine}
             activeCase={activeCase}
-            miniNmm={effectiveMiniNmm ?? undefined}
+            networkGraph={effectiveNetworkGraph ?? undefined}
             status={relationStatuses.get(activeLine.id)}
           />
         );

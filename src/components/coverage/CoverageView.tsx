@@ -53,7 +53,7 @@ export function CoverageView() {
               </span>
             </div>
             <span className="text-blue-700">
-              Topology derived from mini-NMM via seed-corridor adapter.
+              Topology derived from network graph via seed-corridor adapter.
             </span>
           </div>
         )}
