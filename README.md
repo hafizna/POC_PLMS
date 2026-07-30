@@ -6,6 +6,8 @@ PLMS adalah proof-of-concept aplikasi lifecycle management untuk setting proteks
 
 Tujuan produk ini bukan sekadar membuat spreadsheet digital. PLMS dirancang sebagai sistem kerja engineer proteksi: data aset dan dokumen existing masuk sebagai baseline, engineer membuat study per bay/line, menghitung setting baru, menerbitkan TAP setting, memantau checking setting aktual oleh tim lapangan, lalu menyimpan evidence/report yang traceable.
 
+> **Business-process remapping:** arah proses, transaksi data, lifecycle, user access, dan evaluasi modul lama sedang dikonsolidasikan di [`BUSINESS_PROCESS_BLUEPRINT.md`](./BUSINESS_PROCESS_BLUEPRINT.md). Blueprint tersebut menjadi acuan target; uraian fitur lama di bawah tetap dipertahankan sebagai catatan implementasi POC saat ini.
+
 ## Executive Summary
 
 Masalah utama di proses setting proteksi saat ini:
