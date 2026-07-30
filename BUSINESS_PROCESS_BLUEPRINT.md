@@ -1,6 +1,6 @@
 # PLMS Business Process Blueprint
 
-Status: working blueprint v0.1
+Status: working blueprint v0.2
 Purpose: remap PLMS around the protection-setting lifecycle before further UI or database implementation.
 
 ## 1. Product Boundary
@@ -56,6 +56,57 @@ This separates concepts that are currently mixed together:
 - `Source Document`: evidence, not automatically the current truth.
 - `Actual Readback`: the observed setting in the installed relay.
 
+### 2.1 Setting Calculation and Database Revisions
+
+`Calculate New Setting` must not directly overwrite active master or technical data.
+
+The safe model is:
+
+```text
+Active Data Revision
+        │
+        ├── frozen as Case Baseline
+        │
+        └── copied into Proposed Change Set
+                         │
+                         ├── source evidence
+                         ├── proposed physical/technical changes
+                         ├── affected-scope analysis
+                         └── validation and approval
+                                      │
+                                      v
+                     Proposed Network/Technical Revision
+                                      │
+                         selected by Study Scenario
+                                      │
+                                      v
+                              Calculation Run
+                                      │
+                                      v
+                         Proposed Setting Revision(s)
+```
+
+The current active database remains unchanged while engineering work is being prepared, calculated, reviewed, cancelled, or revised.
+
+Every calculation must bind explicitly to:
+
+- baseline asset/network revision;
+- proposed technical-data revision, when applicable;
+- network and fault-study scenario;
+- calculation method/rule version;
+- affected asset and endpoint scope;
+- source evidence and engineering assumptions.
+
+Activation is a separate controlled transaction:
+
+- the technical/network revision can be approved and scheduled before energization;
+- the issued setting can be prepared before field work;
+- the new physical/technical revision becomes active at its effective or commissioning date;
+- actual relay readback is verified against the issued revision;
+- the former data and setting revisions are then superseded, never overwritten.
+
+If a project is cancelled, its proposed revisions are closed without contaminating current active data.
+
 ## 3. End-to-End Business Process
 
 ```mermaid
@@ -63,7 +114,11 @@ flowchart LR
     A[Trigger / Request] --> B[Create Setting Case]
     B --> C[Resolve asset, bay, circuit, and relay]
     C --> D[Freeze baseline and source evidence]
-    D --> E{Data ready?}
+    D --> D1{Physical or technical data changes?}
+    D1 -- Yes --> D2[Create Proposed Change Set]
+    D2 --> D3[Impact analysis, ownership, and proposed revision]
+    D3 --> E{Data ready?}
+    D1 -- No --> E
     E -- No --> F[Data Quality / Mapping Queue]
     F --> C
     E -- Yes --> G{Case type}
@@ -124,6 +179,134 @@ Readiness is evaluated by function and case type, for example:
 
 Missing data creates a governed task. It must not be replaced by an undocumented default.
 
+### 3.3 `Calculate New Setting` Entry Flow
+
+The user-facing entry point can remain simple: `Calculate New Setting`.
+
+It should open a guided Setting Change Case rather than jump directly to a formula screen:
+
+1. **Reason for change** — reconductoring, CT/VT replacement, relay replacement, new substation insertion, remote-side work, policy revision, or other.
+2. **Protected scope** — circuit, local bay, remote bay, relay roles, and affected neighboring protection.
+3. **Ownership** — case owner, local UPT, remote UPT, contributors, reviewers, and required approvals.
+4. **Source evidence** — approved project document, equipment datasheet, commissioning document, SLD, study request, or existing setting evidence.
+5. **Proposed data changes** — only fields affected by the selected reason.
+6. **Impact and readiness** — settings, bays, studies, and endpoints that must be recalculated or reviewed.
+7. **Study scenario** — use an approved existing scenario or request a new network/fault study.
+8. **Calculate and coordinate** — calculate each affected endpoint and validate the coordinated package.
+9. **Review and issue** — independent review, multi-owner approval where required, TAP/package issuance.
+10. **Implement and verify** — field work, read from IED, actual comparison, activation, and closure.
+
+The first transaction creates a `Change Request`, not a calculation:
+
+```text
+Change Request
+├── primary reason
+├── one or more change items
+├── business/project context
+├── protected-object scope
+├── planned effective/energization date
+├── urgency and operational constraints
+├── requesting and owning organizations
+├── source evidence
+└── initial assumptions
+```
+
+One case must support multiple change items. A new-GI insertion, for example, can simultaneously include new line sections, new bays, CT/VT installation, new relays, teleprotection changes, and recalculation at existing remote ends. The UI should ask for one `primary reason` for routing/reporting, while retaining all applicable `change items` for readiness and impact analysis.
+
+Stage-gated wizard:
+
+| Stage | User/system input | System output and gate |
+|---|---|---|
+| 1. Case initiation | reason, project/incident/policy context, urgency, planned date, requester | Setting Change Case ID, initial workflow, required organizations |
+| 2. Change declaration | one or more physical/equipment/policy change items | dynamic required-field checklist |
+| 3. Scope and ownership | protected circuit, local/remote bay, relays, owning UPTs, case lead | endpoint work packages, access assignments, required reviewers |
+| 4. Evidence and baseline | project documents, existing topology, active technical revision, issued setting, actual readback | immutable case baseline and missing-evidence issues |
+| 5. Proposed data revision | new conductor/CT/VT/relay/topology values appropriate to the selected change items | validated proposed Change Set; active database remains unchanged |
+| 6. Impact and readiness | system-derived dependency graph plus engineer confirmation | affected settings/functions/endpoints; blockers and study requirements |
+| 7. Study context | approved existing scenario or request/import of a new study | calculation-ready scenario bound to proposed revision |
+| 8. Calculation | template/rule, policy, engineer inputs and documented overrides | reproducible Calculation Runs and proposed endpoint revisions |
+| 9. Coordination | local/remote/neighbor settings and scheme dependencies | coordinated package, coverage/selectivity/gap results |
+| 10. Review and approval | reviewer comments, revisions, endpoint approvals | immutable approved revision or rework decision |
+| 11. Issue and implementation | TAP/package number, schedule, field assignment | issued setting, field work packages |
+| 12. Readback and closure | native readback artifacts, acquisition manifests, discrepancies | verified actual, activation/supersession, closed case |
+
+The first screen must distinguish:
+
+- `Setting-only revision`: no physical master-data change; use an approved current data revision.
+- `Equipment/data change`: create a proposed equipment or technical-data revision.
+- `Topology/network change`: create a proposed network revision and require impact analysis.
+
+This lets engineers start from their business intent without navigating to a separate database editor first, while still preventing calculations from using undocumented data.
+
+### 3.4 Change-Type Requirements and Setting Impact
+
+| Change reason | Proposed database revision | New network/fault study | Typical setting impact | Collaboration scope |
+|---|---|---|---|---|
+| Reconductoring | conductor/cable, thermal rating, length if changed, sequence R/X/B or approved line constants | normally required when electrical parameters or system model change | OCR/GFR pickup and sensitivity, distance reach, load encroachment, charging compensation, coordination | both line ends and affected forward/reverse backup protection |
+| CT replacement | CT asset, ratio, class, burden, polarity/location, effective date | network fault study usually reusable; CT performance check may be required | secondary pickup, differential matching, restraint/saturation-related checks, metering/scaling | affected bay/relay and its protection counterpart where differential is used |
+| CVT/VT replacement | VT asset, ratio, class, winding, polarity/location, effective date | network fault study usually reusable unless primary network also changes | distance conversion/scaling, synchronism and voltage elements, secondary quantities | affected bay and schemes that share the voltage source |
+| Relay replacement | relay asset, firmware, order code, capability profile, I/O/logic and communication mapping | existing approved scenario may be reused if the primary system is unchanged | full semantic conversion, function/logic gaps, units, curves, groups, timers, teleprotection | local owner plus remote counterpart for line differential, permissive schemes, intertrip, or coordinated distance |
+| New GI insertion / line cut-in | new substation, busbar, bays, terminals, two or more physical line sections, equipment and effective dates | required; topology, line constants, fault level, and source contribution change | settings at the new GI, both former line ends, adjacent backup zones, OCR/GFR, differential, AR/SYNC, teleprotection | project owner plus every UPT owning an affected endpoint |
+| Remote-side work | revision depends on the physical change at the remote site | impact analysis decides whether a new study is required | local Z2/Z3, reverse zones, permissive/intertrip, line differential, AR/SYNC, backup OCR/GFR may be affected | parent cross-unit case with endpoint work packages |
+| Policy-only recalculation | no physical-data change; new policy/rule version only | approved current scenario can be reused if still valid | values selected by the revised policy | engineering owner and normal review chain |
+
+For reconductoring, conductor ampacity/CCC normally changes and line electrical parameters may change. PLMS should not derive complete sequence impedance and capacitance from a conductor name alone. Approved line constants require the applicable geometry, bundle, phase arrangement/transposition, earth wire and ground-return assumptions, length, and calculation method, or an approved export from the engineering model.
+
+Suggested values must therefore be produced only after:
+
+1. source evidence is attached;
+2. the proposed technical revision passes readiness;
+3. the applicable study scenario is resolved;
+4. impact analysis determines the affected protection functions;
+5. calculation rules run against the proposed revision;
+6. an engineer reviews assumptions and overrides.
+
+### 3.5 Cross-UPT and Remote-side Work
+
+Organization access should combine:
+
+```text
+Role
++ organizational scope
++ case assignment
++ asset ownership
++ workflow state
+```
+
+A static role such as `Engineer` is not enough. An engineer may edit owned assets in one UPT, read coordinated data at the remote UPT, and receive temporary case-bound contributor access for a cross-unit project.
+
+Recommended structure:
+
+```text
+Parent Setting Change Case — protected circuit/project
+├── Shared Engineering Change Set
+├── Shared Study Scenario and impact analysis
+├── Local Endpoint Work Package — UPT A
+│   ├── bay/relay revisions
+│   ├── calculation and review
+│   └── field implementation/readback
+├── Remote Endpoint Work Package — UPT B
+│   ├── bay/relay revisions
+│   ├── calculation and review
+│   └── field implementation/readback
+└── Coordinated Setting Package
+    ├── cross-end checks
+    ├── required endpoint approvals
+    └── issue/activation gate
+```
+
+Access and workflow rules:
+
+- each UPT edits its owned endpoint by default;
+- shared line-section/network data has an explicit engineering-data owner;
+- case assignment can grant limited cross-unit contribution without granting permanent access to all assets;
+- remote settings remain visible for coordination but cannot be changed unilaterally by the local endpoint owner;
+- the parent package cannot be issued until all required endpoint reviews/approvals are complete, unless an authorized exception is recorded;
+- changes to remote topology automatically create impact notifications/tasks for local and neighboring protection owners;
+- field implementation and actual readback are completed independently per endpoint, while closure is evaluated at parent-case level.
+
+This resolves Setting Package granularity as a hierarchy: one coordinated package per protected circuit/change, containing controlled endpoint/relay Setting Revisions.
+
 ## 4. Supported Process Variants
 
 ### P1 — Actual Setting Crosscheck
@@ -132,12 +315,93 @@ Purpose: determine whether the installed relay matches the setting that should c
 
 1. Select asset, bay, circuit, and installed relay.
 2. Resolve the applicable issued Setting Revision.
-3. Import actual setting from relay export, PDF, CSV, or manual entry.
-4. Normalize vendor parameters into canonical parameters.
-5. Compare values, logic, enablement, curve, timer, and relevant dependencies.
-6. Classify mismatch as cosmetic, tolerance, functional, unsupported, or unknown.
-7. Accept, create resetting work, or escalate to engineering review.
-8. Store evidence and close the verification cycle.
+3. Read the setting from the physical relay using its official vendor tool.
+4. Preserve the original vendor file and an acquisition manifest.
+5. When available, export CSV, Excel, XML, XRIO, RIO, or text from the same online readback session as a derived parsing artifact.
+6. Normalize vendor parameters into canonical parameters.
+7. Compare values, logic, enablement, active group, curve, timer, and relevant dependencies.
+8. Classify mismatch as cosmetic, tolerance, functional, unsupported, or unknown.
+9. Accept, create resetting work, or escalate to engineering review.
+10. Store evidence and close the verification cycle.
+
+#### Actual-setting authority and evidence
+
+The issued TAP/PDF represents the setting that should apply. It is not evidence of what is currently stored in the relay.
+
+The preferred actual-setting evidence order is:
+
+1. A connected readback from the identified physical relay using the official vendor engineering tool.
+2. A native vendor setting file produced by that connected readback, accompanied by an acquisition manifest.
+3. A structured export such as CSV, Excel, XML, XRIO, RIO, or text generated from that same readback session.
+4. An existing native setting file without acquisition evidence, treated as an unverified candidate rather than confirmed actual.
+5. A printout, screenshot, PDF, or manual transcription, accepted only as controlled fallback evidence.
+
+File extension alone does not establish that a file is actual. A `.set`, `.urs`, project archive, XML, or CSV file can be an offline engineering file that was never downloaded to the relay.
+
+Each `RelayReadbackSession` must capture, as available:
+
+- physical asset, substation, bay, circuit, and relay role;
+- manufacturer, model, serial/device identifier, firmware, and order code;
+- official tool name, version, and connectivity package/data model;
+- operator and organizational scope;
+- read-from-IED timestamp and communication method;
+- active setting group and all setting groups retrieved;
+- native file name, size, checksum, and parser result;
+- tool-generated structured export and its checksum;
+- connection log, screenshot, or field evidence needed by the applicable procedure;
+- any limitation, partial read, inaccessible parameter, or unsupported function.
+
+PLMS must use direction-neutral UI wording such as `Read from IED` and `Write to IED`. Vendor tools do not use upload/download terminology consistently, and reversing the intended direction is operationally unsafe.
+
+#### Vendor adapter and converter boundary
+
+There is no universal relay `.set` format and no guarantee that every relay exports complete settings directly as CSV.
+
+PLMS therefore needs an adapter pipeline:
+
+```text
+Raw vendor artifact
+→ format/model/firmware detection
+→ lossless vendor parser
+→ vendor parameter model
+→ canonical protection-setting model
+→ validation and parser-coverage report
+→ comparison against issued Setting Revision
+```
+
+Rules for this pipeline:
+
+- Always retain the untouched original artifact.
+- Version adapters by vendor family, data model/firmware, and official tool version where relevant.
+- Preserve every raw parameter, including parameters not yet mapped to canonical semantics.
+- Report decoded, mapped, unmapped, unsupported, and conflicting parameter counts.
+- Treat CSV/Excel/XML as convenient derived formats, not automatically as higher-authority evidence.
+- Do not convert source-vendor parameters directly to target-vendor parameters. Conversion must pass through canonical engineering intent and a target capability profile.
+- A normalized PLMS CSV may be generated for review, but it must not be presented as a native relay deployment file.
+
+Initial vendor acquisition matrix:
+
+| Relay ecosystem | Preferred actual artifact | Structured alternative | PLMS implication |
+|---|---|---|---|
+| MiCOM P40 / S1 Agile | Courier setting file read from IED | Excel export; some families also support CSV/CAPE | Existing parser is only a P443/P545 pilot and needs real files per model/firmware |
+| Siemens SIPROTEC 4 | DIGSI device/project readback | DIGSI XML with device identity, settings, and routing | Build a DIGSI 4 XML adapter and retain the original project context |
+| Siemens SIPROTEC 5 | DEX5 device archive or approved DIGSI project readback | TEA-X XML; RIO for protection-test data | Do not assume RIO contains the complete device configuration |
+| ABB/Hitachi Relion / PCM600 | IED readback inside PCM600/project | XRIO, CSV, or text parameter export | Store the online-read evidence and parse an official parameter export |
+| GE Multilin UR / EnerVista | native `.urs` setting file read from IED | vendor report/export where supported | Start with native `.urs`; do not assume a universal UR CSV |
+| NR Electric / PCS-Explorer | setting file uploaded/read from the device | print/export and RIO where supported | Exact file schema must be profiled from the deployed PCS family and software version |
+| Toshiba GR series | native RSM100/GR-TIEMS setting readback | RSM100 supports CSV output; GR-TIEMS format requires profiling | Separate legacy GR-100 and current GR-200 adapters |
+
+The matrix is a discovery baseline, not a support claim. Each row becomes supported only after sample acquisition, parser fixtures, negative tests, and round-trip verification with the official vendor tool.
+
+Official references reviewed for this discovery baseline:
+
+- [MiCOM S1 Agile User Guide — settings Excel, CSV/CAPE, and XRIO export](https://www.gevernova.com/grid-solutions/sites/default/files/resources/products/manuals/p40-mcr-sas-ug-en-7.pdf)
+- [Siemens DIGSI 4 — XML device data, settings, and routing](https://support.industry.siemens.com/cs/attachments/109742514/DIGSI_MANUAL_XML_A2_EN.pdf?download=true)
+- [Siemens SIPROTEC 5 — DIGSI export formats](https://cache.industry.siemens.com/dl/files/443/109742443/att_989307/v1/SIP5_ComProt_V07.90_Manual_C055-5_en.pdf)
+- [ABB/Hitachi Energy PCM600 — parameter export to XRIO, CSV, or text](https://library.e.abb.com/public/e71fc32842964051b21c196ec90d5e70/PCM600_getstart_757866_ENe.pdf)
+- [GE Vernova EnerVista UR — native `.urs` setting-file behavior](https://www.gevernova.com/grid-solutions/products/software/ur/ger-4882g.pdf)
+- [NR Electric PCS-Explorer — setting-file operations and device transfer](https://www.nrec.com/en/index.php/product/productInfo/289.html)
+- [Toshiba RSM100 — relay setting files and CSV output](https://www.global.toshiba/ww/products-solutions/transmission/products-technical-services/protection-relay/rsm100.html)
 
 ### P2 — New or Revised Engineering Setting
 
@@ -202,8 +466,13 @@ Different objects require separate state machines. Reusing one generic status fo
 
 ```text
 draft
-→ data_preparation
-→ engineering
+→ scoping
+→ baseline_frozen
+→ data_change_preparation
+→ impact_and_readiness
+→ study_preparation
+→ calculation
+→ coordination
 → internal_review
 → approval
 → issued
@@ -211,6 +480,8 @@ draft
 → verification
 → closed
 ```
+
+Stages can be skipped only by an explicit workflow route. For example, a crosscheck-only case does not require `data_change_preparation`, `study_preparation`, or `calculation`; a policy-only recalculation can skip physical data change but must still freeze its baseline and select an approved scenario.
 
 Alternate terminal states: `cancelled`, `rejected`, `on_hold`.
 
@@ -268,7 +539,7 @@ draft
 | Relay capability library | functions, ranges, curves, semantics, vendor mapping | vendor manuals + reviewed PLMS library | canonical mapping and conversion constraints |
 | Setting intent | protection scheme, canonical parameters, policy override | PLMS Setting Package | controlled engineering source of truth |
 | Issued setting | TAP, approved revision, implementation instruction | PLMS or controlled document system | issue, version, distribute, and supersede |
-| Actual setting | relay readback/export and checking evidence | installed relay observation | normalize, compare, and retain evidence |
+| Actual setting | connected relay readback and acquisition evidence | identified physical relay observation | retain native artifact, normalize, compare, and preserve chain of custody |
 | Source evidence | PDF, Excel, XMCD, SLD, `.set`, CSV | originating repository/system | checksum, extraction, mapping, and traceability |
 
 ## 7. Principal Data Entities
@@ -318,6 +589,9 @@ Every physical and logical entity needs stable identity plus effective dating. N
 - `VerificationRun`
 - `VerificationDifference`
 - `FieldImplementation`
+- `RelayReadbackSession`
+- `RawSettingArtifact`
+- `DerivedSettingExport`
 - `ActualReadback`
 - `ApprovalTask`
 - `IssuedArtifact`
@@ -356,7 +630,9 @@ All material writes should create an audit event and preserve the prior version.
 | Approve / reject | reviewed revision | approval decision | Authorized Approver | segregation of duties |
 | Issue setting | approved revision | issued revision, TAP artifact | Issuer / Approver | document number, effective date, distribution |
 | Record implementation | issued revision, work evidence | FieldImplementation | Field / Commissioning | device identity and timestamp |
-| Import actual readback | relay export or record | ActualReadback | Field / Engineer | source hash and parser version |
+| Acquire actual readback | physical IED, official vendor tool | RelayReadbackSession, raw artifact | Field Engineer | device identity, read direction, timestamp, active group, tool version, checksum |
+| Derive structured export | readback session, native file | CSV/Excel/XML/XRIO/RIO/text artifact | Field Engineer / System | link to source session, exporter version, checksum |
+| Normalize actual readback | raw/derived artifact, adapter profile | ActualReadback, parser coverage | System with Engineer review | lossless raw retention, model/firmware match, unmapped parameters |
 | Verify actual | issued + actual | VerificationRun, differences | Engineer / Reviewer | tolerance profile and disposition |
 | Resolve discrepancy | difference, evidence | resetting task or exception | Supervisor / Engineer | risk classification and due date |
 | Close setting case | verified outcome | closed case | Case Owner / Approver | required evidence complete |
@@ -369,7 +645,7 @@ Initial roles should be separated by responsibility and organizational scope. A 
 ### 9.1 Proposed Roles
 
 - `Viewer`: read authorized records and reports.
-- `Field Technician`: upload actual readback and implementation evidence.
+- `Field Engineer`: read settings from the physical IED and submit native artifacts, acquisition manifests, and implementation evidence.
 - `Data Steward`: intake sources, resolve mappings, and propose master-data changes.
 - `Protection Engineer`: create cases, calculate, compare, and propose settings.
 - `Protection Reviewer`: independently review calculations and proposed revisions.
@@ -481,6 +757,10 @@ A topology change must create a new network revision and normally a new approved
 The final navigation should follow work, not implementation components.
 
 ```text
+Primary Actions
+├── Calculate / Revise Setting
+└── Crosscheck Actual Setting
+
 My Work
 ├── Assigned Cases
 ├── Reviews & Approvals
@@ -488,19 +768,22 @@ My Work
 └── Exceptions
 
 Setting Management
-├── Setting Cases
+├── Setting Change Cases
 ├── Effective Setting Register
 └── Setting Package History
 
 Engineering
-├── Calculations & Studies
+├── Impact Analysis
+├── Study Scenarios
+├── Calculation Methods
 ├── Coordination / Coverage
-├── Multi-vendor Conversion
-└── Engineering Changes
+└── Multi-vendor Capability Library
 
 Data Management
 ├── Assets & Protection Topology
-├── Technical Data & Study Snapshots
+├── Technical Data Revisions
+├── Proposed Change Sets
+├── Network & Fault-study Snapshots
 ├── Relay Capability Library
 ├── Source Documents
 └── Data Quality Queue
@@ -513,6 +796,10 @@ Governance
 ```
 
 Menus must be filtered by role. Users should land on assigned work rather than seeing every technical component.
+
+`Calculate / Revise Setting` is the main entry point for a new Setting Change Case. Calculation, coordination, conversion, and report screens should normally be opened in the context of that case rather than as disconnected global tools.
+
+The database menus remain available to Data Stewards and advanced engineering roles for governance and search, but ordinary case users propose required data changes from inside the case wizard. This prevents the user from having to update active master data first and then manually remember which values were used by the calculation.
 
 ## 13. Recommended MVP Remap
 
@@ -527,7 +814,10 @@ Menus must be filtered by role. Users should land on assigned work rather than s
 ### Operational MVP O1 — Actual Crosscheck
 
 - select bay and applicable issued revision;
-- import/manual/PDF/CSV actual setting;
+- acquire the actual setting from the physical relay through its official vendor tool;
+- retain native setting file, readback manifest, active group, device identity, and checksum;
+- parse native or official structured export through a model/version-specific adapter;
+- allow PDF/manual input only as explicitly lower-authority fallback evidence;
 - canonical normalization and comparison;
 - discrepancy disposition and evidence;
 - verification report and case closure.
@@ -574,8 +864,9 @@ The following should be confirmed with process owners before database implementa
 5. Rules for emergency setting changes and retrospective approval.
 6. Which mismatch classes require immediate resetting, engineering review, or accepted exception.
 7. Required evidence for field implementation and verification.
-8. Setting-package granularity: per relay, per bay, per circuit end, or coordinated multi-end package.
-9. Cross-UPT/UIT visibility and approval for lines whose two ends have different ownership.
-10. Record-retention, document-numbering, and electronic-signature requirements.
+8. Confirmation that the proposed hierarchy is acceptable: coordinated circuit/change package containing endpoint and relay Setting Revisions.
+9. Cross-UPT/UIT case ownership, visibility, endpoint approval, and final issue authority when the two ends have different ownership.
+10. Ownership and timing for activating proposed technical/network data at energization or commissioning.
+11. Record-retention, document-numbering, and electronic-signature requirements.
 
 These decisions affect authorization and data transactions materially and should not be guessed from the current UI.

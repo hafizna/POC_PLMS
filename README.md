@@ -8,6 +8,10 @@ Tujuan produk ini bukan sekadar membuat spreadsheet digital. PLMS dirancang seba
 
 > **Business-process remapping:** arah proses, transaksi data, lifecycle, user access, dan evaluasi modul lama sedang dikonsolidasikan di [`BUSINESS_PROCESS_BLUEPRINT.md`](./BUSINESS_PROCESS_BLUEPRINT.md). Blueprint tersebut menjadi acuan target; uraian fitur lama di bawah tetap dipertahankan sebagai catatan implementasi POC saat ini.
 
+> **Klarifikasi actual setting:** sumber utama setting aktual adalah hasil `Read from IED` menggunakan software resmi vendor beserta native setting file dan acquisition manifest. TAP/PDF adalah expected/issued setting, bukan bukti setting yang sedang tersimpan di relay. CSV/Excel/XML/XRIO/RIO dapat dipakai sebagai derived parsing artifact bila dihasilkan dari sesi readback yang sama; file tanpa bukti akuisisi tetap berstatus unverified candidate.
+
+> **Klarifikasi hitung setting baru:** menu target `Calculate / Revise Setting` membuat Setting Change Case dan terlebih dahulu meminta alasan serta change items. Rekonduktoring, penggantian CT/VT/relay, sisipan GI, atau pekerjaan sisi remote menghasilkan proposed data/network revision di dalam case; perhitungan memakai revision calon tersebut tanpa menimpa database aktif. Aktivasi data baru dilakukan terkontrol saat effective date/energization/commissioning.
+
 ## Executive Summary
 
 Masalah utama di proses setting proteksi saat ini:
@@ -727,7 +731,7 @@ Important design decision:
 | TAP setting PDF | browser OCR/text-layer extraction | formal SourceDocument + SettingRecord |
 | Excel registry | imported via Node scripts into generated JSON | browser or backend import job |
 | Legacy crosscheck workbook | indexed into generated JSON | source for DIgSILENT line DB, fault levels, L1-L4 selector, and benchmark outputs |
-| Actual setting export | manual/plain-text/CSV-like parser + comparison; MiCOM adapter pilot | tambah adapter dan fixture per vendor/model |
+| Actual setting readback | manual/plain-text/CSV-like parser + comparison; MiCOM Courier adapter pilot | `Read from IED` via official vendor tool, retain native file + acquisition manifest, then parse native or derived structured export per vendor/model/version |
 | MiCOM `.set` binary | Courier records parsed untuk fixture P443/P545 | hardening real sample, firmware support matrix, dan round-trip vendor tool |
 | PST data | not integrated | backend connector or PST mock JSON |
 | Mathcad templates | ABB REL670 dan MiCOM P545 `.xmcd` samples indexed; P545 Ciledug–Alam Sutera sudah didissect | port P545 ke rule typed + parity benchmark |
@@ -740,7 +744,7 @@ Important design decision:
 | Legacy crosscheck workbook | replace spreadsheet workflow with PLMS flow | workbook indexed; next step is UI mapping into Study Wizard and Calculation |
 | Latest TAP setting PDF per side | baseline setting before engineering change and source evidence | PDF with text layer or scanned sample |
 | New TAP setting output | official result from engineering calculation | generated from PLMS calculation workflow |
-| Actual relay setting export/checking result | baseline validation and post-resetting confirmation | CSV/text export preferred |
+| Actual relay readback/checking result | baseline validation and post-resetting confirmation | native file hasil connected readback + device/tool/timestamp/active-group manifest; CSV/Excel/XML/XRIO/RIO hanya derived artifact bila tersedia |
 | CT/VT master | calculation conversion and readiness | ratio already supported; accuracy class and knee voltage for pilot hardening |
 | Line impedance | distance reach and coverage | R/X positive sequence, length, conductor |
 | Fault level / source impedance | sensitivity and coordination validation | max/min 3-phase and 1-phase per bus |
@@ -776,7 +780,7 @@ Yang sudah dikerjakan tidak dimasukkan sebagai pending. OCR pipeline dan CT/VT s
 |---|---|---|---|
 | Mathcad templates existing | File Mathcad PLN atau PDF export | 12 `.xmcd` indexed: 10 distance dan 2 LCD, lintas Siemens/GE/MiCOM/ABB/Toshiba | extract capability/formula semantics dan sign-off expected outputs |
 | TAP setting terakhir | Dokumen engineering existing | sebagian ada | PDF per side untuk baseline comparison |
-| Actual setting/checking result | Tim lapangan / export relay | sebagian seed comparison | CSV/text/PDF hasil checking per bay |
+| Actual setting/checking result | Field Engineer / connected relay readback | sebagian seed comparison | native vendor file, relay identity, firmware, tool version, read timestamp, active group, checksum, dan structured export dari sesi yang sama |
 | CT/VT detail lanjutan | PST atau registry aset | ratio structured sudah ada | accuracy class, knee voltage, polarity, location, manufacturer |
 | Line impedance proper | PST atau line constant calculation | X-ohm equivalent | R, X, B per km positive/zero sequence, conductor, length, ground wire, soil resistivity |
 | Short-circuit fault levels | PSAT / DIgSILENT study output | 1.122 historical IHS records Semester 1 2021 | current fault MVA/current 3-phase dan single-phase, max/min infeed, method, network revision, dan source contribution per bus |
@@ -870,7 +874,7 @@ working state sendiri.
 Sasaran: menjadikan workflow Reference -> Import Actual -> Crosscheck sebagai baseline yang stabil sebelum menambah generator setting.
 
 - Hardening regression test MVP 1A untuk OCR/GFR, trafo, dan distance dengan lebih banyak case workbook.
-- Hardening MVP 1B normalization/mapping/tolerance dengan sample actual setting nyata.
+- Hardening MVP 1B normalization/mapping/tolerance dengan native actual-setting readback dan acquisition manifest nyata.
 - Hardening MVP 1C MiCOM parser menggunakan real P443/P545 files dan dokumentasikan support matrix awal.
 - Validasi Relay Catalog UPT Durikosambi: brand, model, bay, fungsi, CT/VT, manual, dan kecocokan topology.
 - Pertahankan Network Graph sebagai foundation mandiri: SLD scope -> `digsilentLineDb` topology -> setting-doc overlay -> review per-GI.
