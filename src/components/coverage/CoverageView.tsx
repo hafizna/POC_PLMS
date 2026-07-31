@@ -1,11 +1,12 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { Save } from "lucide-react";
 import { useProsetStore } from "../../store/useProsetStore";
 import { CorridorDiagram } from "./CorridorDiagram";
 import { ZoneParameterPanel } from "./ZoneParameterPanel";
 import { DiagnosticsPanel } from "./DiagnosticsPanel";
 import { BranchSelector } from "./BranchSelector";
 import { RXPlaneModal } from "./RXPlaneModal";
-import { runGraphCoordinationChecks } from "../../lib/graph-coordination";
+import { runGraphCoordinationChecks, summarizeGraphDiagnostics } from "../../lib/graph-coordination";
 import { NETWORK_CASES } from "../../domain/seed-network-registry";
 import {
   getEffectiveNetworkGraph,
@@ -21,6 +22,18 @@ export function CoverageView() {
   const activeCaseId = useProsetStore((s) => s.activeNetworkCaseId);
   const activeLineId = useProsetStore((s) => s.activeNetworkLineId);
   const networkGraphOverrides = useProsetStore((s) => s.networkGraphOverrides);
+  const addCoordinationCheck = useProsetStore((s) => s.addCoordinationCheck);
+  const linkToSettingCase = useProsetStore((s) => s.linkToSettingCase);
+  // Same detection CalculationView uses one stage earlier
+  // (BUSINESS_PROCESS_BLUEPRINT.md §8's CalculationRun -> §9's
+  // CoordinationCheck): a case whose protected scope points at the line
+  // currently open here is the case a saved check should link back to.
+  const linkedSettingCase = useProsetStore((s) =>
+    s.settingCases.find(
+      (item) => item.protectedScope.subjectLineId === s.activeNetworkLineId
+    )
+  );
+  const [savedCheckId, setSavedCheckId] = useState<string | null>(null);
 
   const activeCorridor =
     corridors.find((c) => c.id === activeCorridorId) ?? corridors[0];
@@ -92,6 +105,24 @@ export function CoverageView() {
     [networkGraph]
   );
   const hasRelaySettings = Boolean(networkGraph?.relaySettings?.length);
+  const diagnosticsSummary = useMemo(() => summarizeGraphDiagnostics(diagnostics), [diagnostics]);
+  const activeLineIdForSave = fullLine?.id ?? activeLine?.id;
+
+  const handleSaveCoordinationCheck = () => {
+    if (!activeLineIdForSave) return;
+    const checkId = addCoordinationCheck({
+      caseId: linkedSettingCase?.id ?? activeCase.id,
+      lineId: activeLineIdForSave,
+      diagnostics,
+      errorCount: diagnosticsSummary.error,
+      warningCount: diagnosticsSummary.warning,
+      note: "Coordination check (coverage/selectivity/gap) dari graph-coordination.ts.",
+    });
+    if (linkedSettingCase) {
+      linkToSettingCase(linkedSettingCase.id, { kind: "coordination", refId: checkId });
+    }
+    setSavedCheckId(checkId);
+  };
 
   return (
     <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_430px] gap-6">
@@ -154,7 +185,37 @@ export function CoverageView() {
           <CorridorDiagram corridor={activeCorridor} />
         </div>
         {hasRelaySettings ? (
-          <DiagnosticsPanel diagnostics={diagnostics} />
+          <>
+            <DiagnosticsPanel diagnostics={diagnostics} />
+            <div className="bg-white border border-slate-200 rounded-lg p-4">
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <div className="text-xs text-slate-600">
+                  {diagnosticsSummary.error} error, {diagnosticsSummary.warning} warning —
+                  simpan sebagai Coordination Check (BUSINESS_PROCESS_BLUEPRINT.md §9)
+                  untuk melengkapi evidence case.
+                  {linkedSettingCase && (
+                    <span className="ml-2 rounded-full bg-blue-50 border border-blue-200 px-2 py-0.5 text-blue-700">
+                      Case: {linkedSettingCase.title}
+                    </span>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={handleSaveCoordinationCheck}
+                  disabled={!activeLineIdForSave}
+                  className="inline-flex items-center gap-1.5 rounded-md bg-slate-900 px-3 py-1.5 text-xs font-medium text-white disabled:cursor-not-allowed disabled:bg-slate-300"
+                >
+                  <Save className="h-3.5 w-3.5" />
+                  Save Coordination Check
+                </button>
+              </div>
+              {savedCheckId && (
+                <p className="mt-2 text-xs text-emerald-700">
+                  Tersimpan{linkedSettingCase ? ` & ter-link ke case "${linkedSettingCase.title}"` : ""}.
+                </p>
+              )}
+            </div>
+          </>
         ) : (
           <div className="bg-white border border-amber-200 rounded-lg p-4 text-xs text-amber-800">
             Belum ada RelaySetting (Z1/Z2/Z3) untuk network ini — graph builder

@@ -32,6 +32,7 @@ import type {
   ProtectionFunctionId,
 } from "../domain/unified";
 import type { CtSpec, VtSpec } from "../domain/instrument-transformers";
+import type { GraphDiagnostic } from "../lib/graph-coordination";
 import type { VerificationReferenceDraft } from "../domain/setting-verification";
 import type { VendorImportHandoffDraft } from "../domain/vendor-import";
 import {
@@ -217,6 +218,8 @@ export type AuditEvent = {
     | "pdf_tap_unpromote"
     | "calculation_snapshot_add"
     | "calculation_snapshot_remove"
+    | "coordination_check_add"
+    | "coordination_check_remove"
     | "reference_verification_staged"
     | "vendor_import_staged"
     | "setting_case_created"
@@ -329,6 +332,24 @@ export type CalculationSnapshot = {
   note?: string;
 };
 
+// BUSINESS_PROCESS_BLUEPRINT.md §7.2/§9's `CoordinationCheck` — a saved
+// coverage/selectivity/gap coordination run, same evidentiary role one
+// stage later than CalculationSnapshot above. Stores the full diagnostics
+// list (not just a pass/fail flag) so a reviewer can see exactly what was
+// found at the time the check was saved, even if the live network graph
+// changes afterward.
+export type CoordinationCheckRecord = {
+  id: string;
+  caseId: string;
+  lineId: string;
+  createdAt: string;
+  actor: Persona;
+  diagnostics: GraphDiagnostic[];
+  errorCount: number;
+  warningCount: number;
+  note?: string;
+};
+
 type ZoneOverride = Partial<Zone>;
 type RelayOverride = {
   zones?: { Z1?: ZoneOverride; Z2?: ZoneOverride; Z3?: ZoneOverride };
@@ -384,6 +405,7 @@ type State = {
   sourceIntakeRecords: SourceIntakeRecord[];
   pdfTapPromotions: PdfTapPromotion[];
   calculationSnapshots: CalculationSnapshot[];
+  coordinationChecks: CoordinationCheckRecord[];
   verificationReferenceDraft: VerificationReferenceDraft | null;
   vendorImportHandoffDraft: VendorImportHandoffDraft | null;
 
@@ -446,12 +468,13 @@ type State = {
     link:
       | { kind: "source"; refId: string }
       | { kind: "calculation"; refId: string }
+      | { kind: "coordination"; refId: string }
       | { kind: "changeSet"; refId: string }
       | { kind: "study"; refId: string }
   ) => void;
   unlinkFromSettingCase: (
     id: string,
-    link: { kind: "source" | "calculation" | "changeSet"; refId: string }
+    link: { kind: "source" | "calculation" | "coordination" | "changeSet"; refId: string }
   ) => void;
   createStudy: (
     name: string,
@@ -534,6 +557,10 @@ type State = {
     }
   ) => string;
   removeCalculationSnapshot: (id: string) => void;
+  addCoordinationCheck: (
+    record: Omit<CoordinationCheckRecord, "id" | "createdAt" | "actor">
+  ) => string;
+  removeCoordinationCheck: (id: string) => void;
   clearAuditEvents: () => void;
 
   // Selectors
@@ -577,6 +604,7 @@ export const useProsetStore = create<State>()(
       sourceIntakeRecords: [],
       pdfTapPromotions: [],
       calculationSnapshots: [],
+      coordinationChecks: [],
       verificationReferenceDraft: null,
       vendorImportHandoffDraft: null,
 
@@ -1092,6 +1120,7 @@ export const useProsetStore = create<State>()(
           evidenceCount: settingCase.links.sourceIntakeIds.length,
           hasScenario: Boolean(settingCase.links.scenarioId),
           calculationCount: settingCase.links.calculationSnapshotIds.length,
+          coordinationCheckCount: settingCase.links.coordinationCheckIds.length,
           changeSetCount: settingCase.links.engineeringChangeSetIds.length,
           persona: state.currentPersona,
           hasBaseline: Boolean(settingCase.baseline),
@@ -1178,6 +1207,11 @@ export const useProsetStore = create<State>()(
         ) {
           links.calculationSnapshotIds = [...links.calculationSnapshotIds, link.refId];
         } else if (
+          link.kind === "coordination" &&
+          !links.coordinationCheckIds.includes(link.refId)
+        ) {
+          links.coordinationCheckIds = [...links.coordinationCheckIds, link.refId];
+        } else if (
           link.kind === "changeSet" &&
           !links.engineeringChangeSetIds.includes(link.refId)
         ) {
@@ -1210,6 +1244,10 @@ export const useProsetStore = create<State>()(
           links.sourceIntakeIds = links.sourceIntakeIds.filter((ref) => ref !== link.refId);
         } else if (link.kind === "calculation") {
           links.calculationSnapshotIds = links.calculationSnapshotIds.filter(
+            (ref) => ref !== link.refId
+          );
+        } else if (link.kind === "coordination") {
+          links.coordinationCheckIds = links.coordinationCheckIds.filter(
             (ref) => ref !== link.refId
           );
         } else {
@@ -1945,6 +1983,37 @@ export const useProsetStore = create<State>()(
         });
       },
 
+      addCoordinationCheck: (record) => {
+        const current = get();
+        const id = `coord_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+        const check: CoordinationCheckRecord = {
+          ...record,
+          id,
+          createdAt: new Date().toISOString(),
+          actor: current.currentPersona,
+        };
+        set({ coordinationChecks: [check, ...current.coordinationChecks].slice(0, 200) });
+        appendAuditEvent(get, set, {
+          action: "coordination_check_add",
+          scope: record.caseId,
+          targetId: record.lineId,
+          summary: `Saved coordination check: ${record.errorCount} error(s), ${record.warningCount} warning(s)`,
+          detail: record.note,
+        });
+        return id;
+      },
+
+      removeCoordinationCheck: (id) => {
+        const check = get().coordinationChecks.find((item) => item.id === id);
+        set({ coordinationChecks: get().coordinationChecks.filter((item) => item.id !== id) });
+        appendAuditEvent(get, set, {
+          action: "coordination_check_remove",
+          scope: check?.caseId,
+          targetId: check?.lineId,
+          summary: "Removed coordination check",
+        });
+      },
+
       clearAuditEvents: () => set({ auditEvents: [] }),
 
       getEffectiveRelay: (id) => {
@@ -1993,6 +2062,7 @@ export const useProsetStore = create<State>()(
         sourceIntakeRecords: state.sourceIntakeRecords,
         pdfTapPromotions: state.pdfTapPromotions,
         calculationSnapshots: state.calculationSnapshots,
+        coordinationChecks: state.coordinationChecks,
         verificationReferenceDraft: state.verificationReferenceDraft,
         vendorImportHandoffDraft: state.vendorImportHandoffDraft,
         studies: state.studies,

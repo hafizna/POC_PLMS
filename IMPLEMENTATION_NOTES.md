@@ -8,6 +8,62 @@ arsitektur dan roadmap produk, rujuk:
 - [`README.md`](./README.md) — MVP roadmap, status implementasi per tahap, dan
   demo flow.
 
+## Update 2026-07-31 — Sprint 5 (lanjutan): Buka Gate Coordination
+
+Lanjutan alami dari gate Calculation (Sprint 5 sebelumnya) — sesuai
+BUSINESS_PROCESS_BLUEPRINT.md §9 (tahap 9: "coordinated package,
+coverage/selectivity/gap results") dan §7.2's `CoordinationCheck` yang
+sudah dinamai di daftar domain object tapi belum diimplementasikan.
+
+- `SettingCaseLinks.coordinationCheckIds: string[]` (baru) — mengikuti pola
+  persis `calculationSnapshotIds` satu tahap sebelumnya.
+- `EXECUTABLE_SETTING_CASE_STAGES` menambahkan `"coordination"`; `stageGate()`
+  menolak lanjut dari tahap ini sampai minimal satu `CoordinationCheck`
+  ter-link. Sengaja HANYA mengecek "apakah check sudah dijalankan dan
+  disimpan sebagai evidence" — bukan "apakah hasilnya bersih dari
+  error/mismatch". Menilai apakah hasil coordination check itu ACCEPTABLE
+  adalah pekerjaan tahap 10 (Review & Approval), bukan hard block di sini
+  — sama seperti gate Calculation tidak memvalidasi bahwa hasil kalkulasi
+  "benar", hanya bahwa ada Calculation Run tersimpan.
+- `CoordinationCheckRecord` (baru, di `useProsetStore.ts`) — menyimpan
+  snapshot lengkap hasil `runGraphCoordinationChecks()` (bukan cuma
+  pass/fail flag) di waktu check disimpan, supaya reviewer bisa lihat
+  persis temuan saat itu meski network graph berubah setelahnya.
+  `addCoordinationCheck`/`removeCoordinationCheck` actions, persisted
+  sama seperti `calculationSnapshots`.
+- `linkToSettingCase`/`unlinkFromSettingCase` menambah varian
+  `{ kind: "coordination"; refId }`.
+- `CoverageView.tsx`: tombol "Save Coordination Check" baru — menyimpan
+  hasil diagnostic (`summarizeGraphDiagnostics()` untuk ringkasan error/
+  warning count) dan otomatis link ke case aktif kalau
+  `protectedScope.subjectLineId` cocok dengan line yang sedang dibuka
+  (pola identik `CalculationView.tsx`'s `linkedSettingCase` detection).
+- `SettingCaseDetail.tsx`: `STAGE_TOOL.coordination` dibuka Coverage/
+  Coordination workbook dari dalam case.
+- **Bug ditemukan+fix saat menambah test**: `scripts/test-setting-case.ts`
+  tidak type-checked oleh `tsc --noEmit -p .` (tsconfig.json's `include`
+  cuma `"src"`) — field baru `coordinationCheckCount` yang wajib di
+  `StageGateContext` bisa hilang dari fixture test tanpa terdeteksi
+  compiler. Ditambahkan manual ke `gateContext` fixture + assertion baru
+  yang meng-cover gate coordination (mirror pola test calculation).
+- Diverifikasi end-to-end (Playwright): buat Setting Case nyata dengan
+  `subjectLineId` = line Ancol, buka Coverage, klik "Save Coordination
+  Check" — tersimpan (107 error, 97 warning untuk jaringan penuh — angka
+  besar ini konsisten, bukan bug: banyak setting existing memang
+  under-margin di data nyata, itu justru nilai fitur ini), dan
+  `case.links.coordinationCheckIds` ter-update dengan benar.
+- Regression: seluruh 13 test suite (termasuk assertion baru) + `npm run
+  build` (bundle size stabil ~620kB, +1kB wajar dari import tipe
+  `GraphDiagnostic`) — semua lolos.
+- **Yang TIDAK dikerjakan**: tahap `internal_review` s/d `closed` (10
+  tahap lagi setelah coordination) masih locked — backlog terpisah, belum
+  disentuh sesi ini. Tidak ada UI untuk MELIHAT riwayat `CoordinationCheck`
+  yang tersimpan (mis. daftar check lama per case) — cuma bisa disimpan
+  dan di-link, belum ada halaman review-nya. Formula P545 asli (MVP 2B.2)
+  dan migrasi `CorridorDiagram` ke graph-aware juga belum dikerjakan —
+  keduanya dipilih untuk DITUNDA dulu demi memprioritaskan gate
+  Coordination ini.
+
 ## Update 2026-07-31 — Ancol Nyala di Coverage/Calculation: selectLine() Buta Terhadap Data Nyata di Luar NETWORK_CASES
 
 **Masalah**: setelah relay-catalog matching diperbaiki (entri di bawah), Ancol

@@ -92,6 +92,7 @@ const gateContext = {
   evidenceCount: 1,
   hasScenario: false,
   calculationCount: 0,
+  coordinationCheckCount: 0,
   changeSetCount: 0,
   persona: "Engineer",
   hasBaseline: false,
@@ -597,6 +598,29 @@ assert.deepEqual(stageGate(calculationBoundaryCase, gateContext).blockers, [
 assert.deepEqual(
   stageGate(calculationBoundaryCase, { ...gateContext, calculationCount: 1 })
     .blockers,
+  []
+);
+
+// Sprint 5 (cont'd) opens `coordination`: gates on at least one linked
+// CoordinationCheck (coverage/selectivity/gap), same shape as calculation's
+// gate one stage earlier.
+const coordinationBoundaryCase: SettingCase = {
+  ...futureCase,
+  stage: "coordination",
+  studyPackageBindings: [compatiblePackage],
+};
+assert.equal(isStageImplemented("coordination"), true);
+assert.deepEqual(
+  stageGate(coordinationBoundaryCase, { ...gateContext, calculationCount: 1 })
+    .blockers,
+  ["Belum ada Coordination Check (coverage/selectivity/gap) yang tersimpan dan ter-link ke case ini."]
+);
+assert.deepEqual(
+  stageGate(coordinationBoundaryCase, {
+    ...gateContext,
+    calculationCount: 1,
+    coordinationCheckCount: 1,
+  }).blockers,
   []
 );
 

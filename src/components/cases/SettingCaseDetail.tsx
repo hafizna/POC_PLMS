@@ -34,6 +34,7 @@ import { assessCrosscheckEvidence } from "../../domain/case-flow-hardening";
 const STAGE_TOOL: Partial<Record<SettingCaseStage, { tab: Tab; label: string }>> = {
   scoping: { tab: "network-model", label: "Working Network" },
   calculation: { tab: "calculation", label: "Calculation Workbook" },
+  coordination: { tab: "coverage", label: "Coordination / Coverage" },
 };
 
 export function SettingCaseDetail({
@@ -95,6 +96,7 @@ export function SettingCaseDetail({
     evidenceCount: settingCase.links.sourceIntakeIds.length,
     hasScenario: Boolean(settingCase.links.scenarioId),
     calculationCount: settingCase.links.calculationSnapshotIds.length,
+    coordinationCheckCount: settingCase.links.coordinationCheckIds.length,
     changeSetCount: settingCase.links.engineeringChangeSetIds.length,
     persona,
     hasBaseline: Boolean(settingCase.baseline),

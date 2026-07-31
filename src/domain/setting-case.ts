@@ -197,6 +197,10 @@ export type SettingCaseLinks = {
   sourceIntakeIds: string[];
   calculationSnapshotIds: string[];
   engineeringChangeSetIds: string[];
+  // BUSINESS_PROCESS_BLUEPRINT.md §7.2's `CoordinationCheck` — a saved,
+  // reproducible coordination run (coverage/selectivity/gap diagnostics),
+  // same evidentiary role as calculationSnapshotIds one stage earlier.
+  coordinationCheckIds: string[];
 };
 
 export type SettingCase = {
@@ -357,6 +361,13 @@ export function nextStageOf(settingCase: SettingCase): SettingCaseStage | null {
 // Sprint 4.1 adds requirement-driven Scenario Packages and hardened flow contracts.
 // Sprint 5 (Engineering MVP E1) opens the `calculation` gate: a case can only
 // leave this stage once at least one reproducible Calculation Run is linked.
+// Sprint 5 (cont'd) opens `coordination` (BUSINESS_PROCESS_BLUEPRINT.md §9's
+// "coordinated package, coverage/selectivity/gap results" — CoordinationCheck):
+// a case can only leave this stage once at least one such check is linked.
+// Mirrors calculation's gate shape deliberately — "did the check run and get
+// saved as evidence" is this stage's job; judging whether the results are
+// ACCEPTABLE (zero errors, mismatches resolved, etc.) is Review/Approval's
+// job (stage 10), not a hard block here.
 export const EXECUTABLE_SETTING_CASE_STAGES: ReadonlySet<SettingCaseStage> = new Set([
   "draft",
   "scoping",
@@ -365,6 +376,7 @@ export const EXECUTABLE_SETTING_CASE_STAGES: ReadonlySet<SettingCaseStage> = new
   "impact_and_readiness",
   "study_preparation",
   "calculation",
+  "coordination",
 ]);
 
 export function isStageImplemented(stage: SettingCaseStage): boolean {
@@ -375,6 +387,7 @@ export type StageGateContext = {
   evidenceCount: number;
   hasScenario: boolean;
   calculationCount: number;
+  coordinationCheckCount: number;
   changeSetCount: number;
   persona: string;
   hasBaseline: boolean;
@@ -453,6 +466,13 @@ export function stageGate(settingCase: SettingCase, ctx: StageGateContext): Stag
         );
       }
       break;
+    case "coordination":
+      if (ctx.coordinationCheckCount === 0) {
+        blockers.push(
+          "Belum ada Coordination Check (coverage/selectivity/gap) yang tersimpan dan ter-link ke case ini."
+        );
+      }
+      break;
     default:
       break;
   }
@@ -521,6 +541,7 @@ export function createSettingCaseObject(
       sourceIntakeIds: input.links?.sourceIntakeIds ?? [],
       calculationSnapshotIds: input.links?.calculationSnapshotIds ?? [],
       engineeringChangeSetIds: input.links?.engineeringChangeSetIds ?? [],
+      coordinationCheckIds: input.links?.coordinationCheckIds ?? [],
     },
     stage: "draft",
     stageHistory: [{ stage: "draft", at: now, actor }],
