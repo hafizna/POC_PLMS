@@ -1,6 +1,7 @@
 // Generic per-GI network graph builder.
 //
-// Replaces the hardcoded 6-substation corridor in nmm-generator.ts with a
+// Replaces the hardcoded 6-substation corridor from the retired
+// generateCorridorNmm generator (src/domain/nmm-generator.ts, removed) with a
 // pipeline that scopes any ULTG from its SLD folder index, anchors topology
 // on the explicit fromSubstation/toSubstation records in the legacy
 // DIgSILENT line database (crosscheck-workbook-registry.json), then overlays
@@ -15,6 +16,8 @@ import type { Bay, LineRelation, ProtectionFunctionId, UnifiedNetwork, UnifiedSu
 import { classifyProtectionFunction } from "./unified";
 import type { RegistryConfidence } from "./seed-network-registry";
 import { normalizeStationName, normalizeSubstationIdentity, tokensSubsetOf } from "./normalization";
+import { buildRelayIedsFromCatalog } from "./relay-catalog-builder";
+import { buildRelaySettingsFromOverlays } from "./relay-setting-builder";
 import sldSourceIndex from "./generated/sld-source-index.json";
 import crosscheckRegistry from "./generated/crosscheck-workbook-registry.json";
 import lcdDistRegistry from "./generated/lcd-dist-registry.json";
@@ -170,6 +173,34 @@ const SHORTCODE_OVERRIDE: Record<string, string> = {
   "daan mogot": "DNMGT",
 };
 
+// DIgSILENT names a substation's per-voltage-level section by appending a
+// single trailing digit to its base name (e.g. "DKSBI7" = Durikosambi's
+// 500kV section, "KEMBANGAN5" = Kembangan's 150kV section) — this is a site
+// having multiple voltage levels (GI + GISTET on the same physical site),
+// not a naming collision. The digit itself is NOT trusted as a voltage code
+// here (a prior version of this logic tried that: suffix "7" was 500kV in
+// 131/131 occurrences and "5" was 150kV in 816/818, but "3" alone was a mix
+// of 30kV/150kV with no clear majority — an unreliable basis for something
+// as consequential as a substation's voltage level). Instead, voltage is
+// read directly from each line record's own `type` field, e.g.
+// "OHL-500kV-ACSR..." — a technical fact stated by the source data itself,
+// not inferred from a naming convention. 1180/1183 records have a
+// parseable kV in `type`; the rest fall back to the scope's default 150kV.
+function parseLineVoltageKv(type: string): number | undefined {
+  const match = /(\d{2,3})\s*kv/i.exec(type);
+  return match ? Number(match[1]) : undefined;
+}
+
+// Splits a trailing single-digit suffix off a DIgSILENT substation name,
+// e.g. "DKSBI7" -> "DKSBI", "KEMBANGAN5" -> "KEMBANGAN". Used only to
+// recover the base name for matching purposes — the actual voltage level
+// for a substation comes from parseLineVoltageKv against the records that
+// touch it, never from this suffix digit.
+function stripDigsilentVoltageSuffix(name: string): string {
+  const match = /^(.*[A-Za-z .])\d$/.exec(name.trim());
+  return match ? match[1].trim() : name;
+}
+
 /**
  * A DIgSILENT substation name matches a scoped station name if:
  *  1. an explicit alias says so (DIGSILENT_TO_SLD_ALIAS), or
@@ -190,7 +221,12 @@ const SHORTCODE_OVERRIDE: Record<string, string> = {
  * into the wrong group. See buildAnchorTopology's caller notes.
  */
 function stationNameMatches(scoped: ScopedStation, digsilentName: string): boolean {
-  const digsilentKey = normalizeStationName(digsilentName);
+  // Strip a trailing voltage-suffix digit before token comparison — e.g.
+  // "KEMBANGAN5" should match scope "GIS KEMBANGAN" the same way plain
+  // "KEMBANGAN" would; the digit is a voltage-level marker (its actual kV
+  // comes from parseLineVoltageKv against the record's `type`, not from the
+  // digit itself), not part of the site's name.
+  const digsilentKey = normalizeStationName(stripDigsilentVoltageSuffix(digsilentName));
   if (!digsilentKey) return false;
   const aliasTarget = DIGSILENT_TO_SLD_ALIAS[digsilentKey];
   if (aliasTarget) return aliasTarget === scoped.identityKey;
@@ -317,8 +353,32 @@ export function buildAnchorTopology(
   const matchedScoped = new Set<string>();
   const digsilentShortCodes = extractDigsilentShortCodes(lineDb.records);
 
-  function ensureSubstation(digsilentName: string, scoped?: ScopedStation): UnifiedSubstation {
-    const key = normalizeStationName(digsilentName);
+  // Tracks the voltage each substation key has actually been observed at
+  // (from parseLineVoltageKv against real line records), so a substation
+  // whose first-seen record happened to have an unparseable/default `type`
+  // doesn't silently lock in the wrong voltage for records seen afterward.
+  const observedVoltageKv = new Map<string, number>();
+
+  function ensureSubstation(
+    digsilentName: string,
+    scoped: ScopedStation | undefined,
+    lineVoltageKv: number | undefined
+  ): UnifiedSubstation {
+    // Dedup key: prefer the resolved scope's own identity once a match is
+    // known (scoped.identityKey — keeps the GI/GIS/GISTET token, unlike
+    // fuzzyKey) rather than this specific record's raw name. This matters
+    // for voltage-suffixed names like "DKSBI7": without this, every
+    // digsilentLineDb record touching the same GISTET would key off its own
+    // literal suffixed string and never merge into one substation, even
+    // though `scoped` already correctly resolved which site they belong to.
+    // identityKey (not fuzzyKey) specifically, because "GI Durikosambi" and
+    // "GISTET Durikosambi" share the same fuzzyKey ("durikosambi") but are
+    // two distinct physical/voltage-level sites that must stay separate
+    // substations.
+    const key = scoped ? scoped.identityKey : normalizeStationName(digsilentName);
+    if (lineVoltageKv !== undefined && !observedVoltageKv.has(key)) {
+      observedVoltageKv.set(key, lineVoltageKv);
+    }
     const existing = substations.get(key);
     if (existing) return existing;
     // An explicit alias (DIGSILENT_TO_SLD_ALIAS) always wins for the display
@@ -330,19 +390,56 @@ export function buildAnchorTopology(
     // two different substation IDs the same display name. Prefer the
     // DIgSILENT name when it carries qualifying tokens the scope name
     // doesn't have (the II/BARU that disambiguates the site); otherwise fall
-    // back to the scope's own casing.
-    const isAliased = Boolean(DIGSILENT_TO_SLD_ALIAS[key]);
-    const digsilentTokens = digsilentName.toLowerCase().split(/\s+/).filter(Boolean);
+    // back to the scope's own casing. A voltage-suffixed shortcode name
+    // ("DKSBI7") never carries a *meaningful* qualifier this way — it's
+    // always redirected to scope.rawName, same as the no-extra-qualifier
+    // case, since "dksbi7" isn't a fuller form of "durikosambi", just a
+    // differently-abbreviated one.
+    // Checked against this record's own normalized name, NOT `key` — `key`
+    // is now scoped.identityKey when a scope is known (see above), but
+    // DIGSILENT_TO_SLD_ALIAS is indexed by the DIgSILENT name itself (e.g.
+    // "m karang baru"), so checking it against `key` would silently never
+    // match once `key` stopped being the raw normalized digsilentName.
+    const isAliased = Boolean(DIGSILENT_TO_SLD_ALIAS[normalizeStationName(digsilentName)]);
+    // Deliberately NOT normalizeStationName here (which would strip the
+    // GI/GIS/GISTET token) — this comparison's whole point is to detect
+    // when digsilentName carries a qualifying token the scope name lacks
+    // (e.g. "GIS" in "DAAN MOGOT GIS" vs scope fuzzyKey "daan mogot", or
+    // "II"/"BARU" in "GROGOL II"), so that token must survive here. Only the
+    // voltage-suffix digit is stripped, since that was never part of either
+    // side's actual wording.
+    const digsilentTokens = stripDigsilentVoltageSuffix(digsilentName)
+      .toLowerCase()
+      .split(/\s+/)
+      .filter(Boolean);
     const scopeTokens = new Set((scoped?.fuzzyKey ?? "").split(/\s+/).filter(Boolean));
     const hasExtraQualifier = digsilentTokens.some((t) => !scopeTokens.has(t));
-    const baseRawName = isAliased || !hasExtraQualifier ? (scoped?.rawName ?? digsilentName) : digsilentName;
+    // A name resolved via the shortcode fallback (e.g. "DKSBI7" -> scope
+    // "GISTET Durikosambi") shares NO token at all with the scope's name —
+    // it's a different abbreviation, not a qualified/longer form of it
+    // (contrast "DAAN MOGOT GIS" vs scope "GIS DAAN MOGOT", which does share
+    // tokens). Treat "zero token overlap" as "definitely not a meaningful
+    // qualifier", so it always defers to the scope's own name instead of
+    // being kept verbatim.
+    const hasNoTokenOverlap =
+      scopeTokens.size > 0 && digsilentTokens.every((t) => !scopeTokens.has(t));
+    const baseRawName =
+      isAliased || !hasExtraQualifier || hasNoTokenOverlap
+        ? (scoped?.rawName ?? digsilentName)
+        : digsilentName;
     const rawName = DISPLAY_NAME_OVERRIDE[normalizeSubstationIdentity(baseRawName)] ?? baseRawName;
     const id = `sub_${key.replace(/\s+/g, "_")}`;
+    // Voltage level: the level actually observed on line records touching
+    // this substation (see observedVoltageKv above) — this is what
+    // distinguishes a GISTET's 500kV/70kV section from its site's 150kV GI
+    // section, which scope.kind alone can't tell apart (a GISTET scope
+    // entry could itself be either level depending on which record anchored
+    // it). Falls back to 150, matching every other GI/GIS substation here.
     const sub: UnifiedSubstation = {
       id,
       name: rawName,
       shortCode: SHORTCODE_OVERRIDE[key] ?? digsilentShortCodes.get(key) ?? buildShortCode(rawName),
-      voltageKv: 150,
+      voltageKv: observedVoltageKv.get(key) ?? 150,
       kind: scoped?.kind ?? "GI",
       normalizedName: normalizeStationName(rawName),
     };
@@ -384,16 +481,71 @@ export function buildAnchorTopology(
     return String(next);
   }
 
+  // A GI's higher/lower-voltage section (e.g. GISTET Durikosambi's 500kV
+  // side, DIgSILENT name "DKSBI7") is its own SLD folder, distinct from the
+  // 150kV GI folder. stationNameMatches' token comparison alone can't tell
+  // these apart — "KEMBANGAN5" and "KEMBANGAN7" both token-match scope
+  // "GIS KEMBANGAN" once the voltage-suffix digit is stripped. Disambiguate
+  // using the line's actual voltage (parseLineVoltageKv against `type`, a
+  // technical fact from the source data, not a naming guess): when a
+  // record's real voltage doesn't match the candidate scope's own kind
+  // (GI/GIS default to 150kV; a non-150kV record belongs at a GISTET
+  // instead), redirect to whichever GISTET-kind scope entry shares a
+  // significant word with the token-matched candidate — that is the
+  // intended higher/lower-voltage section of the same physical site.
+  function shortcodeOf(s: ScopedStation): string | undefined {
+    return SHORTCODE_OVERRIDE[s.fuzzyKey] ?? digsilentShortCodes.get(s.fuzzyKey);
+  }
+
+  function gistetSiblingOf(anchor: ScopedStation): ScopedStation | undefined {
+    const anchorWords = new Set(significantWords(anchor.rawName));
+    return scope.find(
+      (s) =>
+        s !== anchor &&
+        s.kind === "GISTET" &&
+        significantWords(s.rawName).some((w) => anchorWords.has(w))
+    );
+  }
+
+  function resolveScopedForRecord(
+    digsilentName: string,
+    lineVoltageKv: number | undefined
+  ): ScopedStation | undefined {
+    // Case 1: the name (or its base with the voltage-suffix digit stripped)
+    // token-matches a scope entry directly — e.g. "KEMBANGAN5"/"KEMBANGAN7"
+    // both match scope "GIS KEMBANGAN" once stripped, since the site's full
+    // name is used either way.
+    const tokenMatch = scope.find((s) => stationNameMatches(s, digsilentName));
+    // Case 2: the base name is instead a shortcode ("DKSBI") belonging to a
+    // DIFFERENT already-known scope entry ("GI Durikosambi") — this happens
+    // when the higher/lower-voltage section is named by abbreviation rather
+    // than by the site's full name, so no token overlap is possible at all.
+    const strippedBase = stripDigsilentVoltageSuffix(digsilentName);
+    const shortcodeOwner =
+      !tokenMatch || tokenMatch.kind !== "GISTET"
+        ? scope.find((s) => {
+            const code = shortcodeOf(s);
+            return code !== undefined && code.toUpperCase() === strippedBase.toUpperCase();
+          })
+        : undefined;
+    const candidate = tokenMatch ?? shortcodeOwner;
+    if (!candidate) return undefined;
+    if (lineVoltageKv === undefined || lineVoltageKv === 150) return candidate;
+    if (candidate.kind === "GISTET") return candidate;
+    return gistetSiblingOf(candidate) ?? candidate;
+  }
+
   for (const record of lineDb.records) {
-    const fromScoped = scope.find((s) => stationNameMatches(s, record.fromSubstation));
-    const toScoped = scope.find((s) => stationNameMatches(s, record.toSubstation));
+    const lineVoltageKv = parseLineVoltageKv(record.type);
+    const fromScoped = resolveScopedForRecord(record.fromSubstation, lineVoltageKv);
+    const toScoped = resolveScopedForRecord(record.toSubstation, lineVoltageKv);
     if (!fromScoped && !toScoped) continue; // neither end in scope — skip entirely
 
     if (fromScoped) matchedScoped.add(fromScoped.rawName);
     if (toScoped) matchedScoped.add(toScoped.rawName);
 
-    const fromSub = ensureSubstation(record.fromSubstation, fromScoped);
-    const toSub = ensureSubstation(record.toSubstation, toScoped);
+    const fromSub = ensureSubstation(record.fromSubstation, fromScoped, lineVoltageKv);
+    const toSub = ensureSubstation(record.toSubstation, toScoped, lineVoltageKv);
 
     const circuit = nextCircuitForPair(fromSub.id, toSub.id);
 
@@ -642,7 +794,7 @@ export function buildCaseFromGraphGroups(caseId: string, groups: GraphBuildGroup
   const keptBayIds = new Set(lineRelations.flatMap((r) => [r.fromBayId, r.toBayId]));
   const bays = groups.flatMap((g) => g.bays).filter((b) => keptBayIds.has(b.id));
 
-  return {
+  const network: UnifiedNetwork = {
     caseId,
     substations: groups.map((g) => g.station),
     busbars: [],
@@ -652,4 +804,15 @@ export function buildCaseFromGraphGroups(caseId: string, groups: GraphBuildGroup
     relayIeds: [],
     protectionFunctions: [],
   };
+  // Populate relayIeds from the relay catalog's confirmed digsilentLineDb
+  // matches (see relay-catalog-builder.ts) — this is the first real source
+  // of relay identity for this pipeline; previously always empty.
+  const { relayIeds } = buildRelayIedsFromCatalog(network);
+  const networkWithRelays: UnifiedNetwork = { ...network, relayIeds };
+  // Populate relaySettings (Z1/Z2/Z3) from the same LCD/DIST overlay records
+  // already resolved per-group by overlaySettingDocs() — see
+  // relay-setting-builder.ts's buildRelaySettingsFromOverlays.
+  const overlays = groups.flatMap((g) => g.overlays);
+  const relaySettings = buildRelaySettingsFromOverlays(networkWithRelays, overlays);
+  return { ...networkWithRelays, relaySettings };
 }

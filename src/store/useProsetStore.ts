@@ -353,6 +353,11 @@ type State = {
   comparisonBayId: string;
   activeNetworkCaseId: string;
   activeNetworkLineId: string | null;
+  // Set when a POC tool tab is opened from inside a Setting Case (via
+  // SettingCaseDetail's "Buka <tool>" action), so the tool can show a
+  // breadcrumb back to the originating case. Not persisted — this is a
+  // navigation affordance only, not a structural case/tool data link.
+  openedFromCaseId: string | null;
 
   // Mutations from user edits (persisted)
   relayOverrides: Record<string, RelayOverride>;
@@ -389,6 +394,8 @@ type State = {
   setActiveNetworkCase: (id: string) => void;
   setActiveNetworkLine: (id: string | null) => void;
   selectLine: (lineId: string) => void;
+  openToolFromCase: (caseId: string, tab: Tab) => void;
+  clearOpenedFromCase: () => void;
   // Setting Case actions
   openCaseWizard: (caseType: SettingCaseType) => void;
   clearCaseWizardRequest: () => void;
@@ -548,6 +555,7 @@ export const useProsetStore = create<State>()(
       comparisonBayId: COMPARISON_BAYS.length > 0 ? COMPARISON_BAYS[0].bay.id : "unknown",
       activeNetworkCaseId: "case_dks_dm_pik_mkb",
       activeNetworkLineId: "unknown", // Will be set by Network Model view
+      openedFromCaseId: null,
 
       relayOverrides: {},
       candidateDecisions: {},
@@ -603,6 +611,9 @@ export const useProsetStore = create<State>()(
       setComparisonBay: (id) => set({ comparisonBayId: id }),
       setActiveNetworkCase: (id) => set({ activeNetworkCaseId: id }),
       setActiveNetworkLine: (id) => set({ activeNetworkLineId: id }),
+      openToolFromCase: (caseId, tab) =>
+        set({ openedFromCaseId: caseId, currentTab: tab }),
+      clearOpenedFromCase: () => set({ openedFromCaseId: null }),
 
       // Single action that propagates a line selection to all related context:
       // active line + case + comparison bay + corridor + selected relay.

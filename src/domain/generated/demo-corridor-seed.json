@@ -2,31 +2,31 @@
   "caseId": "case_dks_dm_pik_mkb",
   "substations": [
     {
-      "id": "sub_durikosambi",
+      "id": "sub_gi_durikosambi",
       "name": "GI DURIKOSAMBI",
-      "shortCode": "DKSBI",
+      "shortCode": "DUR",
       "voltageKv": 150,
       "kind": "GI",
       "normalizedName": "durikosambi"
     },
     {
-      "id": "sub_daan_mogot",
+      "id": "sub_gis_daan_mogot",
       "name": "DAAN MOGOT GIS",
-      "shortCode": "DNMGT",
+      "shortCode": "DM",
       "voltageKv": 150,
       "kind": "GIS",
       "normalizedName": "daan mogot"
     },
     {
-      "id": "sub_pantai_indah_kapuk",
+      "id": "sub_gis_pantai_indah_kapuk",
       "name": "GIS PANTAI INDAH KAPUK",
-      "shortCode": "PINKA",
+      "shortCode": "PIK",
       "voltageKv": 150,
       "kind": "GIS",
       "normalizedName": "pantai indah kapuk"
     },
     {
-      "id": "sub_m_karang_baru",
+      "id": "sub_gis_muarakarang_baru",
       "name": "GIS MUARAKARANG BARU",
       "shortCode": "MB",
       "voltageKv": 150,
@@ -37,8 +37,8 @@
   "busbars": [],
   "bays": [
     {
-      "id": "bay_sub_durikosambi_sub_daan_mogot_1",
-      "substationId": "sub_durikosambi",
+      "id": "bay_sub_gi_durikosambi_sub_gis_daan_mogot_1",
+      "substationId": "sub_gi_durikosambi",
       "rawName": "PHT 150kV DAAN MOGOT GIS#1 (terminal I-5)",
       "normalizedName": "daan mogot",
       "remoteEndpointHint": "daan mogot",
@@ -46,8 +46,8 @@
       "kind": "line"
     },
     {
-      "id": "bay_sub_durikosambi_sub_daan_mogot_2",
-      "substationId": "sub_durikosambi",
+      "id": "bay_sub_gi_durikosambi_sub_gis_daan_mogot_2",
+      "substationId": "sub_gi_durikosambi",
       "rawName": "PHT 150kV DAAN MOGOT GIS#2 (terminal II-5)",
       "normalizedName": "daan mogot",
       "remoteEndpointHint": "daan mogot",
@@ -55,8 +55,8 @@
       "kind": "line"
     },
     {
-      "id": "bay_sub_daan_mogot_sub_durikosambi_1",
-      "substationId": "sub_daan_mogot",
+      "id": "bay_sub_gis_daan_mogot_sub_gi_durikosambi_1",
+      "substationId": "sub_gis_daan_mogot",
       "rawName": "PHT 150kV GI DURIKOSAMBI#1 (terminal I-5)",
       "normalizedName": "durikosambi",
       "remoteEndpointHint": "durikosambi",
@@ -64,8 +64,8 @@
       "kind": "line"
     },
     {
-      "id": "bay_sub_daan_mogot_sub_durikosambi_2",
-      "substationId": "sub_daan_mogot",
+      "id": "bay_sub_gis_daan_mogot_sub_gi_durikosambi_2",
+      "substationId": "sub_gis_daan_mogot",
       "rawName": "PHT 150kV GI DURIKOSAMBI#2 (terminal II-5)",
       "normalizedName": "durikosambi",
       "remoteEndpointHint": "durikosambi",
@@ -73,8 +73,8 @@
       "kind": "line"
     },
     {
-      "id": "bay_sub_daan_mogot_sub_pantai_indah_kapuk_1",
-      "substationId": "sub_daan_mogot",
+      "id": "bay_sub_gis_daan_mogot_sub_gis_pantai_indah_kapuk_1",
+      "substationId": "sub_gis_daan_mogot",
       "rawName": "PHT 150kV GIS PANTAI INDAH KAPUK#1 (terminal II-5)",
       "normalizedName": "pantai indah kapuk",
       "remoteEndpointHint": "pantai indah kapuk",
@@ -82,8 +82,8 @@
       "kind": "line"
     },
     {
-      "id": "bay_sub_daan_mogot_sub_pantai_indah_kapuk_2",
-      "substationId": "sub_daan_mogot",
+      "id": "bay_sub_gis_daan_mogot_sub_gis_pantai_indah_kapuk_2",
+      "substationId": "sub_gis_daan_mogot",
       "rawName": "PHT 150kV GIS PANTAI INDAH KAPUK#2 (terminal I-5)",
       "normalizedName": "pantai indah kapuk",
       "remoteEndpointHint": "pantai indah kapuk",
@@ -91,8 +91,8 @@
       "kind": "line"
     },
     {
-      "id": "bay_sub_pantai_indah_kapuk_sub_daan_mogot_1",
-      "substationId": "sub_pantai_indah_kapuk",
+      "id": "bay_sub_gis_pantai_indah_kapuk_sub_gis_daan_mogot_1",
+      "substationId": "sub_gis_pantai_indah_kapuk",
       "rawName": "PHT 150kV DAAN MOGOT GIS#1 (terminal I-5)",
       "normalizedName": "daan mogot",
       "remoteEndpointHint": "daan mogot",
@@ -100,8 +100,8 @@
       "kind": "line"
     },
     {
-      "id": "bay_sub_pantai_indah_kapuk_sub_daan_mogot_2",
-      "substationId": "sub_pantai_indah_kapuk",
+      "id": "bay_sub_gis_pantai_indah_kapuk_sub_gis_daan_mogot_2",
+      "substationId": "sub_gis_pantai_indah_kapuk",
       "rawName": "PHT 150kV DAAN MOGOT GIS#2 (terminal II-5)",
       "normalizedName": "daan mogot",
       "remoteEndpointHint": "daan mogot",
@@ -109,8 +109,8 @@
       "kind": "line"
     },
     {
-      "id": "bay_sub_pantai_indah_kapuk_sub_m_karang_baru_1",
-      "substationId": "sub_pantai_indah_kapuk",
+      "id": "bay_sub_gis_pantai_indah_kapuk_sub_gis_muarakarang_baru_1",
+      "substationId": "sub_gis_pantai_indah_kapuk",
       "rawName": "PHT 150kV GIS MUARAKARANG BARU#1 (terminal I-5)",
       "normalizedName": "muarakarang baru",
       "remoteEndpointHint": "muarakarang baru",
@@ -118,8 +118,8 @@
       "kind": "line"
     },
     {
-      "id": "bay_sub_m_karang_baru_sub_pantai_indah_kapuk_1",
-      "substationId": "sub_m_karang_baru",
+      "id": "bay_sub_gis_muarakarang_baru_sub_gis_pantai_indah_kapuk_1",
+      "substationId": "sub_gis_muarakarang_baru",
       "rawName": "PHT 150kV GIS PANTAI INDAH KAPUK#1 (terminal II-5)",
       "normalizedName": "pantai indah kapuk",
       "remoteEndpointHint": "pantai indah kapuk",
@@ -131,10 +131,10 @@
   "lineRelations": [
     {
       "id": "anchor_line_359",
-      "fromBayId": "bay_sub_durikosambi_sub_daan_mogot_1",
-      "toBayId": "bay_sub_daan_mogot_sub_durikosambi_1",
-      "fromSubstationId": "sub_durikosambi",
-      "toSubstationId": "sub_daan_mogot",
+      "fromBayId": "bay_sub_gi_durikosambi_sub_gis_daan_mogot_1",
+      "toBayId": "bay_sub_gis_daan_mogot_sub_gi_durikosambi_1",
+      "fromSubstationId": "sub_gi_durikosambi",
+      "toSubstationId": "sub_gis_daan_mogot",
       "circuit": "1",
       "voltageKv": 150,
       "r1Ohm": 0.3948,
@@ -155,10 +155,10 @@
     },
     {
       "id": "anchor_line_360",
-      "fromBayId": "bay_sub_daan_mogot_sub_durikosambi_2",
-      "toBayId": "bay_sub_durikosambi_sub_daan_mogot_2",
-      "fromSubstationId": "sub_daan_mogot",
-      "toSubstationId": "sub_durikosambi",
+      "fromBayId": "bay_sub_gis_daan_mogot_sub_gi_durikosambi_2",
+      "toBayId": "bay_sub_gi_durikosambi_sub_gis_daan_mogot_2",
+      "fromSubstationId": "sub_gis_daan_mogot",
+      "toSubstationId": "sub_gi_durikosambi",
       "circuit": "2",
       "voltageKv": 150,
       "r1Ohm": 0.3948,
@@ -179,10 +179,10 @@
     },
     {
       "id": "anchor_line_361",
-      "fromBayId": "bay_sub_pantai_indah_kapuk_sub_daan_mogot_1",
-      "toBayId": "bay_sub_daan_mogot_sub_pantai_indah_kapuk_1",
-      "fromSubstationId": "sub_pantai_indah_kapuk",
-      "toSubstationId": "sub_daan_mogot",
+      "fromBayId": "bay_sub_gis_pantai_indah_kapuk_sub_gis_daan_mogot_1",
+      "toBayId": "bay_sub_gis_daan_mogot_sub_gis_pantai_indah_kapuk_1",
+      "fromSubstationId": "sub_gis_pantai_indah_kapuk",
+      "toSubstationId": "sub_gis_daan_mogot",
       "circuit": "1",
       "voltageKv": 150,
       "r1Ohm": 0.8648,
@@ -203,10 +203,10 @@
     },
     {
       "id": "anchor_line_362",
-      "fromBayId": "bay_sub_daan_mogot_sub_pantai_indah_kapuk_2",
-      "toBayId": "bay_sub_pantai_indah_kapuk_sub_daan_mogot_2",
-      "fromSubstationId": "sub_daan_mogot",
-      "toSubstationId": "sub_pantai_indah_kapuk",
+      "fromBayId": "bay_sub_gis_daan_mogot_sub_gis_pantai_indah_kapuk_2",
+      "toBayId": "bay_sub_gis_pantai_indah_kapuk_sub_gis_daan_mogot_2",
+      "fromSubstationId": "sub_gis_daan_mogot",
+      "toSubstationId": "sub_gis_pantai_indah_kapuk",
       "circuit": "2",
       "voltageKv": 150,
       "r1Ohm": 0.8648,
@@ -227,10 +227,10 @@
     },
     {
       "id": "anchor_line_804",
-      "fromBayId": "bay_sub_pantai_indah_kapuk_sub_m_karang_baru_1",
-      "toBayId": "bay_sub_m_karang_baru_sub_pantai_indah_kapuk_1",
-      "fromSubstationId": "sub_pantai_indah_kapuk",
-      "toSubstationId": "sub_m_karang_baru",
+      "fromBayId": "bay_sub_gis_pantai_indah_kapuk_sub_gis_muarakarang_baru_1",
+      "toBayId": "bay_sub_gis_muarakarang_baru_sub_gis_pantai_indah_kapuk_1",
+      "fromSubstationId": "sub_gis_pantai_indah_kapuk",
+      "toSubstationId": "sub_gis_muarakarang_baru",
       "circuit": "1",
       "voltageKv": 150,
       "r1Ohm": 0.8835999,
@@ -250,6 +250,609 @@
       "outOfService": false
     }
   ],
-  "relayIeds": [],
-  "protectionFunctions": []
+  "relayIeds": [
+    {
+      "id": "relay_serial_t1645093_1ij7f83",
+      "bayId": "bay_sub_gis_daan_mogot_sub_gi_durikosambi_1",
+      "make": "ABB",
+      "model": "RED670",
+      "serial": "T1645093",
+      "functionGroup": "line-current-differential/distance",
+      "confidence": "high"
+    },
+    {
+      "id": "relay_serial_ivhr91309441_3fkhv1",
+      "bayId": "bay_sub_gis_daan_mogot_sub_gi_durikosambi_1",
+      "make": "ABB",
+      "model": "REF615",
+      "serial": "IVHR91309441",
+      "functionGroup": "overcurrent/earth-fault",
+      "confidence": "high"
+    },
+    {
+      "id": "relay_serial_t1645092_1i97tj4",
+      "bayId": "bay_sub_gis_daan_mogot_sub_gi_durikosambi_2",
+      "make": "ABB",
+      "model": "RED670",
+      "serial": "T1645092",
+      "functionGroup": "line-current-differential/distance",
+      "confidence": "high"
+    },
+    {
+      "id": "relay_serial_ivhr91309444_21mhe6",
+      "bayId": "bay_sub_gis_daan_mogot_sub_gi_durikosambi_2",
+      "make": "ABB",
+      "model": "REF615",
+      "serial": "IVHR91309444",
+      "functionGroup": "overcurrent/earth-fault",
+      "confidence": "high"
+    },
+    {
+      "id": "relay_serial_315994j_1jm9vxq",
+      "bayId": "bay_sub_gi_durikosambi_sub_gis_daan_mogot_1",
+      "make": "Alsthom",
+      "model": "LFAA 101",
+      "serial": "315994J",
+      "functionGroup": "autoreclose",
+      "confidence": "high"
+    },
+    {
+      "id": "relay_serial_39732214_03_20_1r8415j",
+      "bayId": "bay_sub_gi_durikosambi_sub_gis_daan_mogot_1",
+      "make": "MiCOM / Schneider",
+      "model": "MiCOM P142",
+      "serial": "39732214/03/20",
+      "functionGroup": "overcurrent/earth-fault",
+      "confidence": "high"
+    },
+    {
+      "id": "relay_serial_t1645095_1k751dx",
+      "bayId": "bay_sub_gi_durikosambi_sub_gis_daan_mogot_1",
+      "make": "ABB",
+      "model": "RED670",
+      "serial": "T1645095",
+      "functionGroup": "line-current-differential/distance",
+      "confidence": "high"
+    },
+    {
+      "id": "relay_serial_315995j_1bar68b",
+      "bayId": "bay_sub_gi_durikosambi_sub_gis_daan_mogot_2",
+      "make": "Alsthom",
+      "model": "LFAA 101",
+      "serial": "315995J",
+      "functionGroup": "autoreclose",
+      "confidence": "high"
+    },
+    {
+      "id": "relay_serial_39732579_04_20_1j8bt0o",
+      "bayId": "bay_sub_gi_durikosambi_sub_gis_daan_mogot_2",
+      "make": "MiCOM / Schneider",
+      "model": "MiCOM P142",
+      "serial": "39732579/04/20",
+      "functionGroup": "overcurrent/earth-fault",
+      "confidence": "high"
+    },
+    {
+      "id": "relay_serial_t1645094_1jx5foy",
+      "bayId": "bay_sub_gi_durikosambi_sub_gis_daan_mogot_2",
+      "make": "ABB",
+      "model": "RED670",
+      "serial": "T1645094",
+      "functionGroup": "line-current-differential/distance",
+      "confidence": "high"
+    }
+  ],
+  "protectionFunctions": [],
+  "relaySettings": [
+    {
+      "id": "relset_relay_serial_t1645093_1ij7f83",
+      "relayIedId": "relay_serial_t1645093_1ij7f83",
+      "direction": "reverse",
+      "zones": [
+        {
+          "id": "Z1",
+          "xReachOhm": 2.073,
+          "rReachOhm": 0.311,
+          "rfppOhmPerLoop": 4.353,
+          "rfpeOhmPerLoop": 8.085,
+          "timeDelayPpS": 0,
+          "timeDelayPeS": 0,
+          "operatePp": true,
+          "operatePe": true
+        },
+        {
+          "id": "Z2",
+          "xReachOhm": 3.11,
+          "rReachOhm": 0.466,
+          "rfppOhmPerLoop": 6.531,
+          "rfpeOhmPerLoop": 12.129,
+          "timeDelayPpS": 0.4,
+          "timeDelayPeS": 0.4,
+          "operatePp": true,
+          "operatePe": true
+        },
+        {
+          "id": "Z3",
+          "xReachOhm": 22.212,
+          "rReachOhm": 3.332,
+          "rfppOhmPerLoop": 46.645,
+          "rfpeOhmPerLoop": 86.627,
+          "timeDelayPpS": 1.6,
+          "timeDelayPeS": 1.6,
+          "operatePp": true,
+          "operatePe": true
+        }
+      ],
+      "loadEncroachment": {
+        "enabled": true,
+        "rLdFwOhmPerPhase": 40,
+        "rLdRvOhmPerPhase": 40,
+        "argLdDeg": 30
+      },
+      "characteristicAngleDeg": 81.3,
+      "source": "lcd-dist-import",
+      "sourceRef": "official tap setting proteksi sutt daan mogot - durikosambi 1,2_rev01.pdf",
+      "confidence": "medium",
+      "status": "reviewed"
+    },
+    {
+      "id": "relset_relay_serial_ivhr91309441_3fkhv1",
+      "relayIedId": "relay_serial_ivhr91309441_3fkhv1",
+      "direction": "reverse",
+      "zones": [
+        {
+          "id": "Z1",
+          "xReachOhm": 2.073,
+          "rReachOhm": 0.311,
+          "rfppOhmPerLoop": 4.353,
+          "rfpeOhmPerLoop": 8.085,
+          "timeDelayPpS": 0,
+          "timeDelayPeS": 0,
+          "operatePp": true,
+          "operatePe": true
+        },
+        {
+          "id": "Z2",
+          "xReachOhm": 3.11,
+          "rReachOhm": 0.466,
+          "rfppOhmPerLoop": 6.531,
+          "rfpeOhmPerLoop": 12.129,
+          "timeDelayPpS": 0.4,
+          "timeDelayPeS": 0.4,
+          "operatePp": true,
+          "operatePe": true
+        },
+        {
+          "id": "Z3",
+          "xReachOhm": 22.212,
+          "rReachOhm": 3.332,
+          "rfppOhmPerLoop": 46.645,
+          "rfpeOhmPerLoop": 86.627,
+          "timeDelayPpS": 1.6,
+          "timeDelayPeS": 1.6,
+          "operatePp": true,
+          "operatePe": true
+        }
+      ],
+      "loadEncroachment": {
+        "enabled": true,
+        "rLdFwOhmPerPhase": 40,
+        "rLdRvOhmPerPhase": 40,
+        "argLdDeg": 30
+      },
+      "characteristicAngleDeg": 81.3,
+      "source": "lcd-dist-import",
+      "sourceRef": "official tap setting proteksi sutt daan mogot - durikosambi 1,2_rev01.pdf",
+      "confidence": "medium",
+      "status": "reviewed"
+    },
+    {
+      "id": "relset_relay_serial_t1645092_1i97tj4",
+      "relayIedId": "relay_serial_t1645092_1i97tj4",
+      "direction": "forward",
+      "zones": [
+        {
+          "id": "Z1",
+          "xReachOhm": 2.073,
+          "rReachOhm": 0.311,
+          "rfppOhmPerLoop": 4.353,
+          "rfpeOhmPerLoop": 8.085,
+          "timeDelayPpS": 0,
+          "timeDelayPeS": 0,
+          "operatePp": true,
+          "operatePe": true
+        },
+        {
+          "id": "Z2",
+          "xReachOhm": 3.11,
+          "rReachOhm": 0.466,
+          "rfppOhmPerLoop": 6.531,
+          "rfpeOhmPerLoop": 12.129,
+          "timeDelayPpS": 0.4,
+          "timeDelayPeS": 0.4,
+          "operatePp": true,
+          "operatePe": true
+        },
+        {
+          "id": "Z3",
+          "xReachOhm": 22.212,
+          "rReachOhm": 3.332,
+          "rfppOhmPerLoop": 46.645,
+          "rfpeOhmPerLoop": 86.627,
+          "timeDelayPpS": 1.6,
+          "timeDelayPeS": 1.6,
+          "operatePp": true,
+          "operatePe": true
+        }
+      ],
+      "loadEncroachment": {
+        "enabled": true,
+        "rLdFwOhmPerPhase": 40,
+        "rLdRvOhmPerPhase": 40,
+        "argLdDeg": 30
+      },
+      "characteristicAngleDeg": 81.3,
+      "source": "lcd-dist-import",
+      "sourceRef": "official tap setting proteksi sutt daan mogot - durikosambi 1,2_rev01.pdf",
+      "confidence": "medium",
+      "status": "reviewed"
+    },
+    {
+      "id": "relset_relay_serial_ivhr91309444_21mhe6",
+      "relayIedId": "relay_serial_ivhr91309444_21mhe6",
+      "direction": "forward",
+      "zones": [
+        {
+          "id": "Z1",
+          "xReachOhm": 2.073,
+          "rReachOhm": 0.311,
+          "rfppOhmPerLoop": 4.353,
+          "rfpeOhmPerLoop": 8.085,
+          "timeDelayPpS": 0,
+          "timeDelayPeS": 0,
+          "operatePp": true,
+          "operatePe": true
+        },
+        {
+          "id": "Z2",
+          "xReachOhm": 3.11,
+          "rReachOhm": 0.466,
+          "rfppOhmPerLoop": 6.531,
+          "rfpeOhmPerLoop": 12.129,
+          "timeDelayPpS": 0.4,
+          "timeDelayPeS": 0.4,
+          "operatePp": true,
+          "operatePe": true
+        },
+        {
+          "id": "Z3",
+          "xReachOhm": 22.212,
+          "rReachOhm": 3.332,
+          "rfppOhmPerLoop": 46.645,
+          "rfpeOhmPerLoop": 86.627,
+          "timeDelayPpS": 1.6,
+          "timeDelayPeS": 1.6,
+          "operatePp": true,
+          "operatePe": true
+        }
+      ],
+      "loadEncroachment": {
+        "enabled": true,
+        "rLdFwOhmPerPhase": 40,
+        "rLdRvOhmPerPhase": 40,
+        "argLdDeg": 30
+      },
+      "characteristicAngleDeg": 81.3,
+      "source": "lcd-dist-import",
+      "sourceRef": "official tap setting proteksi sutt daan mogot - durikosambi 1,2_rev01.pdf",
+      "confidence": "medium",
+      "status": "reviewed"
+    },
+    {
+      "id": "relset_relay_serial_315994j_1jm9vxq",
+      "relayIedId": "relay_serial_315994j_1jm9vxq",
+      "direction": "forward",
+      "zones": [
+        {
+          "id": "Z1",
+          "xReachOhm": 2.073,
+          "rReachOhm": 0.311,
+          "rfppOhmPerLoop": 4.353,
+          "rfpeOhmPerLoop": 8.085,
+          "timeDelayPpS": 0,
+          "timeDelayPeS": 0,
+          "operatePp": true,
+          "operatePe": true
+        },
+        {
+          "id": "Z2",
+          "xReachOhm": 5.706,
+          "rReachOhm": 0.856,
+          "rfppOhmPerLoop": 11.983,
+          "rfpeOhmPerLoop": 22.253,
+          "timeDelayPpS": 0.4,
+          "timeDelayPeS": 0.4,
+          "operatePp": true,
+          "operatePe": true
+        },
+        {
+          "id": "Z3",
+          "xReachOhm": 9.921,
+          "rReachOhm": 1.488,
+          "rfppOhmPerLoop": 20.834,
+          "rfpeOhmPerLoop": 38.692,
+          "timeDelayPpS": 1.6,
+          "timeDelayPeS": 1.6,
+          "operatePp": true,
+          "operatePe": true
+        }
+      ],
+      "loadEncroachment": {
+        "enabled": true,
+        "rLdFwOhmPerPhase": 40,
+        "rLdRvOhmPerPhase": 40,
+        "argLdDeg": 30
+      },
+      "characteristicAngleDeg": 81.3,
+      "source": "lcd-dist-import",
+      "sourceRef": "official tap setting proteksi sutt durikosambi - daan mogot 1_rev01.pdf",
+      "confidence": "medium",
+      "status": "reviewed"
+    },
+    {
+      "id": "relset_relay_serial_39732214_03_20_1r8415j",
+      "relayIedId": "relay_serial_39732214_03_20_1r8415j",
+      "direction": "forward",
+      "zones": [
+        {
+          "id": "Z1",
+          "xReachOhm": 2.073,
+          "rReachOhm": 0.311,
+          "rfppOhmPerLoop": 4.353,
+          "rfpeOhmPerLoop": 8.085,
+          "timeDelayPpS": 0,
+          "timeDelayPeS": 0,
+          "operatePp": true,
+          "operatePe": true
+        },
+        {
+          "id": "Z2",
+          "xReachOhm": 5.706,
+          "rReachOhm": 0.856,
+          "rfppOhmPerLoop": 11.983,
+          "rfpeOhmPerLoop": 22.253,
+          "timeDelayPpS": 0.4,
+          "timeDelayPeS": 0.4,
+          "operatePp": true,
+          "operatePe": true
+        },
+        {
+          "id": "Z3",
+          "xReachOhm": 9.921,
+          "rReachOhm": 1.488,
+          "rfppOhmPerLoop": 20.834,
+          "rfpeOhmPerLoop": 38.692,
+          "timeDelayPpS": 1.6,
+          "timeDelayPeS": 1.6,
+          "operatePp": true,
+          "operatePe": true
+        }
+      ],
+      "loadEncroachment": {
+        "enabled": true,
+        "rLdFwOhmPerPhase": 40,
+        "rLdRvOhmPerPhase": 40,
+        "argLdDeg": 30
+      },
+      "characteristicAngleDeg": 81.3,
+      "source": "lcd-dist-import",
+      "sourceRef": "official tap setting proteksi sutt durikosambi - daan mogot 1_rev01.pdf",
+      "confidence": "medium",
+      "status": "reviewed"
+    },
+    {
+      "id": "relset_relay_serial_t1645095_1k751dx",
+      "relayIedId": "relay_serial_t1645095_1k751dx",
+      "direction": "forward",
+      "zones": [
+        {
+          "id": "Z1",
+          "xReachOhm": 2.073,
+          "rReachOhm": 0.311,
+          "rfppOhmPerLoop": 4.353,
+          "rfpeOhmPerLoop": 8.085,
+          "timeDelayPpS": 0,
+          "timeDelayPeS": 0,
+          "operatePp": true,
+          "operatePe": true
+        },
+        {
+          "id": "Z2",
+          "xReachOhm": 5.706,
+          "rReachOhm": 0.856,
+          "rfppOhmPerLoop": 11.983,
+          "rfpeOhmPerLoop": 22.253,
+          "timeDelayPpS": 0.4,
+          "timeDelayPeS": 0.4,
+          "operatePp": true,
+          "operatePe": true
+        },
+        {
+          "id": "Z3",
+          "xReachOhm": 9.921,
+          "rReachOhm": 1.488,
+          "rfppOhmPerLoop": 20.834,
+          "rfpeOhmPerLoop": 38.692,
+          "timeDelayPpS": 1.6,
+          "timeDelayPeS": 1.6,
+          "operatePp": true,
+          "operatePe": true
+        }
+      ],
+      "loadEncroachment": {
+        "enabled": true,
+        "rLdFwOhmPerPhase": 40,
+        "rLdRvOhmPerPhase": 40,
+        "argLdDeg": 30
+      },
+      "characteristicAngleDeg": 81.3,
+      "source": "lcd-dist-import",
+      "sourceRef": "official tap setting proteksi sutt durikosambi - daan mogot 1_rev01.pdf",
+      "confidence": "medium",
+      "status": "reviewed"
+    },
+    {
+      "id": "relset_relay_serial_315995j_1bar68b",
+      "relayIedId": "relay_serial_315995j_1bar68b",
+      "direction": "reverse",
+      "zones": [
+        {
+          "id": "Z1",
+          "xReachOhm": 2.073,
+          "rReachOhm": 0.311,
+          "rfppOhmPerLoop": 4.353,
+          "rfpeOhmPerLoop": 8.085,
+          "timeDelayPpS": 0,
+          "timeDelayPeS": 0,
+          "operatePp": true,
+          "operatePe": true
+        },
+        {
+          "id": "Z2",
+          "xReachOhm": 5.706,
+          "rReachOhm": 0.856,
+          "rfppOhmPerLoop": 11.983,
+          "rfpeOhmPerLoop": 22.253,
+          "timeDelayPpS": 0.4,
+          "timeDelayPeS": 0.4,
+          "operatePp": true,
+          "operatePe": true
+        },
+        {
+          "id": "Z3",
+          "xReachOhm": 9.921,
+          "rReachOhm": 1.488,
+          "rfppOhmPerLoop": 20.834,
+          "rfpeOhmPerLoop": 38.692,
+          "timeDelayPpS": 1.6,
+          "timeDelayPeS": 1.6,
+          "operatePp": true,
+          "operatePe": true
+        }
+      ],
+      "loadEncroachment": {
+        "enabled": true,
+        "rLdFwOhmPerPhase": 40,
+        "rLdRvOhmPerPhase": 40,
+        "argLdDeg": 30
+      },
+      "characteristicAngleDeg": 81.3,
+      "source": "lcd-dist-import",
+      "sourceRef": "official tap setting proteksi sutt durikosambi - daan mogot 2_rev01.pdf",
+      "confidence": "medium",
+      "status": "reviewed"
+    },
+    {
+      "id": "relset_relay_serial_39732579_04_20_1j8bt0o",
+      "relayIedId": "relay_serial_39732579_04_20_1j8bt0o",
+      "direction": "reverse",
+      "zones": [
+        {
+          "id": "Z1",
+          "xReachOhm": 2.073,
+          "rReachOhm": 0.311,
+          "rfppOhmPerLoop": 4.353,
+          "rfpeOhmPerLoop": 8.085,
+          "timeDelayPpS": 0,
+          "timeDelayPeS": 0,
+          "operatePp": true,
+          "operatePe": true
+        },
+        {
+          "id": "Z2",
+          "xReachOhm": 5.706,
+          "rReachOhm": 0.856,
+          "rfppOhmPerLoop": 11.983,
+          "rfpeOhmPerLoop": 22.253,
+          "timeDelayPpS": 0.4,
+          "timeDelayPeS": 0.4,
+          "operatePp": true,
+          "operatePe": true
+        },
+        {
+          "id": "Z3",
+          "xReachOhm": 9.921,
+          "rReachOhm": 1.488,
+          "rfppOhmPerLoop": 20.834,
+          "rfpeOhmPerLoop": 38.692,
+          "timeDelayPpS": 1.6,
+          "timeDelayPeS": 1.6,
+          "operatePp": true,
+          "operatePe": true
+        }
+      ],
+      "loadEncroachment": {
+        "enabled": true,
+        "rLdFwOhmPerPhase": 40,
+        "rLdRvOhmPerPhase": 40,
+        "argLdDeg": 30
+      },
+      "characteristicAngleDeg": 81.3,
+      "source": "lcd-dist-import",
+      "sourceRef": "official tap setting proteksi sutt durikosambi - daan mogot 2_rev01.pdf",
+      "confidence": "medium",
+      "status": "reviewed"
+    },
+    {
+      "id": "relset_relay_serial_t1645094_1jx5foy",
+      "relayIedId": "relay_serial_t1645094_1jx5foy",
+      "direction": "reverse",
+      "zones": [
+        {
+          "id": "Z1",
+          "xReachOhm": 2.073,
+          "rReachOhm": 0.311,
+          "rfppOhmPerLoop": 4.353,
+          "rfpeOhmPerLoop": 8.085,
+          "timeDelayPpS": 0,
+          "timeDelayPeS": 0,
+          "operatePp": true,
+          "operatePe": true
+        },
+        {
+          "id": "Z2",
+          "xReachOhm": 5.706,
+          "rReachOhm": 0.856,
+          "rfppOhmPerLoop": 11.983,
+          "rfpeOhmPerLoop": 22.253,
+          "timeDelayPpS": 0.4,
+          "timeDelayPeS": 0.4,
+          "operatePp": true,
+          "operatePe": true
+        },
+        {
+          "id": "Z3",
+          "xReachOhm": 9.921,
+          "rReachOhm": 1.488,
+          "rfppOhmPerLoop": 20.834,
+          "rfpeOhmPerLoop": 38.692,
+          "timeDelayPpS": 1.6,
+          "timeDelayPeS": 1.6,
+          "operatePp": true,
+          "operatePe": true
+        }
+      ],
+      "loadEncroachment": {
+        "enabled": true,
+        "rLdFwOhmPerPhase": 40,
+        "rLdRvOhmPerPhase": 40,
+        "argLdDeg": 30
+      },
+      "characteristicAngleDeg": 81.3,
+      "source": "lcd-dist-import",
+      "sourceRef": "official tap setting proteksi sutt durikosambi - daan mogot 2_rev01.pdf",
+      "confidence": "medium",
+      "status": "reviewed"
+    }
+  ]
 }

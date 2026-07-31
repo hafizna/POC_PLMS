@@ -27,7 +27,11 @@
     "test:engineering-data": "tsx scripts/test-engineering-data.ts",
     "test:engineering-change": "tsx scripts/test-engineering-change.ts",
     "test:setting-case": "tsx scripts/test-setting-case.ts",
-    "test:p545-input-contract": "tsx scripts/test-p545-input-contract.ts"
+    "test:p545-input-contract": "tsx scripts/test-p545-input-contract.ts",
+    "test:graph-coordination": "tsx scripts/test-graph-coordination.ts",
+    "test:relay-setting-builder": "tsx scripts/test-relay-setting-builder.ts",
+    "test:graph-builder-voltage-suffix": "tsx scripts/test-graph-builder-voltage-suffix.ts",
+    "test:relay-catalog-builder": "tsx scripts/test-relay-catalog-builder.ts"
   },
   "dependencies": {
     "d3": "^7.9.0",

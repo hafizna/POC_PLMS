@@ -583,14 +583,22 @@ assert.deepEqual(
   []
 );
 
+// Sprint 5 opens the `calculation` stage: it is no longer an unimplemented
+// boundary, but it still gates on at least one linked Calculation Run.
 const calculationBoundaryCase: SettingCase = {
   ...futureCase,
   stage: "calculation",
   studyPackageBindings: [compatiblePackage],
 };
+assert.equal(isStageImplemented("calculation"), true);
 assert.deepEqual(stageGate(calculationBoundaryCase, gateContext).blockers, [
-  "Stage ini belum diimplementasikan pada Sprint 4.1.",
+  "Belum ada Calculation Run yang tersimpan dan ter-link ke case ini.",
 ]);
+assert.deepEqual(
+  stageGate(calculationBoundaryCase, { ...gateContext, calculationCount: 1 })
+    .blockers,
+  []
+);
 
 const dynamicCorrectionImpact = {
   ...impact,

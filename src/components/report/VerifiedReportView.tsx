@@ -16,7 +16,7 @@ import {
 import { findComparisonBayIdForLine } from "../../domain/seed-comparison";
 import { summarizeBay } from "../../lib/mismatch-classifier";
 import { calculateDistanceSetting, DEFAULT_DISTANCE_INPUT } from "../../lib/distance-calculation";
-import { runCoordinationChecks } from "../../lib/coordination-checks";
+import { runGraphCoordinationChecks } from "../../lib/graph-coordination";
 import { buildUnifiedNetwork } from "../../domain/unified";
 import { useProsetStore } from "../../store/useProsetStore";
 import { ctRatioText, getEffectiveCtVt, vtRatioText } from "../../domain/instrument-transformers";
@@ -27,10 +27,6 @@ export function VerifiedReportView() {
   const networkGraphOverrides = useProsetStore((s) => s.networkGraphOverrides);
   const ctVtOverrides = useProsetStore((s) => s.ctVtOverrides);
   const comparisonBays = useProsetStore((s) => s.comparisonBays);
-  const topology = useProsetStore((s) => s.topology);
-  const corridors = useProsetStore((s) => s.corridors);
-  const activeCorridorId = useProsetStore((s) => s.activeCorridorId);
-  const getEffectiveRelay = useProsetStore((s) => s.getEffectiveRelay);
 
   const activeCase =
     NETWORK_CASES.find((item) => item.id === activeCaseId) ?? NETWORK_CASES[0];
@@ -107,11 +103,12 @@ export function VerifiedReportView() {
       z3DelayS: promoted?.zones.t3 ?? DEFAULT_DISTANCE_INPUT.z3DelayS,
     });
   }, [activeLine, from, promoted, to]);
-  const activeCorridor = corridors.find((item) => item.id === activeCorridorId) ?? corridors[0];
-  const diagnostics = activeCorridor
-    ? runCoordinationChecks(topology, activeCorridor, getEffectiveRelay)
-    : [];
+  const diagnostics = useMemo(
+    () => (networkGraph ? runGraphCoordinationChecks(networkGraph) : []),
+    [networkGraph]
+  );
   const issueCount = diagnostics.filter((item) => item.severity === "error" || item.severity === "warning").length;
+  const hasRelaySettings = Boolean(networkGraph?.relaySettings?.length);
 
   if (!activeLine) {
     return (
@@ -227,13 +224,22 @@ export function VerifiedReportView() {
         </div>
         <div className="bg-white border border-slate-200 rounded-lg p-4">
           <h3 className="text-xs uppercase tracking-wider font-semibold text-slate-600 mb-3">Coverage Diagnostics</h3>
-          <div className="grid grid-cols-2 gap-2">
-            <ReportTile label="Diagnostics" value={String(diagnostics.length)} />
-            <ReportTile label="Warnings/errors" value={String(issueCount)} />
-          </div>
-          <p className="text-xs text-slate-500 mt-3">
-            Detail visual tetap dilihat di Coverage Check. Report ini menyimpan ringkasan hasil rule.
-          </p>
+          {hasRelaySettings ? (
+            <>
+              <div className="grid grid-cols-2 gap-2">
+                <ReportTile label="Diagnostics" value={String(diagnostics.length)} />
+                <ReportTile label="Warnings/errors" value={String(issueCount)} />
+              </div>
+              <p className="text-xs text-slate-500 mt-3">
+                Detail visual tetap dilihat di Coverage Check. Report ini menyimpan ringkasan hasil rule.
+              </p>
+            </>
+          ) : (
+            <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded p-2">
+              Belum ada RelaySetting (Z1/Z2/Z3) untuk network ini — graph builder belum mengisi relay
+              identity/zone data untuk case ini, jadi coordination diagnostics belum bisa dihitung.
+            </p>
+          )}
         </div>
       </section>
     </div>

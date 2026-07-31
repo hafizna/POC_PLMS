@@ -33,6 +33,7 @@ import { assessCrosscheckEvidence } from "../../domain/case-flow-hardening";
 // workflow container; the tools stay where they are and are opened in-context.
 const STAGE_TOOL: Partial<Record<SettingCaseStage, { tab: Tab; label: string }>> = {
   scoping: { tab: "network-model", label: "Working Network" },
+  calculation: { tab: "calculation", label: "Calculation Workbook" },
 };
 
 export function SettingCaseDetail({
@@ -43,7 +44,7 @@ export function SettingCaseDetail({
   onBack: () => void;
 }) {
   const persona = useProsetStore((s) => s.currentPersona);
-  const setTab = useProsetStore((s) => s.setTab);
+  const openToolFromCase = useProsetStore((s) => s.openToolFromCase);
   const selectLine = useProsetStore((s) => s.selectLine);
   const advanceStage = useProsetStore((s) => s.advanceSettingCaseStage);
   const freezeBaseline = useProsetStore((s) => s.freezeSettingCaseBaseline);
@@ -115,7 +116,7 @@ export function SettingCaseDetail({
     if (settingCase.protectedScope.subjectLineId) {
       selectLine(settingCase.protectedScope.subjectLineId);
     }
-    setTab(tab);
+    openToolFromCase(settingCase.id, tab);
   };
 
   return (
@@ -438,8 +439,9 @@ export function SettingCaseDetail({
 
           <div className="rounded-md border border-dashed border-slate-300 bg-slate-50 px-3 py-3 text-xs text-slate-600">
             Study Scenario hanya ditautkan melalui package compatibility binding.
-            Calculation run, approval, commissioning, dan verification belum dapat
-            dieksekusi pada Sprint 4.1.
+            Calculation run kini dapat ditautkan lewat Calculation Workbook
+            (Sprint 5). Coordination, approval, commissioning, dan verification
+            belum dapat dieksekusi.
           </div>
         </section>
 

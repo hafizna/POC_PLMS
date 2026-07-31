@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from "react";
 import {
+  ArrowLeft,
   BookOpen,
   Briefcase,
   Calculator,
@@ -79,12 +80,37 @@ export function AppShell({ children }: { children: ReactNode }) {
   const tab = useProsetStore((state) => state.currentTab);
   const setTab = useProsetStore((state) => state.setTab);
   const openCaseWizard = useProsetStore((state) => state.openCaseWizard);
+  const openedFromCaseId = useProsetStore((state) => state.openedFromCaseId);
+  const clearOpenedFromCase = useProsetStore((state) => state.clearOpenedFromCase);
+  const setActiveSettingCase = useProsetStore((state) => state.setActiveSettingCase);
+  const openedFromCase = useProsetStore((state) =>
+    openedFromCaseId
+      ? state.settingCases.find((item) => item.id === openedFromCaseId)
+      : undefined
+  );
   const [toolsOpen, setToolsOpen] = useState(
     EXISTING_TOOL_ITEMS.some((item) => item.id === tab)
   );
   const [legacyOpen, setLegacyOpen] = useState(
     LEGACY_ITEMS.some((item) => item.id === tab)
   );
+
+  const backToCase = () => {
+    if (openedFromCaseId) {
+      setActiveSettingCase(openedFromCaseId);
+    }
+    clearOpenedFromCase();
+    setTab("cases");
+  };
+
+  // Manual sidebar/mobile navigation clears the case breadcrumb — it only
+  // makes sense while following the "Buka <tool>" link from a specific case.
+  const goToTab = (nextTab: Tab) => {
+    if (openedFromCaseId) {
+      clearOpenedFromCase();
+    }
+    setTab(nextTab);
+  };
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-50">
@@ -96,7 +122,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </label>
         <select
           value={tab}
-          onChange={(event) => setTab(event.target.value as Tab)}
+          onChange={(event) => goToTab(event.target.value as Tab)}
           className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-800"
         >
           {ALL_ITEMS.map((item) => (
@@ -140,7 +166,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   key={item.id}
                   item={item}
                   active={tab === item.id}
-                  onClick={() => setTab(item.id)}
+                  onClick={() => goToTab(item.id)}
                   prominent
                 />
               ))}
@@ -152,7 +178,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   key={item.id}
                   item={item}
                   active={tab === item.id}
-                  onClick={() => setTab(item.id)}
+                  onClick={() => goToTab(item.id)}
                 />
               ))}
             </NavSection>
@@ -163,7 +189,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   key={item.id}
                   item={item}
                   active={tab === item.id}
-                  onClick={() => setTab(item.id)}
+                  onClick={() => goToTab(item.id)}
                 />
               ))}
             </NavSection>
@@ -189,7 +215,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                       key={item.id}
                       item={item}
                       active={tab === item.id}
-                      onClick={() => setTab(item.id)}
+                      onClick={() => goToTab(item.id)}
                       compact
                     />
                   ))}
@@ -218,7 +244,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                       key={item.id}
                       item={item}
                       active={tab === item.id}
-                      onClick={() => setTab(item.id)}
+                      onClick={() => goToTab(item.id)}
                       compact
                     />
                   ))}
@@ -232,26 +258,47 @@ export function AppShell({ children }: { children: ReactNode }) {
               Case-driven
             </div>
             <p className="mt-1 text-[11px] leading-4 text-slate-500">
-              Sprint 4.1 aktif sampai Study Scenario Package. Tool lama belum case-gated.
+              Sprint 5: gate Calculation dibuka. Tool lain masih belum case-gated.
             </p>
           </div>
         </aside>
 
-        <main
-          className={`mx-auto w-full flex-1 px-4 py-5 sm:px-6 lg:px-8 lg:py-7 ${
-            tab === "reference-setting"
-              ? "max-w-[1520px]"
-              : tab === "coverage"
-                ? "max-w-[1760px]"
-                : "max-w-[1280px]"
-          }`}
-        >
-          {children}
-        </main>
+        <div className="flex min-w-0 flex-1 flex-col">
+          {openedFromCaseId && tab !== "cases" && (
+            <div className="flex items-center justify-between gap-3 border-b border-amber-200 bg-amber-50 px-4 py-2 sm:px-6 lg:px-8">
+              <p className="min-w-0 truncate text-xs text-amber-900">
+                Dibuka dari Case{" "}
+                <span className="font-semibold">
+                  {openedFromCase ? openedFromCase.title : openedFromCaseId}
+                </span>{" "}
+                — tool ini belum otomatis menyimpan hasil ke case tersebut.
+              </p>
+              <button
+                type="button"
+                onClick={backToCase}
+                className="inline-flex shrink-0 items-center gap-1 rounded-md border border-amber-300 bg-white px-2.5 py-1 text-xs font-semibold text-amber-800 hover:bg-amber-100"
+              >
+                <ArrowLeft className="h-3.5 w-3.5" /> Kembali ke Case
+              </button>
+            </div>
+          )}
+
+          <main
+            className={`mx-auto w-full flex-1 px-4 py-5 sm:px-6 lg:px-8 lg:py-7 ${
+              tab === "reference-setting"
+                ? "max-w-[1520px]"
+                : tab === "coverage"
+                  ? "max-w-[1760px]"
+                  : "max-w-[1280px]"
+            }`}
+          >
+            {children}
+          </main>
+        </div>
       </div>
 
       <footer className="border-t border-slate-200 bg-white px-6 py-3 text-xs text-slate-500">
-        PLMS · Sprint 4.1: Flow Hardening & Scenario Package · Calculation masih terkunci.
+        PLMS · Sprint 5: Calculation gate dibuka · Coordination dan tahap setelahnya masih terkunci.
       </footer>
     </div>
   );

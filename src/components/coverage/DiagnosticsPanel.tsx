@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { Diagnostic } from "../../domain/types";
+import type { GraphDiagnostic } from "../../lib/graph-coordination";
 import { CheckCircle2, AlertTriangle, AlertCircle, Info, ChevronDown } from "lucide-react";
 
-export function DiagnosticsPanel({ diagnostics }: { diagnostics: Diagnostic[] }) {
+export function DiagnosticsPanel({ diagnostics }: { diagnostics: GraphDiagnostic[] }) {
   const errors = diagnostics.filter((d) => d.severity === "error");
   const warnings = diagnostics.filter((d) => d.severity === "warning");
   const infos = diagnostics.filter((d) => d.severity === "info");
@@ -49,7 +49,7 @@ export function DiagnosticsPanel({ diagnostics }: { diagnostics: Diagnostic[] })
   );
 }
 
-function DiagnosticRow({ diag }: { diag: Diagnostic }) {
+function DiagnosticRow({ diag }: { diag: GraphDiagnostic }) {
   const [expanded, setExpanded] = useState(false);
   const Icon =
     diag.severity === "error"
@@ -84,8 +84,8 @@ function DiagnosticRow({ diag }: { diag: Diagnostic }) {
             {diag.detail}
             <div className="mt-2 text-[10px] font-mono text-slate-400">
               code: {diag.code}
-              {diag.affected_zones &&
-                ` | zones: ${diag.affected_zones.join(", ")}`}
+              {diag.affectedZones &&
+                ` | zones: ${diag.affectedZones.join(", ")}`}
             </div>
           </div>
         )}

@@ -67,7 +67,17 @@ export function CalculationView() {
   const ctVtOverrides = useProsetStore((s) => s.ctVtOverrides);
   const setActiveLine = useProsetStore((s) => s.setActiveNetworkLine);
   const addCalculationSnapshot = useProsetStore((s) => s.addCalculationSnapshot);
+  const linkToSettingCase = useProsetStore((s) => s.linkToSettingCase);
   const activeStudy = useProsetStore((s) => s.studies.find((study) => study.id === s.activeStudyId));
+  // If a Setting Case's protected scope points at the line currently open
+  // here, treat that as the case this calculation belongs to — saved
+  // snapshots are linked back to it (BUSINESS_PROCESS_BLUEPRINT.md §8,
+  // `Execute calculation` writes a CalculationRun bound to the case).
+  const linkedSettingCase = useProsetStore((s) =>
+    s.settingCases.find(
+      (item) => item.protectedScope.subjectLineId === s.activeNetworkLineId
+    )
+  );
   const [side, setSide] = useState<"from" | "to">("from");
   const [selectedTemplateId, setSelectedTemplateId] = useState("distance-line-150kv");
   const [savedSnapshotId, setSavedSnapshotId] = useState<string | null>(null);
@@ -204,6 +214,9 @@ export function CalculationView() {
       warnings: result.warnings,
       note: "Draft TAP setting generated from executable distance workbook.",
     });
+    if (linkedSettingCase) {
+      linkToSettingCase(linkedSettingCase.id, { kind: "calculation", refId: snapshotId });
+    }
     setSavedSnapshotId(snapshotId);
   };
 
@@ -335,9 +348,15 @@ export function CalculationView() {
             <span className="text-blue-700">
               Prefilled dari {calcIed ? "network graph IED" : promotedLine ? "promoted LCD+DIST" : "registry"}.
             </span>
+            {linkedSettingCase && (
+              <span className="text-amber-800 bg-amber-50 border border-amber-200 rounded px-2 py-0.5">
+                Case: {linkedSettingCase.title}
+              </span>
+            )}
             {savedSnapshotId && (
               <span className="text-emerald-700 bg-emerald-50 border border-emerald-200 rounded px-2 py-0.5">
                 Saved to Setting Register
+                {linkedSettingCase ? ` & ${linkedSettingCase.title}` : ""}
               </span>
             )}
           </div>
@@ -402,7 +421,16 @@ export function CalculationView() {
         <OcrWorkbook
           lineId={activeLineId || ""}
           caseId={activeCase.id}
-          onSave={addCalculationSnapshot}
+          onSave={(snapshot) => {
+            const snapshotId = addCalculationSnapshot(snapshot);
+            if (linkedSettingCase) {
+              linkToSettingCase(linkedSettingCase.id, {
+                kind: "calculation",
+                refId: snapshotId,
+              });
+            }
+            return snapshotId;
+          }}
         />
       ) : (
         <div className="grid grid-cols-1 xl:grid-cols-[380px_1fr] gap-4">

@@ -88,6 +88,9 @@ export function CaseWorkQueueView() {
         Sprint 4.1 menjalankan <b className="font-semibold text-ink">flow authority,
         evidence mode, activation contract, serta Study Scenario Package</b>. Kondisi
         study diturunkan per case; approval tidak mengaktifkan data sebelum commissioning.
+        Sprint 5 membuka gerbang <b className="font-semibold text-ink">Calculation</b>:
+        case dapat lanjut ke Coordination setelah minimal satu Calculation Run
+        ter-link.
       </p>
 
       {/* primary actions + KPI */}
@@ -217,9 +220,10 @@ export function CaseWorkQueueView() {
       </div>
 
       <p className="mt-4 border-t border-line pt-3 text-[12.5px] leading-[1.65] text-ink-2">
-        <b className="text-ink">Boundary Sprint 4.1.</b> Routing P1–P5 membedakan
+        <b className="text-ink">Boundary Sprint 5.</b> Routing P1–P5 membedakan
         document audit/readback, permanent/temporary, serta commissioning activation.
-        Calculation, approval execution, issuance, dan verification belum diklaim selesai.
+        Calculation kini case-gated (minimal satu Calculation Run ter-link).
+        Coordination, approval execution, issuance, dan verification belum diklaim selesai.
       </p>
 
       {wizardType && (

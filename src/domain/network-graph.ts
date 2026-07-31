@@ -29,7 +29,7 @@ export const INVENTORY_MASTER_CASE_ID = "case_ultg_dks_inventory";
 // that at module scope nearly doubled the main bundle. Re-run
 // `npm run generate:demo-seed` if the demo corridor's station selection
 // changes or digsilentLineDb is re-indexed.
-export const NETWORK_GRAPH_DKS_PIK: UnifiedNetwork = demoCorridorSeed as UnifiedNetwork;
+export const NETWORK_GRAPH_DKS_PIK: UnifiedNetwork = demoCorridorSeed as unknown as UnifiedNetwork;
 
 export const NETWORK_GRAPH_BY_CASE: Record<string, UnifiedNetwork> = {
   [NETWORK_GRAPH_DKS_PIK.caseId]: NETWORK_GRAPH_DKS_PIK,

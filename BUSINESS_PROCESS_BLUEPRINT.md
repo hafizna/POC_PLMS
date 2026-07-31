@@ -857,9 +857,10 @@ identities remain blockers rather than invented defaults. The indexed IHS 2021
 scenario is historical, has unknown condition/timestamp, and therefore remains
 reference-only rather than being auto-promoted.
 
-`Calculation` and all later stages remain locked. Existing calculation,
-comparison, register, vendor-import, network-builder, coverage, and report
-screens remain POC tools and are explicitly marked as not case-gated.
+`Coordination` and all later stages remain locked. Existing comparison,
+register, vendor-import, network-builder, coverage, and report screens remain
+POC tools and are explicitly marked as not case-gated. `Calculation` is the
+first POC tool that is case-gated, as of Sprint 5 below.
 
 Sprint 4.1 hardens the business flow before calculation:
 
@@ -880,6 +881,26 @@ Sprint 4.1 hardens the business flow before calculation:
   on approved effective date;
 - visible future routes include commissioning/activation and restoration, but
   their operational handlers remain outside the Sprint 4.1 executable boundary.
+
+Sprint 5 opens the `calculation` stage (Engineering MVP E1's first slice):
+
+- `calculation` was added to `EXECUTABLE_SETTING_CASE_STAGES`; the stage gate
+  requires at least one `CalculationRun` (calculation snapshot) linked to the
+  case before the case can advance to `coordination`.
+- `SettingCaseDetail`'s stage-tool map now opens the Calculation Workbook
+  in-context: the case's `protectedScope.subjectLineId` is applied as the
+  active line before navigating, so the workbook opens already scoped to the
+  right line.
+- Saving a calculation snapshot (distance workbook or OCR/GFR workbook) links
+  it back to the originating case via `links.calculationSnapshotIds`, and the
+  Calculation Workbook shows which case it is bound to.
+- This is plumbing, not policy: the calculation engine itself is still the
+  same distance/OCR-GFR POC formulas (MVP 2B.2 formula parity is a separate,
+  unstarted piece of work). What changed is that a Setting Case can now
+  reference a real Calculation Run instead of the stage being an unreachable
+  placeholder.
+- Coordination, review, approval, issuance, field implementation,
+  commissioning, and verification remain outside the executable boundary.
 
 ### Foundation F1 — Domain and Governance
 

@@ -355,6 +355,8 @@ export function nextStageOf(settingCase: SettingCase): SettingCaseStage | null {
 }
 
 // Sprint 4.1 adds requirement-driven Scenario Packages and hardened flow contracts.
+// Sprint 5 (Engineering MVP E1) opens the `calculation` gate: a case can only
+// leave this stage once at least one reproducible Calculation Run is linked.
 export const EXECUTABLE_SETTING_CASE_STAGES: ReadonlySet<SettingCaseStage> = new Set([
   "draft",
   "scoping",
@@ -362,6 +364,7 @@ export const EXECUTABLE_SETTING_CASE_STAGES: ReadonlySet<SettingCaseStage> = new
   "data_change_preparation",
   "impact_and_readiness",
   "study_preparation",
+  "calculation",
 ]);
 
 export function isStageImplemented(stage: SettingCaseStage): boolean {
@@ -388,8 +391,9 @@ export type StageGateResult = {
   warnings: string[];
 };
 
-// Current gates validate intake/scoping, the frozen baseline, and completeness
-// of the latest proposed revision. Technical impact validation remains Sprint 3.
+// Current gates validate intake/scoping, the frozen baseline, completeness of
+// the latest proposed revision, impact/study readiness, and (Sprint 5) that at
+// least one Calculation Run is linked before leaving the `calculation` stage.
 export function stageGate(settingCase: SettingCase, ctx: StageGateContext): StageGateResult {
   const blockers: string[] = [];
   const warnings: string[] = [];
@@ -439,6 +443,13 @@ export function stageGate(settingCase: SettingCase, ctx: StageGateContext): Stag
       if (!ctx.studyPackageReady) {
         blockers.push(
           "Belum ada Study Scenario Package yang lengkap dan compatible dengan revision case."
+        );
+      }
+      break;
+    case "calculation":
+      if (ctx.calculationCount === 0) {
+        blockers.push(
+          "Belum ada Calculation Run yang tersimpan dan ter-link ke case ini."
         );
       }
       break;

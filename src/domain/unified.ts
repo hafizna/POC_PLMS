@@ -199,6 +199,54 @@ export type SettingRecord = {
   status: LifecycleStatus;
 };
 
+export type DistanceZoneId = "Z1" | "Z2" | "Z3";
+
+// One distance zone's reach and timer, in primary ohms/seconds. Field names
+// and semantics mirror the legacy `Zone` type (src/domain/types.ts) used by
+// src/lib/corridor-math.ts and coordination-checks.ts, so a future graph-aware
+// port of that math can read the same values from RelaySetting instead of the
+// old linear-chain Relay type — this is the typed home that model has
+// intentionally lacked so far (RelayIED carries no zone/reach fields, and
+// SettingRecord.values is an untyped bag not suited to zone-reach math).
+export type DistanceZoneSetting = {
+  id: DistanceZoneId;
+  xReachOhm: number;
+  rReachOhm: number;
+  rfppOhmPerLoop: number;
+  rfpeOhmPerLoop: number;
+  timeDelayPpS: number;
+  timeDelayPeS: number;
+  operatePp: boolean;
+  operatePe: boolean;
+};
+
+export type LoadEncroachmentSetting = {
+  enabled: boolean;
+  rLdFwOhmPerPhase: number;
+  rLdRvOhmPerPhase: number;
+  argLdDeg: number;
+};
+
+// Distance-protection zone settings for one RelayIED. Kept separate from
+// RelayIED itself (rather than adding these fields directly) because not
+// every relay carries a distance function (ProtectionFunctionId "DIST") —
+// this only exists for relays where that function applies, mirroring how
+// ProtectionFunction is already a separate join rather than flags on
+// RelayIED. A relay has at most one RelaySetting per direction (a relay can
+// have forward and reverse elements looking at different line ends).
+export type RelaySetting = {
+  id: string;
+  relayIedId: string;
+  direction: "forward" | "reverse";
+  zones: [DistanceZoneSetting, DistanceZoneSetting, DistanceZoneSetting];
+  loadEncroachment: LoadEncroachmentSetting;
+  characteristicAngleDeg: number;
+  source: SettingSourceKind;
+  sourceRef: string;
+  confidence: RegistryConfidence;
+  status: LifecycleStatus;
+};
+
 export type UnifiedNetwork = {
   caseId: string;
   substations: UnifiedSubstation[];
@@ -215,6 +263,11 @@ export type UnifiedNetwork = {
   // candidates instead of assuming "next line" by default.
   transformers?: Transformer[];
   remoteBusBranches?: RemoteBusBranch[];
+  // Optional: absent/empty until a graph-aware coordination engine is wired
+  // up (see corridor-math.ts / coordination-checks.ts, currently ported only
+  // against the legacy linear Relay/Corridor types). This is the future
+  // typed home for Z1/Z2/Z3 reach and timer settings on this graph.
+  relaySettings?: RelaySetting[];
 };
 
 const KNOWN_FUNCTION_TOKENS: Record<string, ProtectionFunctionId> = {
