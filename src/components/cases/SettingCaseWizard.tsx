@@ -1,12 +1,12 @@
 import { useMemo, useState } from "react";
-import { ArrowLeft, ArrowRight, CheckCircle2, Search, X } from "lucide-react";
+import { AlertTriangle, ArrowLeft, ArrowRight, CheckCircle2, Search, ShieldAlert, X } from "lucide-react";
 import { useProsetStore } from "../../store/useProsetStore";
+import { buildGraphForUltg, type GraphBuildGroup } from "../../domain/graph-builder";
+import { INVENTORY_MASTER_CASE_ID } from "../../domain/network-graph";
 import {
-  getEffectiveNetworkGraph,
-  INVENTORY_MASTER_CASE_ID,
-} from "../../domain/network-graph";
-import { buildUnifiedNetwork } from "../../domain/unified";
-import { NETWORK_CASES } from "../../domain/seed-network-registry";
+  bayReadinessByRecordId,
+  type BayReadiness,
+} from "../../domain/upt-zone-audit";
 import {
   CHANGE_ITEM_LABEL,
   deriveSettingCaseType,
@@ -70,27 +70,49 @@ export function SettingCaseWizard({
   const [evidenceIds, setEvidenceIds] = useState<string[]>([]);
 
   const createSettingCase = useProsetStore((s) => s.createSettingCase);
-  const networkGraphOverrides = useProsetStore((s) => s.networkGraphOverrides);
   const sourceIntakeRecords = useProsetStore((s) => s.sourceIntakeRecords);
+  const goToDataQualityQueue = useProsetStore((s) => s.setTab);
 
-  const inventoryCase =
-    NETWORK_CASES.find((item) => item.id === INVENTORY_MASTER_CASE_ID) ?? NETWORK_CASES[0];
-  const masterFallback = useMemo(() => buildUnifiedNetwork(inventoryCase), [inventoryCase]);
-  const workingGraph = useMemo(
-    () =>
-      getEffectiveNetworkGraph(
-        INVENTORY_MASTER_CASE_ID,
-        networkGraphOverrides[INVENTORY_MASTER_CASE_ID],
-        masterFallback
-      ),
-    [masterFallback, networkGraphOverrides]
+  // Bay scope is sourced from the ULTG anchor pipeline (digsilentLineDb +
+  // SLD scope + LCD/DIST overlay — the same data Data Quality Queue/Inbox
+  // uses), not from manually-confirmed network graph overrides. A bay whose
+  // topology is already resolvable from real DIgSILENT data (e.g. GI Angke)
+  // shows up here immediately — the user is no longer forced to visit Data
+  // Quality Queue first just to make an already-known bay selectable.
+  // Groups still marked needsManualTopology (sites with no 2021 anchor at
+  // all — post-2021 energization) remain visible but flagged, with a link
+  // to go confirm them instead of silently failing later in the flow.
+  const graphResult = useMemo(() => buildGraphForUltg(), []);
+  const readinessByRecordId = useMemo(() => bayReadinessByRecordId(), []);
+
+  const allGroups: GraphBuildGroup[] = graphResult.groups;
+  const allBays = useMemo(() => allGroups.flatMap((g) => g.bays), [allGroups]);
+  const allLineRelations = useMemo(() => allGroups.flatMap((g) => g.lineRelations), [allGroups]);
+  const allSubstationsRaw = useMemo(() => allGroups.map((g) => g.station), [allGroups]);
+  const groupByStationId = useMemo(
+    () => new Map(allGroups.map((g) => [g.station.id, g])),
+    [allGroups]
   );
 
+  // A bay's readiness is the best (or worst) status among the overlay
+  // records that resolved onto it — a bay can have both an LCD (no
+  // distance function) and a DIST record layered on the same anchor bay.
+  function readinessForBay(bayId: string): BayReadiness | undefined {
+    for (const group of allGroups) {
+      for (const overlay of group.overlays) {
+        if (overlay.matchedBayId !== bayId) continue;
+        const found = readinessByRecordId.get(overlay.sourceId);
+        if (found) return found;
+      }
+    }
+    return undefined;
+  }
+
   const candidateBays = useMemo(() => {
-    if (!workingGraph) return [];
-    return workingGraph.bays.map((bay) => {
-      const sub = workingGraph.substations.find((s) => s.id === bay.substationId);
-      const relation = workingGraph.lineRelations.find(
+    return allBays.map((bay) => {
+      const sub = allSubstationsRaw.find((s) => s.id === bay.substationId);
+      const group = groupByStationId.get(bay.substationId);
+      const relation = allLineRelations.find(
         (r) => r.fromBayId === bay.id || r.toBayId === bay.id
       );
       const remoteSubId =
@@ -99,7 +121,8 @@ export function SettingCaseWizard({
           : relation?.toBayId === bay.id
             ? relation.fromSubstationId
             : undefined;
-      const remoteSub = workingGraph.substations.find((s) => s.id === remoteSubId);
+      const remoteSub = allSubstationsRaw.find((s) => s.id === remoteSubId);
+      const readiness = readinessForBay(bay.id);
       return {
         bayId: bay.id,
         substationId: sub?.id ?? "",
@@ -110,11 +133,14 @@ export function SettingCaseWizard({
         relationLabel: relation
           ? remoteSub
             ? `${sub?.shortCode} - ${remoteSub.shortCode}`
-            : "menunggu GI lawan di-confirm"
+            : "GI lawan belum teridentifikasi"
           : "unmapped",
+        needsManualTopology: group?.needsManualTopology ?? false,
+        readiness,
       };
     });
-  }, [workingGraph]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allBays, allSubstationsRaw, allLineRelations, groupByStationId, readinessByRecordId]);
 
   const filteredBays = useMemo(() => {
     const q = search.toLowerCase();
@@ -130,9 +156,9 @@ export function SettingCaseWizard({
   const selectedSubject = candidateBays.find((b) => b.bayId === subjectBayId);
 
   const suggestedSubstations = useMemo(() => {
-    if (!selectedSubject || !workingGraph) return [];
+    if (!selectedSubject) return [];
     const subs = new Set<string>([selectedSubject.substationId]);
-    const primary = workingGraph.lineRelations.find(
+    const primary = allLineRelations.find(
       (r) => r.fromBayId === selectedSubject.bayId || r.toBayId === selectedSubject.bayId
     );
     if (primary) {
@@ -142,7 +168,7 @@ export function SettingCaseWizard({
         primary.fromBayId === selectedSubject.bayId
           ? primary.toSubstationId
           : primary.fromSubstationId;
-      workingGraph.lineRelations
+      allLineRelations
         .filter((r) => r.fromSubstationId === remoteSubId || r.toSubstationId === remoteSubId)
         .forEach((r) => {
           subs.add(r.fromSubstationId);
@@ -150,15 +176,15 @@ export function SettingCaseWizard({
         });
     }
     return Array.from(subs).map((id) => {
-      const sub = workingGraph.substations.find((s) => s.id === id);
+      const sub = allSubstationsRaw.find((s) => s.id === id);
       return { id, code: sub?.shortCode ?? id, name: sub?.name ?? id };
     });
-  }, [selectedSubject, workingGraph]);
+  }, [selectedSubject, allLineRelations, allSubstationsRaw]);
 
-  const allSubstations = useMemo(() => {
-    if (!workingGraph) return [];
-    return [...workingGraph.substations].sort((a, b) => a.shortCode.localeCompare(b.shortCode));
-  }, [workingGraph]);
+  const allSubstations = useMemo(
+    () => [...allSubstationsRaw].sort((a, b) => a.shortCode.localeCompare(b.shortCode)),
+    [allSubstationsRaw]
+  );
 
   const skipChangeStep = entryKind === "crosscheck";
   const reasonOptions: ChangeItemKind[] =
@@ -590,9 +616,15 @@ export function SettingCaseWizard({
                       </div>
                       <div className="text-[11px] text-slate-500">{bay.relationLabel}</div>
                     </div>
-                    {subjectBayId === bay.bayId && (
-                      <CheckCircle2 className="h-4 w-4 shrink-0 text-blue-600" />
-                    )}
+                    <div className="flex shrink-0 items-center gap-1.5">
+                      <BayReadinessBadge
+                        needsManualTopology={bay.needsManualTopology}
+                        readiness={bay.readiness}
+                      />
+                      {subjectBayId === bay.bayId && (
+                        <CheckCircle2 className="h-4 w-4 shrink-0 text-blue-600" />
+                      )}
+                    </div>
                   </button>
                 ))}
                 {filteredBays.length === 0 && (
@@ -602,8 +634,51 @@ export function SettingCaseWizard({
                 )}
               </div>
               {selectedSubject ? (
-                <div className="rounded-md border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-800">
-                  Scope GI: {suggestedSubstations.map((s) => s.code).join(", ")}
+                <div className="space-y-2">
+                  <div className="rounded-md border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-800">
+                    Scope GI: {suggestedSubstations.map((s) => s.code).join(", ")}
+                  </div>
+                  {selectedSubject.needsManualTopology && (
+                    <div className="flex items-center justify-between gap-3 rounded-md border border-red-200 bg-red-50 p-3 text-xs text-red-800">
+                      <span>
+                        GI ini belum punya anchor topologi (situs baru / belum ter-mapping).
+                        Case tetap bisa dibuat, tapi calculation/crosscheck akan terhambat
+                        sampai topologi di-confirm.
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => goToDataQualityQueue("inbox")}
+                        className="inline-flex shrink-0 items-center gap-1 rounded border border-red-300 bg-white px-2 py-1 font-medium text-red-700 hover:bg-red-100"
+                      >
+                        Buka Data Quality Queue
+                      </button>
+                    </div>
+                  )}
+                  {!selectedSubject.needsManualTopology && selectedSubject.readiness?.status === "mismatch" && (
+                    <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+                      <div className="flex items-center gap-1.5 font-medium">
+                        <AlertTriangle className="h-3.5 w-3.5" />
+                        {selectedSubject.readiness.mismatchCount} nilai Z1-Z3/timer TAP vs actual
+                        berbeda melebihi toleransi.
+                      </div>
+                      <p className="mt-1">
+                        Case tetap bisa dibuat untuk menindaklanjuti temuan ini — lihat detail di
+                        Reference Setting / Actual Verification sebelum menerbitkan setting baru.
+                      </p>
+                    </div>
+                  )}
+                  {!selectedSubject.needsManualTopology && selectedSubject.readiness?.status === "missing-data" && (
+                    <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+                      Data Z1-Z3/timer (reference, TAP, atau actual) belum lengkap untuk bay ini.
+                      Lengkapi dulu di Dokumen Sumber / Vendor Import sebelum crosscheck penuh.
+                    </div>
+                  )}
+                  {!selectedSubject.needsManualTopology && selectedSubject.readiness?.status === "ready" && (
+                    <div className="flex items-center gap-1.5 rounded-md border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-800">
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                      Data Z1-Z3/timer reference/TAP/actual sudah konsisten untuk bay ini.
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div>
@@ -725,5 +800,57 @@ export function SettingCaseWizard({
         </div>
       </div>
     </div>
+  );
+}
+
+// Inline signal on each bay row in Step 3's picker, so the user sees data
+// readiness BEFORE picking a bay, not after the case already exists and
+// they hit a wall in Calculation/Reference Setting. See upt-zone-audit.ts
+// for what each status means.
+function BayReadinessBadge({
+  needsManualTopology,
+  readiness,
+}: {
+  needsManualTopology: boolean;
+  readiness?: BayReadiness;
+}) {
+  if (needsManualTopology) {
+    return (
+      <span
+        title="GI belum punya anchor topologi — perlu confirm manual di Data Quality Queue"
+        className="inline-flex items-center gap-1 rounded border border-red-200 bg-red-50 px-1.5 py-0.5 text-[10px] font-medium text-red-700"
+      >
+        <ShieldAlert className="h-3 w-3" /> Perlu mapping
+      </span>
+    );
+  }
+  if (!readiness || readiness.status === "no-distance-function") return null;
+  if (readiness.status === "mismatch") {
+    return (
+      <span
+        title={`${readiness.mismatchCount} nilai Z1-Z3/timer TAP vs actual berbeda melebihi toleransi`}
+        className="inline-flex items-center gap-1 rounded border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-700"
+      >
+        <AlertTriangle className="h-3 w-3" /> Mismatch
+      </span>
+    );
+  }
+  if (readiness.status === "missing-data") {
+    return (
+      <span
+        title="Data Z1-Z3/timer reference/TAP/actual belum lengkap"
+        className="inline-flex items-center gap-1 rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] font-medium text-slate-500"
+      >
+        Data belum lengkap
+      </span>
+    );
+  }
+  return (
+    <span
+      title="Reference/TAP/actual Z1-Z3/timer sudah konsisten"
+      className="inline-flex items-center gap-1 rounded border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700"
+    >
+      <CheckCircle2 className="h-3 w-3" /> Siap
+    </span>
   );
 }

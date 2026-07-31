@@ -8,6 +8,146 @@ arsitektur dan roadmap produk, rujuk:
 - [`README.md`](./README.md) — MVP roadmap, status implementasi per tahap, dan
   demo flow.
 
+## Update 2026-07-31 — Fix: Audit Zone Dilakukan per Bay-Fisik, Bukan per Baris
+
+**Masalah yang dikoreksi user**: penjelasan awal soal Angke↔Muarakarang Lama
+("OHL cuma LCD, UGC baru DIST+LCD, wajar") salah arah — user menunjukkan itu
+tidak masuk akal kecuali relainya sendiri memang cuma support diff (mis.
+Siemens 7SD). Investigasi ulang dengan dump lengkap kedua sisi record
+menemukan akar masalah sebenarnya: **relai fisik yang sama (Siemens 7SL87 —
+model yang MEMANG punya elemen distance) dicatat sebagai 2 baris spreadsheet**
+(satu dari sudut pandang tiap gardu), dan salah satu baris punya gap input
+data — `functionGroup` tertulis `"LCD"` dan `actual.z1PhPh = 0` — padahal
+baris pasangannya untuk relai identik yang sama menunjukkan `"DIST+LCD"` dan
+`actual.z1PhPh = 2.5`. Ini transcription gap di Excel sumber, bukan
+perbedaan kapabilitas relay. Skala: 2 dari 59 dokumen TAP yang punya >1 baris
+saling berbeda `functionGroup` seperti ini.
+
+**Fix bertahap (2 langkah, disetujui user secara eksplisit)**:
+
+1. **`buildDistanceCapabilityIndex()`** — record dikelompokkan dulu via
+   `tap.document` yang sama (kedua sisi bay fisik biasanya mengutip PDF TAP
+   yang sama). Sebuah grup dianggap distance-capable kalau ADA anggota
+   dengan `functionGroup` mengandung "dist", ATAU ada anggota dengan
+   `actual.z1PhPh` non-zero (bukti langsung elemen distance nyata melapor
+   nilai). Ini menaikkan cakupan audit dari 152 → 156 record capable —
+   baris Angke-side yang tadinya salah terklasifikasi "LCD-only" sekarang
+   ikut teraudit.
+2. **`effectiveSource()`** (fix susulan, per keputusan user "gabungkan jadi 1
+   unit perbandingan") — langkah 1 saja belum cukup: tiap record masih
+   dibandingkan terhadap sumber `distance`/`tap`/`actual` MILIKNYA SENDIRI,
+   jadi baris Angke-side (yang `actual.z1PhPh`-nya genuinely 0 di barisnya
+   sendiri) tetap melapor status `"missing"` walau baris pasangannya di sisi
+   Muarakarang punya `actual.z1PhPh = 2.5`. `effectiveSource(record, group,
+   kind)` sekarang memilih sumber non-kosong milik record sendiri dulu,
+   baru fallback ke sumber anggota grup lain kalau punya sendiri kosong —
+   diterapkan ke ketiga source (`distance`/`tap`/`actual`) sebelum
+   `compareValues` dipanggil, untuk KEDUA baris fisik (Angke-side maupun
+   Muarakarang-side) secara simetris.
+
+**Bukti verifikasi** (`gi_150kv_angke_pht_150kv_ugc_muarakarang_lama_1_1_19`
+vs `gi_150kv_muarakarang_lama_pht_150kv_ugc_angke_1_1_35`, sama-sama
+mengutip `tap.document = "Rev.01 MKLMA-ANGKE dan Sebaliknya.pdf"`): sebelum
+fix, baris Angke-side membandingkan `tap.z1PhPh=0` vs `actual.z1PhPh=0` milik
+sendiri → `0 === 0` → salah lapor **"match"** (false positive, menyembunyikan
+bahwa baris ini sendiri tidak pernah diisi). Sesudah fix, kedua baris
+sama-sama membandingkan terhadap `actual.z1PhPh=2.5` (diambil dari sisi
+Muarakarang yang punya data) vs `tap.z1PhPh=0`/`distance.z1PhPh=0` (yang
+memang kosong di KEDUA sisi — tidak ada referensi tap/distance tercatat sama
+sekali untuk sirkuit ini) → status `"missing"` untuk `distance_vs_tap`
+(benar — tidak ada apa pun untuk dibandingkan), tapi `tap_vs_actual` dan
+`distance_vs_actual` sekarang menunjukkan `leftValue: 0, rightValue: 2.5`
+alih-alih `0 vs 0` — nilai actual real sudah ikut terbawa ke kedua sisi.
+`bayReadinessByRecordId()` untuk kedua record kini identik:
+`{ status: "missing-data", mismatchCount: 0, missingCount: 18 }` — kedua
+sisi bay fisik yang sama sekarang selalu mendapat status yang sama,
+sesuai prinsip "1 unit perbandingan" yang diminta user.
+
+- Regression: seluruh 13 test suite existing + `npm run build` — semua
+  lolos tanpa perubahan (tidak ada test lama yang bergantung pada perilaku
+  lama `auditRecordPair`/`isSourceEmpty` per-baris).
+- **Yang TIDAK dikerjakan**: tidak menambah test otomatis baru untuk modul
+  ini (diverifikasi manual via script debug sekali-pakai, dihapus setelah
+  pemakaian, mengikuti kasus nyata Angke-Muarakarang di atas) — kandidat
+  test regresi permanen untuk `upt-zone-audit.ts` masih backlog kalau modul
+  ini terus dipakai. Tidak mengubah UI wizard (`SettingCaseWizard.tsx`) pada
+  slice ini — badge readiness sudah otomatis konsisten karena
+  `bayReadinessByRecordId()` dipakai apa adanya, tidak perlu perubahan
+  pemanggil.
+
+## Update 2026-07-31 — Bay Readiness Gate di Setting Case Wizard
+
+**Masalah yang dilaporkan user**: alur pembuatan case terasa berat — pilih GI
+Angke di wizard, tidak ketemu (topologi belum di-confirm), diarahkan ke Data
+Quality Queue, confirm, balik lagi, lalu ketemu gap serupa di Reference
+Setting. Semua UPT/GI seakan harus di-confirm manual dulu sebelum bisa
+screening/ubah setting sama sekali.
+
+**Root cause**: `SettingCaseWizard.tsx` Langkah 3 (pilih bay) bersumber dari
+`INVENTORY_MASTER_CASE_ID` (`case_ultg_dks_inventory`, `lines: []` murni) +
+`networkGraphOverrides` — topologi HANYA muncul kalau sudah di-confirm manual
+di Data Quality Queue. Padahal data GI Angke sebenarnya sudah lengkap di
+`buildGraphForUltg()` (anchor `digsilentLineDb` + overlay LCD/DIST otomatis,
+yang sama dipakai `relay-catalog-builder.ts`/Inbox) — wizard cuma tidak
+memakainya.
+
+**Cross-validation massal (ide user)**: daripada mewajibkan confirm manual
+per-GI, bandingkan otomatis nilai Z1/Z2/Z3 + timer dari tiga sumber yang
+sudah ada di tiap `LcdDistRecord` (`distance` = reference engineering, `tap`
+= dokumen resmi, `actual` = pembacaan relay terpasang) — modul baru
+`src/domain/upt-zone-audit.ts`:
+- `auditUptZoneSettings()` membandingkan ketiganya pairwise per zone/timer,
+  tolerance sama dengan verifikasi interaktif (`setting-verification.ts`,
+  profil "engineering": ±1%/±0.01Ω untuk reach, ±0.01s untuk timer).
+- Dua koreksi domain penting setelah diskusi dengan user: (1) nilai `0` di
+  Z1/Z2/Z3 diperlakukan sebagai "data belum diisi", bukan setting valid
+  (awalnya salah, menghasilkan 644 "mismatch" palsu — actual/tap
+  benar-benar kosong, bukan beda nilai); (2) bay tanpa fungsi distance
+  (LCD-only, mis. SKTT/underground) dikecualikan dari audit reach —
+  Z1-Z3 memang tidak berlaku untuk fungsi itu, sesuai koreksi user.
+  Emptiness dicek per-sumber (`z1PhPh === 0` menandai SELURUH sisi kosong,
+  bukan per-metrik — terbukti dari data nyata: `t2S=0` selalu berbarengan
+  `z1PhPh=0` di sisi yang sama).
+- Hasil audit UPT Durikosambi (152 bay berfungsi distance dari 184 total):
+  distance vs tap 100% match (0 mismatch); tap/distance vs actual: 404
+  match, 110 dalam toleransi, **148 mismatch nyata** (Z1 38, Z2 40, Z3 44,
+  t2 2, t3 24), 324 data belum lengkap.
+- `bayReadinessByRecordId()` memetakan tiap `LcdDistRecord.id` ke status
+  `ready` / `mismatch` / `missing-data` / `no-distance-function`.
+
+**Wizard sekarang** (`SettingCaseWizard.tsx`):
+- Langkah 3 bersumber dari `buildGraphForUltg()` (union semua
+  `GraphBuildGroup`), bukan lagi `INVENTORY_MASTER_CASE_ID`/override manual
+  — bay yang topologinya sudah resolvable dari DIgSILENT langsung muncul
+  dan bisa dipilih.
+- Tiap baris bay menampilkan badge readiness inline (dari
+  `bayReadinessByRecordId` + `overlaySettingDocs().matchedBayId`): "Siap"
+  (hijau), "Mismatch" (kuning), "Data belum lengkap" (abu-abu), atau "Perlu
+  mapping" (merah, untuk `needsManualTopology: true` — situs pasca-2021
+  tanpa anchor sama sekali).
+- Setelah bay dipilih, panel detail menjelaskan status itu secara eksplisit
+  (termasuk tombol "Buka Data Quality Queue" untuk kasus `needsManualTopology`)
+  — bukan silent fail yang baru terlihat di tahap berikutnya.
+- Field `protectedScope.networkCaseId` tetap `INVENTORY_MASTER_CASE_ID` untuk
+  kompatibilitas validasi `case-baseline.ts` (yang mengecek terhadap
+  `NETWORK_CASES` lama) — perubahan ini murni soal SUMBER bay picker, bukan
+  identitas case.
+- Verifikasi bundle size: main bundle tetap ~613 kB (tidak regresi) karena
+  `SettingCaseWizard` hanya diimpor dari `CaseWorkQueueView` yang sudah
+  lazy-loaded — pola sama dengan `InboxView.tsx` yang sudah lebih dulu
+  memanggil `buildGraphForUltg()` dengan aman.
+- Diverifikasi end-to-end di browser (Playwright): cari "angke" di Langkah 3
+  sekarang langsung menampilkan 4 bay dengan badge readiness masing-masing,
+  tanpa perlu mampir ke Data Quality Queue dulu.
+- Regression baru: seluruh 13 suite existing tetap lolos (tidak ada test
+  baru untuk UI wizard — dicek manual via Playwright).
+- **Yang TIDAK dikerjakan**: dashboard/halaman ringkasan 148 mismatch
+  (sengaja ditunda — fokus sesi ini pada alur gate, bukan pelaporan).
+  Gate ini murni informatif (badge + pesan), belum jadi hard block yang
+  mencegah `handleCreate` — user tetap bisa lanjut membuat case meski
+  statusnya mismatch/missing-data, karena itu sendiri bisa jadi alasan
+  valid membuat case (mis. P1 crosscheck untuk menindaklanjuti temuan).
+
 ## Update 2026-07-31 — Lapis 3: CoverageView/VerifiedReportView Graph-Aware + Relay Data Nyata
 
 Migrasi consumer (lapis 3 dari 3) yang sebelumnya jadi backlog di lapis 2.
