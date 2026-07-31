@@ -8,6 +8,89 @@ arsitektur dan roadmap produk, rujuk:
 - [`README.md`](./README.md) — MVP roadmap, status implementasi per tahap, dan
   demo flow.
 
+## Catatan 2026-08-01 — Temuan Diskusi: Data Freeze, Scope UPT vs ULTG, User Access (BELUM DIKERJAKAN)
+
+Tiga temuan/keputusan dari diskusi, dicatat sebagai backlog eksplisit —
+**tidak ada kode yang diubah untuk entri ini**, murni dokumentasi arah.
+
+**1. Kondisi data saat ini genuinely "freeze", bukan snapshot terkini.**
+Dikonfirmasi dari metadata sumber:
+- `digsilentLineDb` (topologi/impedansi line, basis seluruh perhitungan
+  Z1-Z3/coordination) berasal dari file bernama harfiah "Digsilent_ 9
+  Maret 2021, IHS 1-2021", dengan sheet DI DALAMNYA sendiri bernama
+  "Backup DB Juli 2019" — kemungkinan besar data topologi intinya
+  merepresentasikan kondisi jaringan **2019**, di-crosscheck ulang 2021.
+- Data setting relay UPT (`relay-catalog.json`/`lcd-dist-registry.json`)
+  tidak punya tanggal revisi eksplisit yang bisa ditemukan di dalam file
+  sumbernya sendiri (`Data Setting Penghantar UPT DKSBI (1).xlsx`).
+- Tidak ada mekanisme "update data topology/setting" di aplikasi ini SAMA
+  SEKALI — satu-satunya jalan input data baru sekarang adalah re-run
+  script generator (`npm run index-*`, `npm run generate:*`) terhadap
+  file Excel/DIgSILENT baru di disk lokal, bukan lewat upload UI.
+- **Implikasi**: sebelum ini dipakai untuk sesuatu mendekati produksi
+  (bukan sekadar POC/demo), data topologi & setting perlu benar-benar
+  diperbarui ke kondisi jaringan terkini — ini pekerjaan pengumpulan data
+  oleh user/tim PLN, bukan sesuatu yang bisa diperbaiki lewat kode saja.
+
+**2. Scope data ternyata UPT (5 ULTG), bukan cuma ULTG Durikosambi —
+tapi SLD/topologi mentah cuma ada untuk ULTG Durikosambi.**
+- Data setting (`relay-catalog.json`, dari sheet MASTER_PHT dkk.)
+  mencakup 5 ULTG di bawah UPT DKSBI: **Durikosambi, Angke, Citra Raya,
+  Cikupa, Tangkot** (555 aset total) — bukan cuma 200 aset "ULTG
+  DURIKOSAMBI" yang dianalisis sesi-sesi sebelumnya (kesalahan filter
+  saya sendiri, `/dksbi|durikosambi/i` cuma menangkap 1 dari 5 ULTG).
+- SLD folder yang sudah di-index (`sld-source-index.json`, basis
+  `buildGraphForUltg()`'s anchor) HANYA untuk ULTG Durikosambi (17
+  GI/GIS/GISTET) — 4 ULTG lain tidak punya SLD ter-index sama sekali,
+  konsisten dengan match rate DIgSILENT yang jauh lebih rendah:
+
+  | ULTG | Matched | Candidate | Unmatched (line bays) |
+  |---|---|---|---|
+  | Durikosambi | 74 | 30 | 48 |
+  | Angke | 56 | 24 | 53 |
+  | Citra Raya | 29 | 26 | 54 |
+  | Cikupa | 2 | 24 | 9 |
+  | Tangkot | 0 | 0 | 4 |
+
+- **Keputusan user**: tetap fokus ULTG Durikosambi dulu untuk demo
+  (konsisten dengan arahan "bare minimum" sebelumnya) — 4 ULTG lain
+  butuh SLD/topologi mereka sendiri sebelum bisa di-anchor dengan benar,
+  dicatat sebagai kebutuhan data terpisah, BUKAN dikerjakan sekarang.
+
+**3. User access level: per-ULTG, scope UPT Durikosambi (5 ULTG di
+atas) — desain belum diimplementasikan sama sekali.**
+- Yang ada sekarang cuma dropdown "Demo Role" (`currentPersona`:
+  Engineer/Asisten Manajer/Manajer) di TopBar — murni role global, TIDAK
+  ADA scope organisasi (ULTG/UPT) yang membatasi visibility data sama
+  sekali. `SettingCase.owningUnit`/`remoteUnit` baru field string bebas,
+  bukan referensi ke entitas User/ULTG nyata.
+- `BUSINESS_PROCESS_BLUEPRINT.md` §9 sudah merancang role model (Viewer,
+  Field Engineer, Data Steward, Protection Engineer, dst. + "assigned
+  ULTG/UPT/UIT or project scope") tapi ini baru desain dokumen, belum
+  ada kode sama sekali.
+- **Keputusan user**: kalau nanti dikerjakan, buat 1 user per ULTG DALAM
+  UPT Durikosambi (5 user: Durikosambi/Angke/Citra Raya/Cikupa/Tangkot),
+  bukan 1 user per UPT — supaya flow approval/ownership antar-ULTG bisa
+  didemokan nyata. Eksplisit ditunda ("catat dulu sebagai next dev"),
+  bukan dikerjakan sesi ini.
+- Catatan tambahan dari user (belum diminta dikerjakan): per-user
+  nantinya perlu notifikasi/alert kalau ada tindakan yang harus
+  dilakukan atau perubahan yang sudah di-approve — juga next dev,
+  dicatat di sini supaya tidak hilang.
+
+**Pertanyaan terbuka yang belum terjawab tuntas** (ditemukan saat
+menyelidiki poin di atas, sengaja belum dikejar lebih jauh):
+`confirmGraphBuildGroup()` (approve GI dari Graph Builder di Data
+Quality Queue) menyimpan hasilnya ke `networkGraphOverrides[activeCaseId]`
+— dan `activeNetworkCaseId` defaultnya adalah `"case_dks_dm_pik_mkb"`
+(case demo statis), BUKAN `INVENTORY_MASTER_CASE_ID` (Data Teknis/master).
+Artinya approve dari Graph Builder saat ini TIDAK otomatis memperbarui
+Data Teknis kecuali `activeNetworkCaseId` kebetulan sedang di-set ke
+master — differentiation antara "Working Network" (case-scoped + merge
+master) vs "Data Teknis" (master-only) sudah jelas secara MEKANISME, tapi
+alur mana yang SEHARUSNYA jadi tujuan approve (selalu ke master? atau
+memang ke case aktif?) belum didesain ulang — backlog terpisah.
+
 ## Update 2026-07-31 — Rapikan Navigasi Case-Driven + Fix shortCode Akar (Bukan Gejala)
 
 **Masalah navigasi**: user menunjuk sidebar "Existing Tools · not case-gated"
