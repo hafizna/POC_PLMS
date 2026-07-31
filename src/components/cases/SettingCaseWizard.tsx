@@ -3,6 +3,7 @@ import { AlertTriangle, ArrowLeft, ArrowRight, CheckCircle2, Search, ShieldAlert
 import { useProsetStore } from "../../store/useProsetStore";
 import { buildGraphForUltg, type GraphBuildGroup } from "../../domain/graph-builder";
 import { INVENTORY_MASTER_CASE_ID } from "../../domain/network-graph";
+import { RELAY_CATALOG } from "../../domain/relay-catalog";
 import {
   bayReadinessByRecordId,
   type BayReadiness,
@@ -152,6 +153,24 @@ export function SettingCaseWizard({
         b.relationLabel.toLowerCase().includes(q)
     );
   }, [candidateBays, search]);
+
+  // buildGraphForUltg() only anchors substations touched by ULTG
+  // Durikosambi's SLD folder — a real GI belonging to a different ULTG
+  // under the same UPT (e.g. ULTG Cikupa's Balaraja/Lontar/Spinmill/Suvarna
+  // Sutera, which DO have setting data in RELAY_CATALOG but no SLD anchor
+  // at all) will never appear in candidateBays, so search for them always
+  // comes up empty with no explanation. When the primary search finds
+  // nothing, check whether the term matches a real station name in the
+  // wider relay catalog (data exists, just not anchored yet) so the user
+  // gets pointed at what to do next instead of a dead-end "not found".
+  const unanchoredMatch = useMemo(() => {
+    if (filteredBays.length > 0 || search.trim().length < 3) return null;
+    const q = search.toLowerCase();
+    const asset = RELAY_CATALOG.assets.find(
+      (a) => a.bayKind === "line" && a.stationRaw.toLowerCase().includes(q)
+    );
+    return asset ? { stationRaw: asset.stationRaw, ultg: asset.ultg } : null;
+  }, [filteredBays, search]);
 
   const selectedSubject = candidateBays.find((b) => b.bayId === subjectBayId);
 
@@ -649,9 +668,19 @@ export function SettingCaseWizard({
                     </div>
                   </button>
                 ))}
-                {filteredBays.length === 0 && (
+                {filteredBays.length === 0 && !unanchoredMatch && (
                   <div className="px-3 py-6 text-center text-xs text-slate-400">
                     Tidak ada bay yang cocok.
+                  </div>
+                )}
+                {filteredBays.length === 0 && unanchoredMatch && (
+                  <div className="px-3 py-3 text-xs text-amber-800">
+                    "{unanchoredMatch.stationRaw}" ({unanchoredMatch.ultg}) ada di data
+                    setting, tapi SLD/topologi jaringannya belum tersedia sama sekali untuk
+                    ULTG ini (baru ULTG Durikosambi yang sudah di-scan) — belum bisa dipilih
+                    sebagai subject sampai SLD-nya diunggah dan di-index. Data Quality Queue
+                    tidak akan membantu untuk kasus ini karena butuh SLD baru, bukan
+                    konfirmasi topologi yang sudah ter-scan.
                   </div>
                 )}
               </div>

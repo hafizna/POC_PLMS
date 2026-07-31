@@ -8,6 +8,42 @@ arsitektur dan roadmap produk, rujuk:
 - [`README.md`](./README.md) — MVP roadmap, status implementasi per tahap, dan
   demo flow.
 
+## Update 2026-08-01 — Fix: Pencarian Bay di Wizard Buntu Tanpa Penjelasan untuk GI di Luar ULTG Durikosambi
+
+**Pertanyaan user**: "case-nya balik lagi, apa yang terjadi bila bay yang
+dicari tidak ada saat ingin resetting? apa yang harus mereka lakukan?
+navigasinya kemana?"
+
+**Temuan**: `SettingCaseWizard.tsx` Langkah 3's daftar bay HANYA berasal
+dari `buildGraphForUltg()` — yang cuma meng-anchor GI yang SLD-nya sudah
+di-scan untuk **ULTG Durikosambi**. Untuk 4 ULTG lain dalam UPT yang sama
+(Angke, Citra Raya, Cikupa, Tangkot — lihat catatan sebelumnya soal scope
+UPT vs ULTG), banyak GI (mis. GITET Balaraja, GIS Lontar/Spinmill/Suvarna
+Sutera di ULTG Cikupa) punya data setting nyata di `RELAY_CATALOG` tapi
+NOL anchor SLD. Mencari nama GI itu di wizard sebelumnya cuma menampilkan
+teks statis "Tidak ada bay yang cocok." — tanpa penjelasan kenapa, tanpa
+arah navigasi.
+
+**Fix**: `unanchoredMatch` (baru) — kalau pencarian primer kosong dan
+teks pencarian (≥3 karakter) cocok dengan nama stasiun nyata di
+`RELAY_CATALOG.assets` (bay line), tampilkan pesan yang jujur: nama GI +
+ULTG-nya ditemukan di data setting, tapi SLD/topologinya belum tersedia
+sama sekali untuk ULTG itu — BUKAN kasus "confirm topologi yang sudah
+ke-scan" (itu peran Data Quality Queue), jadi sengaja TIDAK memberi
+tombol "Buka Data Quality Queue" yang akan jadi jalan buntu kedua
+(`resolveUltgScope()` cuma scan `sldSourceIndex.stationFolders`, yang
+cuma berisi folder ULTG Durikosambi — GI dari ULTG lain tidak akan pernah
+muncul di `unresolvedStations` Inbox manapun).
+- Diverifikasi (Playwright): cari "balaraja" → pesan amber menyebutkan
+  "GITET 500KV BALARAJA" (ULTG CIKUPA), menjelaskan SLD belum ada, dan
+  eksplisit bilang Data Quality Queue tidak akan membantu untuk kasus ini.
+- Regression: seluruh 13 test suite + `npm run build` (bundle stabil —
+  `relay-catalog.json` sudah jadi lazy chunk terpisah yang dipakai
+  bersama `VendorImportView`, tidak duplikat) — semua lolos.
+- **Yang TIDAK dikerjakan**: solusi sebenarnya (upload SLD baru untuk 4
+  ULTG lain, lalu re-run `buildGraphForUltg()`) tetap backlog data,
+  bukan sesuatu yang bisa diselesaikan lewat pesan UI saja.
+
 ## Update 2026-08-01 — Fix: Wizard Bisa Membuat Case Tanpa Subject Line yang Diam-Diam Putus Nyambung
 
 **Masalah**: user menandai flow "masih terasa aneh" secara fungsional
