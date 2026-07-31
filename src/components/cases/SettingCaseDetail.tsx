@@ -28,6 +28,7 @@ import { ProposedRevisionEditor } from "./ProposedRevisionEditor";
 import { ImpactReadinessPanel } from "./ImpactReadinessPanel";
 import { StudyBindingPanel } from "./StudyBindingPanel";
 import { assessCrosscheckEvidence } from "../../domain/case-flow-hardening";
+import { buildGraphForUltg } from "../../domain/graph-builder";
 
 // Which existing workspace(s) support the work of each stage. The case is
 // the workflow container; the tools stay where they are and are opened
@@ -127,6 +128,22 @@ export function SettingCaseDetail({
   const openTool = (tab: Tab) => {
     if (settingCase.protectedScope.subjectLineId) {
       selectLine(settingCase.protectedScope.subjectLineId);
+    } else if (settingCase.protectedScope.substationIds.length > 0) {
+      // Case types without a required subject line (new_gi_insertion,
+      // topology_change, policy_revision, data_correction, other) still
+      // scope to at least one substation — without this fallback, opening
+      // Working Network/Network Builder from one of these cases left
+      // activeNetworkCaseId/activeNetworkLineId completely untouched,
+      // showing whatever context was previously active (often the stale
+      // demo case) instead of the GI this case is actually about.
+      const { groups } = buildGraphForUltg();
+      const group = groups.find((g) =>
+        settingCase.protectedScope.substationIds.includes(g.station.id)
+      );
+      const relation = group?.lineRelations[0];
+      if (relation) {
+        selectLine(relation.id);
+      }
     }
     openToolFromCase(settingCase.id, tab);
   };

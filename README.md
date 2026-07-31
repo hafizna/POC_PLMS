@@ -47,22 +47,52 @@ Pitch product:
 
 ## MVP Roadmap and Current Status
 
-> **Canonical roadmap diremap 2026-07-29.** PLMS tidak langsung melompat dari network graph ke kalkulator. Urutannya adalah: digitalkan existing process -> bentuk engineering-data foundation -> versioned change/scenario -> calculation parity -> canonical TAP package -> semantic multi-vendor conversion -> closed-loop governance. PLMS tidak menunggu NMM dan native vendor-file export didefer.
+> **Roadmap dikonsolidasi 2026-08-01.** Sebelumnya ada dua skema penomoran roadmap berjalan paralel: README memakai MVP 1A–3, sementara `BUSINESS_PROCESS_BLUEPRINT.md` §13 memakai F1/O1/D1/E1/C1/N1 untuk cakupan yang sebagian besar sama. **F1/O1/D1/E1/C1/N1 sekarang jadi satu-satunya skema roadmap resmi**; mention MVP 1A-2D pada narasi historis di bawah (Strategic Positioning, Roadmap 3-Month Pilot, dst) tetap dibiarkan apa adanya sebagai catatan tanggal-nya-ditulis, tapi rujukan barunya memakai label track F1-N1. Tabel padanan ada di bagian bawah untuk membaca histori lama.
+>
+> PLMS punya **dua sumbu status berbeda**, bukan satu urutan linear:
+> - **Sumbu Case Lifecycle** (Sprint N) — kematangan mesin `Setting Case`: gating tahap, otoritas, evidence, immutability. Rincian penuh ada di [`BUSINESS_PROCESS_BLUEPRINT.md` §13](./BUSINESS_PROCESS_BLUEPRINT.md#13-recommended-mvp-remap).
+> - **Sumbu Engineering Track** (F1/O1/D1/E1/C1/N1) — kedalaman substansi teknik di dalam case itu: data intake, crosscheck, kalkulasi, konversi vendor, network change.
 
-### Canonical MVP sequence
+### Sumbu 1 — Case Lifecycle (Sprint N)
 
-| Tahap | Outcome | Status POC saat ini |
+| Sprint | Cakupan | Status |
 |---|---|---|
-| **MVP 1A — Reference Engine** | Digitalisasi parity workbook `Aplikasi Crosscheck Setting Relay` untuk OCR/GFR penghantar/kopel, trafo, dan distance. | **Implemented.** Formula reference, lookup fault/line, pemilihan ruas/bay lawan, formula trace, serta regression benchmark sudah tersedia. Hasil masih berstatus reference, bukan issued TAP. |
-| **MVP 1B — Crosscheck** | Actual setting dimasukkan manual atau dari hasil ekstraksi, lalu dibandingkan dengan reference menggunakan tolerance dan basis primary/secondary yang jelas. | **Implemented.** Mendukung input manual/plain text/CSV-like, normalization, manual mapping parameter, tolerance profile, dan klasifikasi match/deviation/missing/unmapped. |
-| **MVP 1C — Source and Vendor Intake** | Import actual/TAP setting dan source document ke parameter PLMS yang seragam. | **Pilot implemented.** Parser MiCOM Courier `.set` P443/P545, normalized TAP PDF adapter, workbook/PDF/XMCD index, dan handoff ke Crosscheck tersedia. |
-| **MVP 1D — Network and Relay Data Foundation** | Bentuk network/asset/relay registry yang dapat direview tanpa dependency NMM. | **Partially implemented.** Self-contained graph, review topology per-GI, relay catalog, sisipan GI, `superseded` lifecycle, dan historical source snapshots sudah ada. Electrical-data completeness dan current-source ingestion belum lengkap. |
-| **MVP 2A — Engineering Change and Study Scenario** | Setiap perubahan topology/data menjadi versioned change set; setiap fault level terikat ke scenario dan network revision. | **GI-insertion pilot implemented.** Slice 2A.1–2A.4 tersedia: source/scenario, immutable change set, readiness/conflict detection, dan neutral DIgSILENT staging preview. Perluasan change type dan official PowerFactory adapter belum termasuk. |
-| **MVP 2B — Calculation Engine and Mathcad Parity** | Hitung recommended setting secara native dengan formula trace dan parity terhadap XMCD. | **2B.1 implemented.** Input contract P545 Ciledug–Alam Sutera sudah typed/unit-aware, scenario-gated, menampilkan provenance, conflict, missing data, dan justified override. Formula parity 2B.2 belum dipindahkan/disetujui engineer. |
-| **MVP 2C — Canonical Setting Package and TAP Composer** | Satukan calculated setting, policy, override, provenance, approval state, dan hasilkan draft TAP resmi. | **Not implemented.** Calculation snapshot/printable report ada, tetapi canonical schema dan TAP composer multi-page belum ada. |
-| **MVP 2D — Relay Capability Profiles and Multi-vendor Conversion** | Konversi engineering intent ke proposed target settings lintas brand/model disertai capability-gap report. | **Seed data available.** Relay Catalog, manual references, actual/TAP records, dan 12 XMCD tersedia; capability profiles dan conversion rules belum ada. |
-| **MVP 3 — Closed-loop Lifecycle and Governance** | PLMS -> DIgSILENT study -> PLMS impact/recalculation -> review/approve/issue/field verification. | **Case-local foundation implemented through Sprint 5.** Immutable baseline/proposal/impact/scenario package, authority profile, audit, dan activation contract tersedia di local state. Sprint 5 menyambungkan `calculation` stage ke Calculation Workbook: snapshot yang disimpan ter-link ke `links.calculationSnapshotIds` dan menjadi gate wajib sebelum lanjut ke `coordination`. Shared backend, identity enforcement, executable approval/commissioning, coordination checks, issue, serta field verification belum ada. |
-| **Deferred — Native Vendor-file Export** | Menghasilkan `.set` atau project/import format vendor. | **Explicitly deferred.** Bukan acceptance criterion MVP 2/awal MVP 3. |
+| 1–4.1 | Intake/scoping, immutable Case Baseline, append-only Proposed Data Revision, versioned Case Impact Assessment, requirement-driven Study Scenario Package, authority/notification profile, activation vs approval terpisah. | **Implemented.** |
+| 5 | Membuka gerbang `calculation`: case tidak bisa lanjut ke `coordination` tanpa minimal 1 `CalculationRun` ter-link. | **Implemented** (plumbing saja — formula kalkulasi masih POC lama, lihat track E1). |
+| Berikutnya | `coordination`, review, approval, issuance, field implementation, commissioning, verification. | **Belum diimplementasikan** — case dead-end setelah `calculation` untuk `new_setting`, dan setelah `baseline_frozen` untuk `crosscheck` (lihat track O1). |
+
+Detail lengkap tiap sprint (apa yang dicek, tipe data, bug yang ditemukan) ada di `BUSINESS_PROCESS_BLUEPRINT.md` §13 dan `IMPLEMENTATION_NOTES.md` — tidak diduplikasi di sini.
+
+### Sumbu 2 — Engineering Track (F1/O1/D1/E1/C1/N1)
+
+| Track | Outcome | Status POC saat ini |
+|---|---|---|
+| **F1 — Foundation** | Canonical entity identity, effective dating, `Setting Case`/`Setting Package`/`Setting Revision` schema, lifecycle state machines, org scope/roles. | **Partially implemented.** Self-contained graph, review topology per-GI, relay catalog, sisipan GI, `superseded` lifecycle, historical source snapshots, `StudyScenario` foundation sudah ada. Org scope/roles dan formal schema governance belum. |
+| **O1 — Actual Crosscheck** | Pilih bay + issued revision, akuisisi actual setting dari relay fisik lewat vendor tool resmi, retain native file + manifest, parse per model/vendor adapter, compare, discrepancy disposition, verification report. | **Partially implemented.** Reference/Crosscheck engine (manual/plain-text/CSV input, tolerance profile, klasifikasi match/deviation/missing) sudah ada. `.rio`/XRIO parser (`rio-xrio-import.ts`) baru selesai tapi **belum disambungkan ke UI** — lihat `IMPLEMENTATION_NOTES.md` 2026-08-01. Native readback acquisition manifest, per-model adapter matrix, dan discrepancy workflow nyata belum ada. |
+| **D1 — Controlled Data Intake** | Source document registry, extraction/mapping queue, protection-relevant asset/topology registry, CT/VT dan relay identity, provenance/data-quality status. | **Slice 1-2 implemented.** Importer `HEL_PHT_TAP` kini mencakup seluruh 13 model relay penghantar (184/184 baris nyata, 7 layout kolom berbeda) — lihat `IMPLEMENTATION_NOTES.md` 2026-08-01. LCD/DIST/OCR legacy import (~5% kedalaman TAP resmi) tetap jalan berdampingan. Belum ada wiring ke UI/`SettingRecord`; model/vendor di luar 13 ini (Toshiba GRZ 200, NR/Xifang lain, format `.urs` lama) belum masuk sheet ini sama sekali. |
+| **E1 — Calculation and Issuance Pilot** | Satu case P545 tervalidasi dengan Mathcad parity, immutable scenario + calculation run, canonical proposed revision, review/approval/issue/draft TAP, field readback kembali ke O1. | **Input-contract slice implemented.** P545 Ciledug–Alam Sutera: input typed/unit-aware, scenario-gated, provenance/conflict/override eksplisit. Formula parity (port XMCD ke rule module) **belum dikerjakan** — ini pekerjaan terbesar yang tersisa di track ini. |
+| **C1 — Multi-vendor Pilot** | Capability profile untuk keluarga MiCOM/Siemens/ABB terpilih, semantic mapping + gap classification, proposed target-vendor setting package. | **Seed data available.** Relay Catalog, manual reference, actual/TAP record, 12 XMCD benchmark tersedia sebagai bahan baku; capability profile dan conversion rule belum ada. Native vendor writer eksplisit **deferred** sampai official-tool validation tersedia. |
+| **N1 — Network and Engineering Change** | Topology/equipment change set, affected-setting impact analysis, DIgSILENT staging, approved snapshot re-import, auto-create affected Setting Cases. | **GI-insertion pilot implemented.** Immutable change set, readiness/conflict detection, neutral DIgSILENT staging preview. Perluasan ke change type lain (reconductoring, CT/VT/relay replacement change-set) dan official PowerFactory adapter belum ada; auto-create affected cases belum ada. |
+
+**Urutan kerja saat ini: D1 → O1 → E1 → C1 → N1** (dipilih 2026-08-01) — engineering track lain butuh data nyata dulu sebelum bisa diuji dengan input yang representatif, bukan urutan nomor F1-N1 di atas yang cuma label kategori.
+
+<details>
+<summary>Tabel padanan skema lama (MVP 1A-3) → track baru (F1/O1/D1/E1/C1/N1), untuk membaca histori sebelum 2026-08-01</summary>
+
+| Label lama | Track baru | Catatan |
+|---|---|---|
+| MVP 1A — Reference Engine | *(tidak punya track — mendahului skema F1-N1)* | Tetap dianggap selesai/implemented; fondasi historis untuk O1/E1. |
+| MVP 1B — Crosscheck | **O1** | MVP 1B adalah versi awal/parsial dari O1. |
+| MVP 1C — Source and Vendor Intake | **D1** | Sama persis cakupannya. |
+| MVP 1D — Network and Relay Data Foundation | **F1** | Sama persis cakupannya. |
+| MVP 2A — Engineering Change and Study Scenario | **N1** (+ sebagian **F1** untuk scenario) | GI-insertion pilot = slice pertama N1. |
+| MVP 2B — Calculation Engine and Mathcad Parity | **E1** | Sama persis cakupannya. |
+| MVP 2C — Canonical Setting Package and TAP Composer | **E1** (bagian issuance) | Bergabung ke E1, bukan track terpisah. |
+| MVP 2D — Relay Capability Profiles and Multi-vendor Conversion | **C1** | Sama persis cakupannya. |
+| MVP 3 — Closed-loop Lifecycle and Governance | *(bukan track — ini Sumbu 1, Sprint 1-5)* | MVP 3 sebenarnya menjelaskan kematangan case-lifecycle, bukan track substansi teknik. |
+| Deferred — Native Vendor-file Export | Cross-cutting, dicatat di bawah **C1** | Tetap deferred, bukan track sendiri. |
+
+</details>
 
 ### Implementasi yang sudah masuk
 

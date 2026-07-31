@@ -929,6 +929,25 @@ Sprint 5 opens the `calculation` stage (Engineering MVP E1's first slice):
 - CT/VT and relay identity;
 - provenance and data-quality status.
 
+**Slice 1-2 (2026-08-01, complete for the source sheet's 13 penghantar
+models):** `HEL_PHT_TAP` importer. A prior completeness audit found the
+currently-imported sheets (`DIST`/`AR`/`OCR_PHT`) capture only ~5% of a real
+issued TAP document's parameter depth, while the never-imported
+`HEL_PHT_TAP` sheet is deep enough (Current Diff, Distance Z1-Z3 with
+PP/PE split, Scheme Logic incl. POTT/PUTT, SOTF/TOR, Autoreclose, System
+Checks/Sync, VTS/CTS, OCR/GFR backup). `scripts/extract-hel-pht-tap.mjs` +
+`src/domain/hel-pht-tap-import.ts` now extract and match all 184 real bay
+rows across all 13 relay models the sheet covers — the 13 models collapse
+into 7 distinct column layouts (several MiCOM sub-families share identical
+column positions), each verified against real data rows before being
+mapped. Not yet wired into any UI or into `SettingRecord`/`RelaySetting`
+population — see `IMPLEMENTATION_NOTES.md` 2026-08-01 for the extraction
+details and what's still open. Relay models/vendors outside this sheet
+(Toshiba GRZ 200, other NR/Xifang families, older `.urs`-format exports)
+are out of scope until they show up in a source sheet. Order chosen for
+the 5 engineering tracks: D1 → O1 → E1 → C1 → N1, since the other tracks
+need real data before they can be tested against representative input.
+
 ### Engineering MVP E1 — Calculation and Issuance Pilot
 
 - one validated P545 case with Mathcad parity;

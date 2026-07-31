@@ -1043,6 +1043,7 @@ function GraphBuilderSection() {
   const activeCaseId = useProsetStore((s) => s.activeNetworkCaseId);
   const decisions = useProsetStore((s) => s.graphBuildDecisions);
   const confirmGroup = useProsetStore((s) => s.confirmGraphBuildGroup);
+  const confirmGroupsBatch = useProsetStore((s) => s.confirmGraphBuildGroupsBatch);
   const rejectGroup = useProsetStore((s) => s.rejectGraphBuildGroup);
   const clearDecision = useProsetStore((s) => s.clearGraphBuildDecision);
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -1061,6 +1062,14 @@ function GraphBuilderSection() {
   const totalUnmatchedOverlays = result.groups.reduce(
     (sum, g) => sum + g.overlays.filter((o) => o.matchStatus === "unmatched").length,
     0
+  );
+  // High-confidence groups (digsilentLineDb anchor matched — needsManualTopology
+  // false) have nothing left for a human to disambiguate; the per-GI review is
+  // still real for needsManualTopology groups (alias/name conflicts, missing
+  // anchor), but forcing the same 1-by-1 expand+confirm ritual on every
+  // already-unambiguous GI reads as pointless friction, not diligence.
+  const highConfidencePending = pendingGroups.filter(
+    (g) => !g.needsManualTopology && (g.bays.length > 0 || g.lineRelations.length > 0)
   );
 
   return (
@@ -1082,6 +1091,28 @@ function GraphBuilderSection() {
           tampilkan yang sudah diputuskan
         </label>
       </div>
+      {highConfidencePending.length > 0 && (
+        <div className="px-4 py-2.5 flex items-center justify-between gap-3 border-b border-slate-100 bg-emerald-50/60 flex-wrap">
+          <p className="text-[11px] text-emerald-800 max-w-2xl">
+            {highConfidencePending.length} GI sudah anchor eksplisit ke digsilentLineDb (tidak butuh disambiguasi manual) — bisa di-confirm sekaligus.
+          </p>
+          <button
+            className="text-xs px-2.5 py-1 rounded border border-emerald-300 bg-emerald-600 text-white hover:bg-emerald-700 flex items-center gap-1.5 shrink-0"
+            onClick={() =>
+              confirmGroupsBatch(
+                activeCaseId,
+                highConfidencePending.map((group) => ({
+                  substation: group.station,
+                  bays: group.bays,
+                  relations: group.lineRelations,
+                }))
+              )
+            }
+          >
+            <CheckCircle2 className="w-3.5 h-3.5" /> Confirm {highConfidencePending.length} GI high-confidence sekaligus
+          </button>
+        </div>
+      )}
       {pendingGroups.length === 0 && decidedGroups.length === 0 ? (
         <EmptyState message="Tidak ada GI dalam scope SLD untuk case ini." />
       ) : (

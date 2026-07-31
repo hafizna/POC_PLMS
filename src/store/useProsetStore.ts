@@ -425,7 +425,11 @@ type State = {
   setComparisonBay: (id: string) => void;
   setActiveNetworkCase: (id: string) => void;
   setActiveNetworkLine: (id: string | null) => void;
-  selectLine: (lineId: string) => void;
+  // Returns a Promise so callers that need the resolved activeNetworkCaseId
+  // right after selection (e.g. createStudy) can await it — the fallback
+  // branch below is genuinely async (dynamic import), so firing-and-forgetting
+  // it races any synchronous state read/tab-switch immediately after the call.
+  selectLine: (lineId: string) => Promise<void>;
   openToolFromCase: (caseId: string, tab: Tab) => void;
   clearOpenedFromCase: () => void;
   // Setting Case actions
@@ -481,7 +485,7 @@ type State = {
     description: string,
     substationIds: string[],
     options?: CreateStudyOptions
-  ) => void;
+  ) => Promise<void>;
   deleteStudy: (id: string) => void;
   setActiveStudy: (id: string) => void;
   setStudyScenario: (studyId: string, scenarioId: string | null) => void;
@@ -502,6 +506,15 @@ type State = {
   confirmGraphBuildGroup: (
     caseId: string,
     payload: { substation: UnifiedSubstation; bays: Bay[]; relations: LineRelation[] }
+  ) => void;
+  // Same commit as confirmGraphBuildGroup, but for every group in one state
+  // update — only ever called with high-confidence groups (digsilentLineDb
+  // anchor matched, not needsManualTopology) from the UI, since those are the
+  // ones with nothing left for a human to disambiguate. Low-confidence groups
+  // still go through confirmGraphBuildGroup one at a time.
+  confirmGraphBuildGroupsBatch: (
+    caseId: string,
+    payloads: Array<{ substation: UnifiedSubstation; bays: Bay[]; relations: LineRelation[] }>
   ) => void;
   rejectGraphBuildGroup: (stationId: string) => void;
   clearGraphBuildDecision: (stationId: string) => void;
@@ -657,7 +670,7 @@ export const useProsetStore = create<State>()(
       // active line + case + comparison bay + corridor + selected relay.
       // Use this from any "open this line" interaction so other tabs are
       // already in-context when the user navigates to them.
-      selectLine: (lineId) => {
+      selectLine: async (lineId) => {
         const state = get();
         const inventoryCase =
           NETWORK_CASES.find((c) => c.id === INVENTORY_MASTER_CASE_ID) ?? NETWORK_CASES[0];
@@ -679,30 +692,30 @@ export const useProsetStore = create<State>()(
           // demo seed) — fall back to the LIVE full anchor+overlay network
           // (buildGraphForUltg via getFullAnchoredNetwork) before giving up.
           // This is what makes a real bay outside every demo subset (e.g.
-          // Angke-Ancol) selectable at all from any of the 8 call sites that
+          // Angke-Ancol) selectable at all from any of the 8+ call sites that
           // route through this single action. Dynamic import (see top of
-          // file) — this makes the fallback branch async, but selectLine's
-          // public signature stays `(lineId) => void` and every caller
-          // already fires it without awaiting, so this is invisible to them.
-          import("../domain/graph-builder").then(({ getFullAnchoredNetwork }) => {
-            const fullNetwork = getFullAnchoredNetwork();
-            const fullLine = networkLinesFromGraph(fullNetwork).find((l) => l.id === lineId);
-            if (!fullLine) return;
-            const compareBay = findComparisonBayIdForLine(lineId);
-            const relayId = `rel_${fullLine.fromNodeId}_fwd_${fullLine.toNodeId}`;
-            set({
-              activeNetworkLineId: lineId,
-              activeNetworkCaseId: INVENTORY_MASTER_CASE_ID,
-              selectedRelayId: relayId,
-              ...(compareBay ? { comparisonBayId: compareBay } : {}),
-            });
-            appendAuditEvent(get, set, {
-              action: "line_selected",
-              scope: INVENTORY_MASTER_CASE_ID,
-              targetId: lineId,
-              summary: `Selected line ${fullLine.circuit}`,
-              detail: `${fullLine.fromNodeId} -> ${fullLine.toNodeId}`,
-            });
+          // file, bundle-size reason) — this makes the fallback branch async;
+          // selectLine itself is now `async` so callers that need the
+          // resolved state right after (createStudy) can await it, while
+          // existing fire-and-forget callers are unaffected either way.
+          const { getFullAnchoredNetwork } = await import("../domain/graph-builder");
+          const fullNetwork = getFullAnchoredNetwork();
+          const fullLine = networkLinesFromGraph(fullNetwork).find((l) => l.id === lineId);
+          if (!fullLine) return;
+          const compareBay = findComparisonBayIdForLine(lineId);
+          const relayId = `rel_${fullLine.fromNodeId}_fwd_${fullLine.toNodeId}`;
+          set({
+            activeNetworkLineId: lineId,
+            activeNetworkCaseId: INVENTORY_MASTER_CASE_ID,
+            selectedRelayId: relayId,
+            ...(compareBay ? { comparisonBayId: compareBay } : {}),
+          });
+          appendAuditEvent(get, set, {
+            action: "line_selected",
+            scope: INVENTORY_MASTER_CASE_ID,
+            targetId: lineId,
+            summary: `Selected line ${fullLine.circuit}`,
+            detail: `${fullLine.fromNodeId} -> ${fullLine.toNodeId}`,
           });
           return;
         }
@@ -1268,7 +1281,7 @@ export const useProsetStore = create<State>()(
         });
       },
 
-      createStudy: (name, description, substationIds, options) => {
+      createStudy: async (name, description, substationIds, options) => {
         const id = `study_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
         const newStudy: Study = {
           id,
@@ -1284,10 +1297,34 @@ export const useProsetStore = create<State>()(
           sourceBridge: options?.sourceBridge,
           status: "active",
         };
+        // Resolve activeNetworkCaseId from the study's actual subject/scope
+        // instead of hardcoding the demo corridor — a study about a GI
+        // outside that corridor (e.g. built from a manual substation pick)
+        // should not leave the working context pointed at an unrelated case.
+        let resolvedCaseId: string | undefined;
+        if (!options?.subjectLineId && substationIds.length > 0) {
+          const state = get();
+          const inventoryCase =
+            NETWORK_CASES.find((c) => c.id === INVENTORY_MASTER_CASE_ID) ?? NETWORK_CASES[0];
+          const masterNetworkGraph = getEffectiveNetworkGraph(
+            INVENTORY_MASTER_CASE_ID,
+            state.networkGraphOverrides[INVENTORY_MASTER_CASE_ID],
+            buildUnifiedNetwork(inventoryCase)
+          );
+          const owningCase = NETWORK_CASES.find((c) => {
+            if (c.nodes.some((n) => substationIds.includes(n.id))) return true;
+            const effective = mergeMasterRelationsIntoCase(
+              getEffectiveNetworkGraph(c.id, state.networkGraphOverrides[c.id], buildUnifiedNetwork(c)),
+              masterNetworkGraph
+            );
+            return Boolean(effective && effective.substations.some((s) => substationIds.includes(s.id)));
+          });
+          resolvedCaseId = owningCase?.id ?? INVENTORY_MASTER_CASE_ID;
+        }
         set({
           studies: [...get().studies, newStudy],
           activeStudyId: id,
-          activeNetworkCaseId: "case_dks_dm_pik_mkb",
+          ...(resolvedCaseId ? { activeNetworkCaseId: resolvedCaseId } : {}),
           ...(options?.subjectLineId ? { activeNetworkLineId: options.subjectLineId } : {}),
           currentTab: "study-dashboard",
         });
@@ -1303,7 +1340,7 @@ export const useProsetStore = create<State>()(
           ].filter(Boolean).join(" | "),
         });
         if (options?.subjectLineId) {
-          get().selectLine(options.subjectLineId);
+          await get().selectLine(options.subjectLineId);
           set({ currentTab: "study-dashboard" });
         }
       },
@@ -1598,6 +1635,7 @@ export const useProsetStore = create<State>()(
           bays: upsertById(existing.bays, payload.bays),
           relations: upsertById(existing.relations, payload.relations),
         };
+        const firstRelation = payload.relations[0];
         set({
           networkGraphOverrides: next,
           networkUndoStack: pushNetworkUndo(
@@ -1609,6 +1647,15 @@ export const useProsetStore = create<State>()(
             ...current.graphBuildDecisions,
             [payload.substation.id]: { status: "confirmed", decidedAt: new Date().toISOString() },
           },
+          // Previously nothing set the working context on confirm — a user
+          // confirming GI X had no way to land on GI X afterward, since
+          // activeNetworkCaseId/activeNetworkLineId were left at whatever
+          // they were before (often the stale demo case). Single-GI confirm
+          // only: batch-confirming many GIs at once has no single correct
+          // "GI to select afterward."
+          ...(firstRelation
+            ? { activeNetworkCaseId: caseId, activeNetworkLineId: firstRelation.id }
+            : {}),
         });
         appendAuditEvent(get, set, {
           action: "network_graph_add",
@@ -1616,6 +1663,41 @@ export const useProsetStore = create<State>()(
           targetId: payload.substation.id,
           summary: "Confirmed graph-builder GI group",
           detail: `${payload.substation.name}: ${payload.bays.length} bay(s), ${payload.relations.length} relation(s)`,
+        });
+      },
+
+      confirmGraphBuildGroupsBatch: (caseId, payloads) => {
+        if (payloads.length === 0) return;
+        const current = get();
+        const next = { ...current.networkGraphOverrides };
+        let existing = normalizedOverride(next[caseId]);
+        const decidedAt = new Date().toISOString();
+        const decisions = { ...current.graphBuildDecisions };
+        for (const payload of payloads) {
+          existing = {
+            ...existing,
+            substations: upsertById(existing.substations, [payload.substation]),
+            bays: upsertById(existing.bays, payload.bays),
+            relations: upsertById(existing.relations, payload.relations),
+          };
+          decisions[payload.substation.id] = { status: "confirmed", decidedAt };
+        }
+        next[caseId] = existing;
+        set({
+          networkGraphOverrides: next,
+          networkUndoStack: pushNetworkUndo(
+            current,
+            caseId,
+            `Confirmed ${payloads.length} graph-builder group(s) (batch, high-confidence)`
+          ),
+          graphBuildDecisions: decisions,
+        });
+        appendAuditEvent(get, set, {
+          action: "network_graph_add",
+          scope: caseId,
+          targetId: payloads.map((p) => p.substation.id).join(","),
+          summary: `Confirmed ${payloads.length} graph-builder GI group(s) in batch`,
+          detail: payloads.map((p) => p.substation.name).join(", "),
         });
       },
 

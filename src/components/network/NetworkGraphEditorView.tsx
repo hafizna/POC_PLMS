@@ -1,6 +1,10 @@
 import { Pencil } from "lucide-react";
 import { NETWORK_CASES } from "../../domain/seed-network-registry";
-import { getEffectiveNetworkGraph } from "../../domain/network-graph";
+import {
+  INVENTORY_MASTER_CASE_ID,
+  getEffectiveNetworkGraph,
+  mergeMasterRelationsIntoCase,
+} from "../../domain/network-graph";
 import { useProsetStore } from "../../store/useProsetStore";
 import { NetworkGraphEditor } from "./NetworkGraphEditor";
 
@@ -9,8 +13,17 @@ export function NetworkGraphEditorView() {
   const setActiveCase = useProsetStore((s) => s.setActiveNetworkCase);
   const activeCase =
     NETWORK_CASES.find((item) => item.id === activeCaseId) ?? NETWORK_CASES[0];
+  const inventoryCase =
+    NETWORK_CASES.find((item) => item.id === INVENTORY_MASTER_CASE_ID) ?? activeCase;
   const override = useProsetStore((s) => s.networkGraphOverrides[activeCase.id]);
-  const networkGraph = getEffectiveNetworkGraph(activeCase.id, override);
+  const masterOverride = useProsetStore((s) => s.networkGraphOverrides[INVENTORY_MASTER_CASE_ID]);
+  const baseNetworkGraph = getEffectiveNetworkGraph(activeCase.id, override);
+  // Same merge every other consumer view already does (NetworkModelView,
+  // StudyDashboardView, CalculationView, etc.) — without this, GI confirmed
+  // via Graph Builder into the master inventory override never showed up
+  // here, since this view previously read only its own case's override.
+  const masterNetworkGraph = getEffectiveNetworkGraph(inventoryCase.id, masterOverride);
+  const networkGraph = mergeMasterRelationsIntoCase(baseNetworkGraph, masterNetworkGraph);
 
   return (
     <div className="space-y-4">
@@ -33,9 +46,10 @@ export function NetworkGraphEditorView() {
             onChange={(e) => setActiveCase(e.target.value)}
             className="bg-white text-sm px-3 py-1.5 rounded border border-slate-300 focus:border-blue-500 focus:outline-none"
           >
-            {NETWORK_CASES.filter((item) => item.scope === "corridor").map((item) => (
+            {NETWORK_CASES.map((item) => (
               <option key={item.id} value={item.id}>
                 {item.title}
+                {item.id === INVENTORY_MASTER_CASE_ID ? " (master inventory)" : ""}
               </option>
             ))}
           </select>

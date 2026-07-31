@@ -8,6 +8,295 @@ arsitektur dan roadmap produk, rujuk:
 - [`README.md`](./README.md) — MVP roadmap, status implementasi per tahap, dan
   demo flow.
 
+## Update 2026-08-01 — Fix: Konteks GI Tidak Mengikuti Kerja User (Study/Network Builder Nyangkut ke Demo Case)
+
+**Konteks**: menindaklanjuti temuan sesi sebelumnya (entri "Batch-confirm" di
+bawah) bahwa Study/Working Network selalu balik ke demo case lama
+("DKS-DM-PIK-MKB") walau user sedang mengecek GI lain. Riset arsitektur
+menyeluruh (subagent Explore + verifikasi manual per file) menemukan bahwa
+ini BUKAN dua sistem topologi yang terpisah total — 8 dari 10 view consumer
+(`NetworkModelView`/Working Network, `StudyDashboardView`, `StudyWizard`,
+`CalculationView`, `CoverageView`, `VerifiedReportView`, `LineRegistryView`,
+`MasterDataView`) sudah benar melakukan merge `getEffectiveNetworkGraph` +
+`mergeMasterRelationsIntoCase` terhadap `INVENTORY_MASTER_CASE_ID`. Masalah
+sebenarnya adalah 4 celah propagasi konkret:
+
+1. **`NetworkGraphEditorView.tsx` ("Network Builder")** tidak pernah
+   memanggil `mergeMasterRelationsIntoCase` sama sekali — satu-satunya view
+   yang tidak melihat hasil konfirmasi Graph Builder yang tersimpan di
+   master inventory override. Case-picker-nya juga di-filter ke
+   `scope === "corridor"`, yang secara struktural mengeklusi
+   `INVENTORY_MASTER_CASE_ID` dari daftar pilihan.
+2. **`createStudy` (`useProsetStore.ts`)** unconditionally hardcode
+   `activeNetworkCaseId: "case_dks_dm_pik_mkb"` pada setiap Study baru,
+   apa pun GI/line yang sebenarnya jadi subjek Study itu. Self-correct hanya
+   terjadi kalau `subjectLineId` diisi (lewat `selectLine`), dan bahkan itu
+   race dengan `set({ currentTab: ... })` yang jalan sinkron tepat sesudahnya
+   karena `selectLine`'s fallback branch (`import()` dinamis) bersifat async
+   sementara pemanggilnya fire-and-forget.
+3. **`SettingCaseDetail.tsx`'s `openTool()`** hanya memanggil `selectLine`
+   kalau `protectedScope.subjectLineId` terisi. Untuk tipe case tanpa
+   subject line wajib (`new_gi_insertion`, `topology_change`,
+   `policy_revision`, `data_correction`, `other`) — justru tipe case yang
+   paling berkaitan dengan "sedang kerja di topology GI ini" — membuka
+   Working Network/Network Builder dari case itu tidak menyentuh
+   `activeNetworkCaseId`/`activeNetworkLineId` sama sekali.
+4. **`confirmGraphBuildGroup`/`confirmGraphBuildGroupsBatch`** tidak pernah
+   men-set `activeNetworkCaseId`/`activeNetworkLineId` — confirm GI cuma
+   menulis ke `networkGraphOverrides`/`graphBuildDecisions`. Tidak ada
+   langkah "user baru confirm GI X, maka context kerja sekarang GI X" di
+   mana pun.
+
+**Fix**:
+- `NetworkGraphEditorView.tsx`: tambah merge master inventory (pola identik
+  `NetworkModelView.tsx:75-89`, bukan diimplementasi ulang), dan case-picker
+  sekarang menampilkan semua `NETWORK_CASES` termasuk
+  `INVENTORY_MASTER_CASE_ID` (diberi label eksplisit "(master inventory)").
+- `selectLine` (`useProsetStore.ts`) diubah signature-nya jadi
+  `Promise<void>` (dari `void`) — fallback branch (`import()` dinamis ke
+  `graph-builder.ts`, sengaja dinamis demi bundle size, lihat komentar di
+  atas import) sekarang di-`await`, bukan fire-and-forget. Semua 8+ caller
+  existing aman karena tidak ada satupun yang menggunakan return value-nya.
+- `createStudy`: hardcode dihapus. Kalau `subjectLineId` diisi, `await
+  selectLine(...)` dulu sebelum pindah tab (tidak ada lagi flash-of-wrong-case).
+  Kalau tidak (`manualSubstationIds` path), resolve case yang benar dari
+  `substationIds` lewat pencarian yang meniru logic `selectLine` (cek
+  `NETWORK_CASES` + merged master graph), bukan dibiarkan di case
+  sebelumnya begitu saja.
+- `SettingCaseDetail.tsx`'s `openTool`: tambah fallback — kalau
+  `subjectLineId` kosong tapi `protectedScope.substationIds` ada isinya,
+  cari `LineRelation` pertama yang menyentuh salah satu substation itu
+  lewat `buildGraphForUltg()` (sudah dipakai `SettingCaseWizard.tsx`, bukan
+  import baru yang aneh), lalu `selectLine` ke situ.
+- `confirmGraphBuildGroup` (bukan versi batch — confirm 24 GI sekaligus
+  tidak punya satu "GI mana yang harus dipilih" yang jelas): setelah commit
+  override, kalau grup itu punya line relation, langsung set
+  `activeNetworkCaseId`/`activeNetworkLineId` ke situ.
+
+**Verifikasi**: browser (Playwright) — confirm GI ANGKE (bukan bagian
+demo corridor) di Data Quality Queue, lalu cek Working Network dan Network
+Builder. Working Network menampilkan baris relasi baru (ANGKE↔sub_ancol,
+ANGKE↔sub_karet, ANGKE↔sub_ketapang, ANGKE↔sub_gi_muarakarang) dan section
+"NETWORK GRAPH" baru "ANGKE - GI ANGKE" dengan 8 relasi bay/terminal nyata.
+Network Builder (sebelumnya sama sekali tidak melihat data ini) sekarang
+menampilkan GI ANGKE di dropdown FROM/TO SUBSTATION dan opsi "Sisipkan GI ke
+Line Existing", serta case-picker menampilkan opsi "ULTG Durikosambi
+Inventory (master inventory)". Regression 15 test suite + `npm run build`
+semua lolos, ukuran bundle utama stabil (import `graph-builder.ts` baru di
+`SettingCaseDetail.tsx` tidak menambah bundle utama karena
+`SettingCaseDetail` sendiri sudah lazy-loaded via `CaseWorkQueueView`).
+
+**Yang TIDAK dikerjakan (backlog terpisah, disebutkan di riset tapi di luar
+scope 4 fix ini)**:
+- Dropdown "Active Study" di `NetworkModelView.tsx` (Working Network)
+  masih di-filter ke `STUDY_CASE_IDS = {"case_dks_dm_pik_mkb"}` — jadi
+  meski data-nya sudah benar ter-merge (dikonfirmasi di atas), label
+  dropdown itu sendiri belum bisa menampilkan/memilih
+  `INVENTORY_MASTER_CASE_ID` sebagai "Study" bernama. Ini kosmetik/labeling
+  gap, bukan data gap.
+- `SourceIndexView.tsx` juga belum melakukan merge master inventory (sama
+  seperti Network Builder sebelum fix ini) — tidak disebut di audit README
+  sebelumnya, kemungkinan luput. Belum diperbaiki di update ini.
+- `Study.substationIds` tetap snapshot statis saat Study dibuat — Study yang
+  sudah ada tidak otomatis "tumbuh" cakupannya kalau GI baru dikonfirmasi
+  setelah Study itu dibuat. `StudyDashboardView`'s row-filtering
+  (`buildStudyScopeKeys`/`isSubstationInScope`) akan tetap mengeklusi GI
+  yang baru dikonfirmasi dari tabel Study yang sudah ada, walau graph yang
+  mendasarinya sudah benar. Backlog terpisah.
+- Status "SLD Endpoint Candidates/Promote to master" (matcher per-record
+  lama) relatif terhadap Graph Builder (per-GI baru) — user sempat
+  menanyakan apakah itu masih relevan, belum dijawab dengan perubahan kode.
+
+## Update 2026-08-01 — Fix: Batch-confirm untuk GI High-Confidence di Graph Builder
+
+**Konteks**: user melaporkan alur konfirmasi topology terasa "nyangkut" —
+tiap kali masuk ke Study, konteksnya selalu balik ke Study demo lama
+("DKS-DM-PIK-MKB") walau sedang mengecek GI lain (mis. Grogol), dan
+menanyakan kenapa Graph Builder masih minta konfirmasi manual satu-satu
+padahal networknya "sudah di-build". Investigasi menemukan dua masalah
+struktural berbeda:
+
+1. **Study/`activeNetworkCaseId` statis, tidak mengikuti bay yang sedang
+   dikerjakan** — `NETWORK_CASES` cuma berisi 1 demo case hardcoded; GI lain
+   di luar situ tidak punya Study sendiri, jadi Working Network selalu jatuh
+   balik ke default lama. `buildGraphForUltg()` (SLD scope → digsilentLineDb
+   anchor → setting-doc overlay) sudah ada dan sudah generate network penuh
+   se-ULTG, tapi belum jadi satu-satunya sumber — jalur lama (`NETWORK_CASES`
+   + matcher per-record + "SLD Endpoint Candidates/Promote to master") masih
+   co-exist berdampingan. **Ini backlog struktural besar, belum dikerjakan
+   pada update ini** — didiskusikan tapi disepakati dibahas terpisah,
+   scope-nya lebih besar dari satu slice.
+2. **Konfirmasi Graph Builder tidak membedakan GI yang genuinely butuh
+   keputusan manusia vs yang cuma formalitas** — `GraphBuildGroup.confidence`
+   sudah ada (`"high"` kalau anchor `digsilentLineDb` match persis, `"low"`/
+   `needsManualTopology` kalau butuh disambiguasi nama/alias), tapi UI
+   memperlakukan semua GI sama: satu tombol expand+confirm per GI, tanpa
+   bedanya. Untuk 24 dari 27 GI di ULTG Durikosambi yang high-confidence,
+   ritual itu terasa seperti friksi kosong, bukan diligence — inilah yang
+   diperbaiki di update ini.
+
+**Fix**: `confirmGraphBuildGroupsBatch` (baru, `useProsetStore.ts`) — commit
+banyak `GraphBuildGroup` dalam satu state update (satu entry undo, satu
+audit event), memakai logic upsert yang identik dengan
+`confirmGraphBuildGroup` yang sudah ada, bukan reimplementasi terpisah.
+`GraphBuilderSection` (`InboxView.tsx`) menghitung `highConfidencePending`
+(grup `!needsManualTopology` dengan bay/relasi > 0) dan menampilkan tombol
+"Confirm N GI high-confidence sekaligus" terpisah dari daftar per-GI di
+bawahnya — GI `needsManualTopology` tetap wajib direview satu-satu seperti
+sebelumnya (tombol Confirm-nya tetap gated di belakang "sudah expand
+detail"), karena itu genuinely butuh keputusan manusia (alias/nama
+konflik, anchor topology hilang).
+
+**Verifikasi**: diuji end-to-end di browser (Playwright) — tombol
+"Confirm 24 GI high-confidence sekaligus" muncul di Data Quality Queue
+(nama baru untuk "Data Mapping Inbox"), diklik, dan setelahnya tombol
+menghilang (tidak ada lagi grup high-confidence pending). Regression
+`test:setting-case`, `test:relay-catalog-builder`, `test:graph-coordination`,
+`test:relay-setting-builder`, dan `npm run build` semua lolos tanpa
+regresi.
+
+**Yang TIDAK dikerjakan (dicatat sebagai backlog terpisah, scope lebih
+besar)**:
+- Menyatukan `NETWORK_CASES`/Working Network/Study dengan
+  `buildGraphForUltg()` sebagai satu-satunya sumber topologi — ini yang
+  akan menyelesaikan akar masalah "Study selalu DKS-MKB walau cek GI lain".
+- Mempensiunkan atau menjelaskan status "SLD Endpoint Candidates/Promote to
+  master" (jalur matcher per-record lama) relatif terhadap Graph Builder
+  (jalur per-GI baru) — user eksplisit bertanya apakah itu masih relevan,
+  belum dijawab dengan perubahan kode.
+- Upload dokumen sumber langsung dari layar Setting Case Detail (root cause
+  terpisah: tombol "Buka Working Network" di panel Bukti Sumber mengarah ke
+  tool yang salah, dan tidak ada cara upload source-intake record tanpa
+  pindah ke menu Dokumen Sumber) — didiskusikan, root cause dikonfirmasi,
+  belum diimplementasikan.
+- Database sungguhan untuk state ini (confirm/approve saat ini hanya
+  tersimpan di localStorage per-browser, bukan shared) — user eksplisit
+  menunda ini sampai flow inti (case lifecycle + calculation) solid.
+
+## Update 2026-08-01 — D1 Slice 2: Importer HEL_PHT_TAP Selesai untuk Seluruh 13 Model Relay
+
+**Konteks**: melanjutkan D1 Slice 1 (MICOM P545 saja, 52/184 baris) sampai
+mencakup seluruh 13 model relay penghantar yang ada di sheet `HEL_PHT_TAP`
+(184/184 baris real). User eksplisit membatasi scope ke 13 model penghantar
+ini dulu — model/vendor lain (Toshiba GRZ 200, NR, Xifang di luar PCS-931,
+format `.urs` lama) belum ada di sheet ini sama sekali dan bukan bagian
+dari slice ini.
+
+- **13 model kolase jadi 7 layout kolom berbeda, bukan 13 mapping
+  terpisah** — beberapa sub-keluarga MiCOM berbagi posisi kolom identik:
+  - **Layout A** (MICOM P545/P546/P543/P521): PP/PE-split distance,
+    Scheme Logic (Aid1/Aid2), SOTF/TOR status+tripping bitmask, AR, sync
+    checks — sama persis dengan mapping P545 dari Slice 1.
+  - **Layout B** (MICOM P443/P442/P446): distance flat Z1/R1G/R1Ph/tZ1
+    (tanpa split PP/PE), field `SOTF/TOR Mode` gabungan, GFR pakai `Ie>`.
+  - **L90** (GE): Current Differential (87L) + Phase/Ground Distance Mho
+    penuh dengan quadrilateral blinder, Pilot Scheme.
+  - **7SL87/7SD61** (Siemens, layout identik): 87 Line Differential,
+    distance flat + varian Mho terpisah, carrier/aided scheme.
+  - **RED670** (ABB): Diff Mode (IdMin/EndSection slope), Zone 1 PP/PE-split
+    (mencerminkan struktur XRIO ZMFPDIS yang ditemukan saat kerja parser
+    .rio/XRIO), Zone 2/3 reach bersama, Autorecloser + Synchronizing.
+  - **PCS-931** (NR): penamaan gaya IEC-61850 (`87L.*`, `21M1-3.ZG/ZP.*`),
+    Pilot Mode eksplisit (`85.Opt_PilotMode` = POTT/PUTT).
+  - **GRL 200** (Toshiba): karakteristik phase (Mho) dan ground (Quad)
+    terpisah per zone, Carrier Distance/DEF, Differential (`DIFL.*`).
+- **Setiap layout diverifikasi terhadap baris data nyata** sebelum ditulis
+  ke extractor — bukan ditebak dari header row saja. Ditemukan bahwa MICOM
+  P521 punya 2 baris di workbook, satu benar-benar kosong (identitas bay
+  saja) dan satu punya data OCR/GFR backup nyata — extractor tidak
+  memfabrikasi nilai untuk baris kosong tsb, sesuai prinsip no-fabrication
+  yang sudah dipakai builder lain di proyek ini.
+- **`parseQuantity` diperbaiki** untuk menangani suffix parenthetical
+  deskriptif yang muncul di beberapa model (`"0,819 A (sec)"`,
+  `"1 A (0,2xIn)"`) — sebelumnya gagal parse (return null) karena regex
+  cuma menerima angka+unit tanpa teks tambahan setelahnya.
+- **`PromotedHelPhtTapBay` (`hel-pht-tap-import.ts`) didesain ulang** —
+  awalnya (Slice 1) meniru bentuk P545 secara flat (`distance`,
+  `currentDiff`, `scheme`, dst di top level). Begitu 12 model lain
+  ditambah, ini gagal typecheck karena tiap model punya field yang
+  genuinely berbeda (RED670 punya `zone1`/`zone2`/`zone3`, PCS-931 punya
+  `distSetting.z1gZSetOhm`, dst — bukan variasi kecil, tapi struktur
+  berbeda). Diperbaiki: field yang dipromote ke top level hanya yang
+  benar-benar ada di semua 7 shape (identity, matching, CT/VT); detail
+  spesifik-model disimpan utuh di field `raw`, konsumen yang sudah tahu
+  modelnya baca dari situ — sama seperti `rio-xrio-import.ts`'s callers
+  yang switch berdasarkan `kind`/vendor, bukan satu bentuk universal yang
+  dipaksakan.
+- Regression `test:hel-pht-tap-import` diperluas: assert jumlah record per
+  model (184 total, exact match per 13 model), spot-check nilai nyata
+  untuk 4 layout berbeda (A/RED670/PCS-931/GRL 200), dan verifikasi
+  normalisasi angka koma-desimal serta suffix parenthetical.
+- Regression: 15 test suite (termasuk `test:hel-pht-tap-import` yang
+  diperluas) + `npm run build` — semua lolos, tidak ada chunk/bundle baru
+  (importer masih belum di-wire ke UI manapun, sesuai scope audit-dulu
+  yang disepakati).
+- **Yang TIDAK dikerjakan**: wiring importer ke UI (`VendorImportView.tsx`
+  atau `overlaySettingDocs()`); populate `SettingRecord.values`/
+  `RelaySetting` dari hasil `promoteMatchedHelPhtTapCandidates` — itu D1
+  slice berikutnya. Model/vendor di luar 13 ini (lihat Konteks di atas)
+  juga belum masuk scope.
+
+## Update 2026-08-01 — D1 Slice 1: Importer HEL_PHT_TAP (MICOM P545)
+
+**Konteks**: menindaklanjuti audit kelengkapan data (lihat entri di bawah,
+"Audit Kelengkapan Data HEL_PHT_TAP") yang menemukan bahwa sheet
+`HEL_PHT_TAP` — belum pernah diimport — punya kedalaman parameter jauh lebih
+dekat ke dokumen TAP resmi (Current Diff, Distance Z1-Z3, Scheme
+Logic/POTT-PUTT, SOTF/TOR, Autoreclose, System Checks/Sync, VTS/CTS,
+OCR/GFR backup) dibanding sumber yang sekarang dipakai (`DIST`/`AR`/
+`OCR_PHT`, ~5% depth). Ini slice pertama Data MVP D1 (Controlled Data
+Intake) — user eksplisit memilih urutan track D1 → O1 → E1 → C1 → N1 karena
+track lain butuh data nyata dulu.
+
+- **`scripts/extract-hel-pht-tap.mjs`** (baru, `npm run import:hel-pht-tap`):
+  mengekstrak `HEL_PHT_TAP` ke `src/domain/generated/hel-pht-tap-registry.json`,
+  mengikuti pola `extract-lcd-dist.mjs`/`extract-ocr.mjs`. **Hanya MICOM
+  P545** yang punya column map di slice ini (52/184 baris nyata) — 12 model
+  relay lain (7SL87, PCS-931, MICOM P546/P543/P521/P443/P442/P446, L90,
+  7SD61, RED670, GRL 200) dilewati secara eksplisit dan dilaporkan di
+  `summary.skippedModels`, bukan didiamkan atau ditebak.
+- **Alasan hanya 1 model dulu**: sheet ini TIDAK punya satu layout kolom
+  tetap — baris 2-14 masing-masing adalah header dictionary terpisah PER
+  MODEL, dan baris data bay (baris 15+) untuk model berbeda saling
+  ter-interleave (bukan per blok model). Kolom index yang sama berarti
+  field berbeda tergantung model barisnya (kolom 8 = "Distance enabled"
+  untuk P545, tapi "VT" untuk 7SL87, "Current" untuk L90). Mapping kolom
+  P545 diverifikasi langsung terhadap nilai baris nyata (PHT.01: Z1
+  0.263 ohm @70.066°, K1 30%→0.3, tRevGuard 100ms→0.1s, scheme PUR, SOTF
+  "Enable Pole Dead", AR "1PAR/3PAR") sebelum dipakai, bukan ditebak dari
+  audit sebelumnya (yang sempat salah menggabungkan header 13 model jadi
+  satu daftar kolom demi estimasi kelengkapan, cukup untuk audit tapi tidak
+  cukup akurat untuk extractor nyata).
+- **`src/domain/hel-pht-tap-import.ts`** (baru): mirror pola
+  `lcd-dist-import.ts` — `mapHelPhtTapCandidatesToLines`/
+  `promoteMatchedHelPhtTapCandidates`, memakai `matchAnySide` yang sama
+  (matcher.ts, tidak reimplementasi logic matching). Sheet ini tidak
+  punya kolom circuit terpisah (beda dari DIST/OCR_PHT), jadi circuit
+  dikosongkan dan diserahkan ke `inferRemoteEndpoint` seperti bay tanpa
+  akhiran "-1"/"-2".
+- **`SettingSourceKind`** (`unified.ts`) menambah `"hel-pht-tap-import"`.
+- **Unit normalization baru** (`parseQuantity` di extractor): sel di sheet
+  ini menyimpan angka+satuan inline ("0.263 ohm", "30%", "100 ms"), bukan
+  kolom satuan terpisah. "ms" dinormalisasi ke detik dan "%" ke fraksi
+  supaya konsisten dengan `DistanceZoneSetting`/`RelaySetting` yang sudah
+  pakai detik dan fraksi, bukan ms/persen.
+- Regression baru: `scripts/test-hel-pht-tap-import.ts` /
+  `npm run test:hel-pht-tap-import` — memverifikasi 52 record P545
+  terekstrak, nilai PHT.01 sesuai sumber asli, dan matching ke
+  NetworkLine fixture berhasil lewat matcher yang sama dengan LCD/DIST.
+- **Yang TIDAK dikerjakan**: belum ada wiring ke UI (`VendorImportView.tsx`
+  atau `graph-builder.ts`'s `overlaySettingDocs()`) — modul ini belum
+  dipanggil dari mana pun di luar dirinya sendiri dan test-nya, dikonfirmasi
+  lewat `npm run build` (tidak ada chunk baru, ukuran bundle tidak berubah).
+  12 model relay lain belum punya column map — itu pekerjaan lanjutan
+  per-model dengan pola yang sama (dump header row model tsb dari
+  `HEL_PHT_TAP`, verifikasi terhadap baris data nyata, baru tulis
+  extractor-nya). Populate `SettingRecord.values`/`RelaySetting` dari hasil
+  promote juga belum dikerjakan — itu langkah D1 berikutnya setelah lebih
+  banyak model tercakup.
+- Regression: 14 test suite existing + `test:hel-pht-tap-import` baru,
+  semua lolos; `npm run build` lolos tanpa warning baru.
+
 ## Update 2026-08-01 — Modul Baru: Parser .rio/XRIO untuk Crosscheck Actual Setting
 
 **Konteks**: menindaklanjuti temuan bahwa alur "Crosscheck Actual Setting"
