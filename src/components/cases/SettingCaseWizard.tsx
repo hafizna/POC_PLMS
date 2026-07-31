@@ -199,7 +199,29 @@ export function SettingCaseWizard({
     (ownerLevel !== "UPT" || notifiedUnit.trim().length > 0) &&
     (lifecycleIntent !== "temporary_emergency" ||
       (temporaryExpiresAt.length > 0 && emergencyReason.trim().length > 0));
-  const scopeChosen = Boolean(selectedSubject) || manualSubstationIds.length > 0;
+  // Change items below all modify something on an EXISTING specific line/bay
+  // (reconductoring a line, swapping a CT on a bay, replacing a relay at a
+  // bay, remote-side work on a specific circuit) — for these, "pilih GI
+  // langsung tanpa bay subject" would silently produce a case whose
+  // Calculation/Coordination tools can never resolve which line to act on
+  // (SettingCaseDetail's openTool() skips selectLine() when subjectLineId is
+  // empty, and CalculationView/CoverageView's linkedSettingCase lookup can
+  // never match — the case quietly stops linking evidence with no error
+  // shown anywhere). new_gi_insertion/topology_change/policy_revision/
+  // data_correction/other are excluded: they may legitimately target a GI,
+  // multiple substations, or a not-yet-existing line, so manual substation
+  // selection stays valid for them.
+  const REQUIRES_SUBJECT_LINE: ReadonlySet<ChangeItemKind> = new Set([
+    "reconductoring",
+    "ct_replacement",
+    "vt_replacement",
+    "relay_replacement",
+    "remote_side_work",
+  ]);
+  const requiresSubjectLine = primaryReason && REQUIRES_SUBJECT_LINE.has(primaryReason);
+  const scopeChosen = requiresSubjectLine
+    ? Boolean(selectedSubject)
+    : Boolean(selectedSubject) || manualSubstationIds.length > 0;
 
   const toggleChangeItem = (kind: ChangeItemKind) => {
     if (kind === primaryReason) return;
@@ -679,6 +701,13 @@ export function SettingCaseWizard({
                       Data Z1-Z3/timer reference/TAP/actual sudah konsisten untuk bay ini.
                     </div>
                   )}
+                </div>
+              ) : requiresSubjectLine ? (
+                <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+                  {CHANGE_ITEM_LABEL[primaryReason as ChangeItemKind]} berlaku untuk satu
+                  bay/line spesifik — pilih bay-nya di atas (bukan hanya GI) supaya
+                  Calculation dan Coordination nanti tahu line mana yang dituju dan hasilnya
+                  ter-link balik ke case ini.
                 </div>
               ) : (
                 <div>

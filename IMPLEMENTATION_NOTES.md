@@ -8,6 +8,51 @@ arsitektur dan roadmap produk, rujuk:
 - [`README.md`](./README.md) — MVP roadmap, status implementasi per tahap, dan
   demo flow.
 
+## Update 2026-08-01 — Fix: Wizard Bisa Membuat Case Tanpa Subject Line yang Diam-Diam Putus Nyambung
+
+**Masalah**: user menandai flow "masih terasa aneh" secara fungsional
+(bukan visual). Audit menemukan `SettingCaseWizard.tsx` Langkah 3
+mengizinkan `scopeChosen = Boolean(selectedSubject) || manualSubstationIds.length > 0`
+— case bisa dibuat hanya dengan "pilih GI langsung (tanpa bay subject)",
+TERLEPAS dari jenis perubahannya. Untuk case yang genuinely butuh satu
+line spesifik (reconductoring, penggantian CT/VT/relay, remote-side
+work), ini menciptakan case yang cacat secara diam-diam:
+`protectedScope.subjectLineId` kosong → `SettingCaseDetail.openTool()`
+skip `selectLine()` (guard `if (subjectLineId)` gagal) → tombol "Buka
+Calculation/Coordination" tetap membuka tool tapi `activeNetworkLineId`
+tetap nilai lama yang tidak relevan → `CalculationView`/`CoverageView`'s
+`linkedSettingCase` lookup (`subjectLineId === activeNetworkLineId`) tidak
+akan PERNAH match → hasil kalkulasi/coordination check tidak pernah
+ter-link ke case, badge "Case: {title}" tidak pernah muncul — semua
+tanpa satu pun pesan error di mana pun.
+
+**Fix**: `REQUIRES_SUBJECT_LINE` (set baru) menandai 5 `ChangeItemKind`
+yang mengubah sesuatu pada line/bay yang SUDAH ADA (reconductoring,
+ct_replacement, vt_replacement, relay_replacement, remote_side_work) —
+untuk case dengan salah satu alasan ini, `scopeChosen` HANYA true kalau
+`selectedSubject` (bay spesifik) terisi; opsi "pilih GI langsung" pada
+Langkah 3 diganti pesan amber yang menjelaskan kenapa. `new_gi_insertion`/
+`topology_change`/`policy_revision`/`data_correction`/`other` sengaja
+tidak dimasukkan — GI baru atau koreksi data massal genuinely bisa tanpa
+satu line spesifik.
+- Tambahan kecil: `SettingCaseDetail.tsx` sekarang menampilkan pesan
+  "Belum ada tool yang dipetakan untuk tahap X" saat `stageTools` kosong
+  untuk stage yang sudah implemented (sebelumnya: kosong tanpa
+  penjelasan) — supaya user tidak bingung kenapa tidak ada tombol
+  "Buka..." muncul di stage tertentu.
+- Diverifikasi (Playwright): pilih alasan "Reconductoring" → Langkah 3
+  menampilkan pesan amber (bukan opsi GI-saja), tombol final "Buat
+  Change Request" tetap disabled sampai bay benar-benar dipilih —
+  case dengan subject line kosong TIDAK BISA dibuat lagi untuk 5 alasan
+  ini.
+- Regression: seluruh 13 test suite + `npm run build` — lolos.
+- **Yang TIDAK dikerjakan**: tombol "Lanjut" antar-langkah (1→2→3→4)
+  masih tidak menge-cek `scopeChosen` — user tetap bisa klik sampai
+  Langkah 4 tanpa pilih bay, baru diblokir di tombol submit terakhir.
+  Ini pola yang sudah ada sebelumnya (bukan regresi baru), gate final
+  sudah cukup untuk mencegah case cacat, tapi UX bisa lebih baik kalau
+  Langkah 3 sendiri juga diblokir — backlog terpisah, bukan bug kritis.
+
 ## Catatan 2026-08-01 — Temuan Diskusi: Data Freeze, Scope UPT vs ULTG, User Access (BELUM DIKERJAKAN)
 
 Tiga temuan/keputusan dari diskusi, dicatat sebagai backlog eksplisit —

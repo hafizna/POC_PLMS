@@ -326,6 +326,11 @@ export function SettingCaseDetail({
                 <ExternalLink className="h-3.5 w-3.5" /> Buka {tool.label}
               </button>
             ))}
+            {!terminal && !stageTools && isStageImplemented(settingCase.stage as SettingCaseStage) && (
+              <span className="text-xs text-ink-4">
+                Belum ada tool yang dipetakan untuk tahap {STAGE_LABEL[settingCase.stage]}.
+              </span>
+            )}
           </div>
           {freezeErrors.map((error) => (
             <div key={error} className="mt-2 text-xs text-red-700">
