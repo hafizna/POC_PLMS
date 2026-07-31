@@ -559,10 +559,21 @@ function stationAliases(value) {
 }
 
 function circuitFromRecord(record) {
-  const terminal = `${record.fromTerminal ?? ""} ${record.toTerminal ?? ""}`;
+  // The record's own name suffix ("ANGKE-ANCOL -1" / "-2") is the reliable
+  // signal: it directly names which parallel circuit this is. Terminal codes
+  // (fromTerminal/toTerminal, e.g. "I-5"/"II-5") are bus/bay position labels,
+  // NOT circuit numbers — "II" is a Roman numeral for terminal 2, not circuit
+  // 2, and both circuits of a parallel pair commonly share the same terminal
+  // codes at each end (confirmed: ANGKE-ANCOL -1 and -2 both run I-5/II-5).
+  // Falling back to terminal-based guessing when the name has no suffix
+  // previously misclassified 40/218 name-suffixed records (~18%) by matching
+  // "II-5" as circuit "2" regardless of the record's real circuit.
   const name = record.name ?? "";
-  if (/(?:^|[-\s])2(?:$|[-\s])|II-?5/i.test(`${name} ${terminal}`)) return "2";
-  if (/(?:^|[-\s])1(?:$|[-\s])|I-?5/i.test(`${name} ${terminal}`)) return "1";
+  const nameMatch = name.match(/-\s*([12])\s*$/);
+  if (nameMatch) return nameMatch[1];
+  const terminal = `${record.fromTerminal ?? ""} ${record.toTerminal ?? ""}`;
+  if (/(?:^|[-\s])2(?:$|[-\s])|II-?5/i.test(terminal)) return "2";
+  if (/(?:^|[-\s])1(?:$|[-\s])|I-?5/i.test(terminal)) return "1";
   return null;
 }
 

@@ -8,6 +8,65 @@ arsitektur dan roadmap produk, rujuk:
 - [`README.md`](./README.md) — MVP roadmap, status implementasi per tahap, dan
   demo flow.
 
+## Update 2026-07-31 — Fix: Salah Baca Kode Terminal sebagai Nomor Sirkit di Relay-Catalog Matching
+
+**Pertanyaan user yang memicu investigasi**: kalau data Z1-Z3 sudah match
+(seperti Angke↔Ancol yang barusan diverifikasi bersih), apakah grading-time
+dan overlap check-nya (`graph-coordination.ts`) juga otomatis ikut jalan?
+Jawabannya awalnya TIDAK — dicek langsung: `network.relaySettings` hanya
+terisi 29 dari kebutuhan (hasil `buildRelayIedsFromCatalog`, yang hanya
+menarik dari 45 aset relay-catalog yang berstatus DIgSILENT-match
+`"matched"`), dan Ancol tidak termasuk di dalamnya sama sekali — padahal
+`upt-zone-audit.ts` (baca langsung dari `LCD_DIST_REGISTRY`) sudah punya
+data Ancol yang lengkap dan match. Dua pipeline data relay yang berbeda,
+belum tersambung.
+
+**Investigasi kenapa Ancol tidak matched**: asset relay Ancol#1/#2 di
+`relay-catalog.json` sudah dapat kandidat skor 0.9 (`local station` +
+`remote endpoint`), tepat di ambang `unambiguous` (`score >= 0.9`), tapi
+gagal karena **kandidat row 16 ("ANGKE-ANCOL -1") dan row 17 ("ANGKE-ANCOL
+-2") sama-sama skor 0.9** — seri, sehingga status jadi `"candidate"` (perlu
+review manual), bukan `"matched"`.
+
+**Root cause**: `circuitFromRecord()` di `scripts/index-relay-catalog.mjs`
+menebak nomor sirkit dari gabungan `name` DAN kode terminal
+(`fromTerminal`/`toTerminal`, mis. `"I-5"`/`"II-5"`), dengan pola regex
+`II-?5` diartikan sebagai "sirkit 2". Padahal `"I-5"`/`"II-5"` adalah kode
+posisi terminal/bay (angka Romawi), BUKAN nomor sirkit — dan kedua sirkit
+paralel ANGKE-ANCOL sama-sama memakai `fromTerminal: "I-5"` / `toTerminal:
+"II-5"` yang identik. Row 16 (`"-1"` di nama, sirkit sebenarnya 1) ikut
+salah kebaca sebagai sirkit 2 karena `toTerminal` mengandung `"II-5"` —
+akibatnya bonus skor +0.10 untuk circuit-match tidak pernah kena ke row
+yang benar, dan kedua row tetap seri di 0.9.
+- Skala: diukur di seluruh `digsilentLineDb` (1183 record, 218 di antaranya
+  punya suffix `-1`/`-2` di nama) — **40 dari 218 (≈18%) salah
+  diklasifikasi** oleh logic lama, semuanya searah (sirkit 1 asli terbaca
+  sebagai sirkit 2).
+- Fix: prioritaskan suffix nama record (`-1`/`-2`) sebagai sinyal utama —
+  itu langsung menyebut sirkit yang mana, tidak perlu ditebak — fallback ke
+  kode terminal hanya kalau nama tidak punya suffix sama sekali.
+- Setelah fix + regenerate `relay-catalog.json`: DIgSILENT matched naik
+  dari **45 → 133 aset** (hampir 3x), `relay-catalog-builder.ts` sekarang
+  resolve **82 RelayIED** (dari 39), termasuk keenam relay Ancol#1/#2
+  (confidence naik dari 0.9/ambigu jadi 1.0/matched).
+- Diverifikasi end-to-end: `network.relaySettings` sekarang berisi
+  RelaySetting nyata untuk Ancol, dan `runGraphCoordinationChecks()`
+  menghasilkan 12 diagnostic asli untuk bay itu (Z1_UNDERREACH — Z1 0.263Ω
+  = 22.7% dari line X 1.159Ω, di bawah floor 70% wajar; Z2_SHORT — Z2
+  0.403Ω belum mencapai remote bus) — bukan data yang difabrikasi, murni
+  hasil impedansi baris dari DIgSILENT dan setting Z1/Z2 dari LCD/DIST yang
+  sudah ada.
+- Regression: seluruh 13 test suite + `npm run build` — semua lolos;
+  `npm run generate:demo-seed` dijalankan ulang (4 substation demo seed
+  tidak berubah — himpunan relay dalam subset demo itu kebetulan sudah
+  match sebelumnya juga).
+- **Yang TIDAK dikerjakan**: 122 aset relay-catalog yang masih berstatus
+  `"candidate"` (skor terbaik tapi tetap ambigu, atau skor <0.9) belum
+  ditinjau satu-satu — itu backlog terpisah (opsi lain yang tidak dipilih
+  sesi ini: menyambungkan `relaySettings` langsung dari `LCD_DIST_REGISTRY`
+  tanpa melalui `relay-catalog.json`, yang akan menjangkau lebih banyak bay
+  lebih cepat tapi tidak memperbaiki data matching itu sendiri).
+
 ## Update 2026-07-31 — Fix: Audit Zone Dilakukan per Bay-Fisik, Bukan per Baris
 
 **Masalah yang dikoreksi user**: penjelasan awal soal Angke↔Muarakarang Lama
