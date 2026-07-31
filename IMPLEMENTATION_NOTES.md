@@ -8,6 +8,68 @@ arsitektur dan roadmap produk, rujuk:
 - [`README.md`](./README.md) — MVP roadmap, status implementasi per tahap, dan
   demo flow.
 
+## Update 2026-07-31 — Rapikan Navigasi Case-Driven + Fix shortCode Akar (Bukan Gejala)
+
+**Masalah navigasi**: user menunjuk sidebar "Existing Tools · not case-gated"
+— tool yang sudah case-gated (Setting Register, Reference Setting,
+Calculation, Coordination/Coverage, Network Builder) masih bisa diakses
+LANGSUNG dari sidebar, dua jalur masuk yang tidak sinkron (satu ber-gate
+lewat case, satu bebas akses). Keputusan user: "jahit satu per satu" —
+akses langsung dihapus total untuk 5 tool P2 itu.
+
+- `SettingCaseDetail.tsx`'s `STAGE_TOOL` diubah dari satu-tool-per-stage
+  jadi array (perlu, karena `study_preparation` sekarang menaungi 2 tool):
+  `scoping` → Working Network, `data_change_preparation` → Network Builder,
+  `study_preparation` → Setting Register + Reference Setting, `calculation`
+  → Calculation Workbook, `coordination` → Coordination/Coverage.
+- `AppShell.tsx`: `EXISTING_TOOL_ITEMS` dihapus total dari sidebar (5 tool
+  P2 di atas) dan dari `ALL_ITEMS` (dropdown mobile). Sisa 3 tool yang
+  BENAR-BENAR belum ready (Actual Verification, Vendor Import, Verified
+  Report — stage P1-nya, `document_audit`/`actual_readback_intake`/
+  `verification`, belum di-gate sama sekali) ditampilkan sebagai "Segera
+  Hadir": tetap terlihat (bukan hilang tanpa penjelasan) tapi disabled,
+  dengan tooltip menyebutkan gate mana yang ditunggu — bukan dihapus dan
+  bukan dibiarkan bebas akses, sesuai arahan user "kalau memang belum
+  ready, soon to be dulu".
+- Breadcrumb "Dibuka dari Case" disesuaikan: pesan sekarang berbeda untuk
+  `calculation`/`coverage` (yang benar-benar auto-save & link ke case)
+  vs tool lain (yang belum).
+
+**Bug shortCode ditemukan LEBIH DALAM saat verifikasi navigasi** (user
+menunjuk "DUR - DM #1" di Line Registry — bukan "DKSBI - DNMGT" yang sudah
+dikonfirmasi benar sebelumnya): perbaikan `ULTG_INVENTORY_NODES` kemarin
+(AGK→ANGKE dst.) ternyata **tidak pernah menyentuh bug aslinya** — itu
+cuma memperbaiki array statis yang jarang dipakai. Bug asli ada di
+`graph-builder.ts`'s `ensureSubstation()`: lookup shortCode
+(`SHORTCODE_OVERRIDE[key]` / `digsilentShortCodes.get(key)`) memakai `key`
+= `scoped.identityKey`, yang SENGAJA mempertahankan token "gi"/"gis"
+(untuk keperluan lain: membedakan GI vs GISTET Durikosambi sebagai 2
+substation terpisah — lihat komentar dedup-key). Tapi
+`digsilentShortCodes`/`SHORTCODE_OVERRIDE` di-index oleh bentuk FUZZY
+(`normalizeStationName`, tanpa token gi/gis — cocok dengan field mentah
+DIgSILENT "DURIKOSAMBI", bukan "gi durikosambi"). Akibatnya lookup SELALU
+gagal untuk setiap station yang punya `scoped` match (hampir semua),
+diam-diam jatuh ke `buildShortCode()`'s tebakan 3-huruf generik — "DUR"
+untuk Durikosambi, "ANG" untuk Angke (fix kemarin ke `ULTG_INVENTORY_NODES`
+tidak relevan sama sekali untuk jalur `buildGraphForUltg()` yang live ini).
+- Fix: lookup shortCode sekarang pakai `normalizeStationName(rawName)`
+  (variable baru `shortCodeKey`, sama dengan nilai yang sudah dihitung
+  untuk field `normalizedName`), bukan `key`.
+- Hasil setelah fix (diverifikasi langsung, tanpa perlu override manual —
+  `digsilentShortCodes`'s ekstraksi frekuensi sudah benar sejak awal,
+  cuma tidak pernah terpakai): Durikosambi→DKSBI, Angke→ANGKE, Daan
+  Mogot→DNMGT, PIK→PINKA, Kebon Jeruk→KBJRK, Karet→KARET, Karet
+  Baru→KRBRU — semua cocok dengan `digsilentLineDb` tanpa tebakan.
+- `demo-corridor-seed.json` diregenerasi — Line Registry sekarang
+  menampilkan "DKSBI - DNMGT #1" dll., diverifikasi visual (Playwright).
+- Regression: seluruh 13 test suite + `npm run build` (bundle stabil
+  ~619kB) — semua lolos.
+- **Yang TIDAK dikerjakan**: `GISTET KEMBANGAN`/`GIS KEMBANGAN` masih
+  berbagi shortCode "KEM" (fallback generik untuk keduanya, bukan
+  regresi baru — situasi ini sudah ada sebelum fix ini) — perlu
+  `SHORTCODE_OVERRIDE` eksplisit kalau mau dibedakan, belum dikerjakan.
+  3 tool P1 yang "Segera Hadir" belum digarap gate-nya — backlog terpisah.
+
 ## Update 2026-07-31 — Sprint 5 (lanjutan): Buka Gate Coordination
 
 Lanjutan alami dari gate Calculation (Sprint 5 sebelumnya) — sesuai

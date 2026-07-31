@@ -29,12 +29,22 @@ import { ImpactReadinessPanel } from "./ImpactReadinessPanel";
 import { StudyBindingPanel } from "./StudyBindingPanel";
 import { assessCrosscheckEvidence } from "../../domain/case-flow-hardening";
 
-// Which existing workspace supports the work of each stage. The case is the
-// workflow container; the tools stay where they are and are opened in-context.
-const STAGE_TOOL: Partial<Record<SettingCaseStage, { tab: Tab; label: string }>> = {
-  scoping: { tab: "network-model", label: "Working Network" },
-  calculation: { tab: "calculation", label: "Calculation Workbook" },
-  coordination: { tab: "coverage", label: "Coordination / Coverage" },
+// Which existing workspace(s) support the work of each stage. The case is
+// the workflow container; the tools stay where they are and are opened
+// in-context — this is now the ONLY way to reach these tools (sidebar's
+// direct "Existing Tools" links were removed once every implemented P2
+// stage had a home here, so a tool never floats free of its case).
+const STAGE_TOOL: Partial<Record<SettingCaseStage, { tab: Tab; label: string }[]>> = {
+  scoping: [{ tab: "network-model", label: "Working Network" }],
+  data_change_preparation: [
+    { tab: "network-graph-editor", label: "Network Builder" },
+  ],
+  study_preparation: [
+    { tab: "line-registry", label: "Setting Register" },
+    { tab: "reference-setting", label: "Reference Setting" },
+  ],
+  calculation: [{ tab: "calculation", label: "Calculation Workbook" }],
+  coordination: [{ tab: "coverage", label: "Coordination / Coverage" }],
 };
 
 export function SettingCaseDetail({
@@ -110,7 +120,7 @@ export function SettingCaseDetail({
     crosscheckEvidenceWarnings: crosscheckEvidence.warnings,
   });
 
-  const stageTool = terminal
+  const stageTools = terminal
     ? undefined
     : STAGE_TOOL[settingCase.stage as SettingCaseStage];
 
@@ -306,15 +316,16 @@ export function SettingCaseDetail({
                 </button>
               </>
             )}
-            {stageTool && (
+            {stageTools?.map((tool) => (
               <button
+                key={tool.tab}
                 type="button"
-                onClick={() => openTool(stageTool.tab)}
+                onClick={() => openTool(tool.tab)}
                 className="inline-flex items-center gap-1.5 rounded-md border border-line bg-white px-3 py-1.5 text-xs font-semibold text-ink-2 hover:border-blue-300 hover:text-blue-700"
               >
-                <ExternalLink className="h-3.5 w-3.5" /> Buka {stageTool.label}
+                <ExternalLink className="h-3.5 w-3.5" /> Buka {tool.label}
               </button>
-            )}
+            ))}
           </div>
           {freezeErrors.map((error) => (
             <div key={error} className="mt-2 text-xs text-red-700">

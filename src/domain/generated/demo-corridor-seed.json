@@ -4,7 +4,7 @@
     {
       "id": "sub_gi_durikosambi",
       "name": "GI DURIKOSAMBI",
-      "shortCode": "DUR",
+      "shortCode": "DKSBI",
       "voltageKv": 150,
       "kind": "GI",
       "normalizedName": "durikosambi"
@@ -12,7 +12,7 @@
     {
       "id": "sub_gis_daan_mogot",
       "name": "DAAN MOGOT GIS",
-      "shortCode": "DM",
+      "shortCode": "DNMGT",
       "voltageKv": 150,
       "kind": "GIS",
       "normalizedName": "daan mogot"
@@ -20,7 +20,7 @@
     {
       "id": "sub_gis_pantai_indah_kapuk",
       "name": "GIS PANTAI INDAH KAPUK",
-      "shortCode": "PIK",
+      "shortCode": "PINKA",
       "voltageKv": 150,
       "kind": "GIS",
       "normalizedName": "pantai indah kapuk"

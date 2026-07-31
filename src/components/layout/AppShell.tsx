@@ -12,11 +12,8 @@ import {
   GitCompareArrows,
   Home,
   Inbox,
-  Library,
   Network,
   PackageOpen,
-  Pencil,
-  Route,
   ShieldCheck,
 } from "lucide-react";
 import { useProsetStore, type Tab } from "../../store/useProsetStore";
@@ -52,15 +49,40 @@ const LOCAL_AUDIT_ITEMS: NavItem[] = [
   { id: "audit-trail", label: "Local Audit (POC)", icon: <ShieldCheck className="h-4 w-4" /> },
 ];
 
-const EXISTING_TOOL_ITEMS: NavItem[] = [
-  { id: "line-registry", label: "Setting Register (POC)", icon: <Library className="h-4 w-4" /> },
-  { id: "reference-setting", label: "Reference Setting (POC)", icon: <Calculator className="h-4 w-4" /> },
-  { id: "calculation", label: "Calculation (POC)", icon: <Calculator className="h-4 w-4" /> },
-  { id: "comparison", label: "Actual Verification (POC)", icon: <GitCompareArrows className="h-4 w-4" /> },
-  { id: "coverage", label: "Coordination / Coverage (POC)", icon: <Route className="h-4 w-4" /> },
-  { id: "network-graph-editor", label: "Network Builder (POC)", icon: <Pencil className="h-4 w-4" /> },
-  { id: "vendor-import", label: "Vendor Import (POC)", icon: <PackageOpen className="h-4 w-4" /> },
-  { id: "verified-report", label: "Verified Report (POC)", icon: <FileCheck2 className="h-4 w-4" /> },
+// Tools that DO have an implemented, case-gated stage (scoping,
+// data_change_preparation, study_preparation, calculation, coordination —
+// see SettingCaseDetail.tsx's STAGE_TOOL) are deliberately NOT listed here
+// anymore: they're only reachable by opening a Setting Case and clicking
+// "Buka <tool>" from its current stage, never directly from the sidebar.
+// This was a real source of confusion (same tool reachable two ways, one
+// gated and one not) until the case-driven path covered everything P2
+// (new_setting) needs — see IMPLEMENTATION_NOTES.md.
+//
+// What remains here is P1 (crosscheck) tooling whose stages
+// (document_audit, actual_readback_intake, verification) are NOT YET
+// case-gated at all — rather than leave them freely accessible (which
+// would just recreate the same confusion for the crosscheck flow) or
+// remove them outright (which would look like the feature vanished),
+// they're shown as disabled "Segera hadir" until that gate is built.
+const COMING_SOON_ITEMS: NavItem[] = [
+  {
+    id: "comparison",
+    label: "Actual Verification",
+    icon: <GitCompareArrows className="h-4 w-4" />,
+    description: "Menunggu gate P1: actual_readback_intake",
+  },
+  {
+    id: "vendor-import",
+    label: "Vendor Import",
+    icon: <PackageOpen className="h-4 w-4" />,
+    description: "Menunggu gate P1: actual_readback_intake",
+  },
+  {
+    id: "verified-report",
+    label: "Verified Report",
+    icon: <FileCheck2 className="h-4 w-4" />,
+    description: "Menunggu gate P1: verification",
+  },
 ];
 
 const LEGACY_ITEMS: NavItem[] = [
@@ -68,11 +90,14 @@ const LEGACY_ITEMS: NavItem[] = [
   { id: "study-dashboard", label: "Bay List", icon: <BookOpen className="h-4 w-4" /> },
 ];
 
+// COMING_SOON_ITEMS deliberately excluded: their tabs are disabled/not
+// case-gated, so they shouldn't be reachable from the mobile dropdown
+// either (unlike the desktop sidebar, a <select> has no way to show
+// "disabled, here's why" inline).
 const ALL_ITEMS = [
   ...MY_WORK_ITEMS,
   ...DATA_FOUNDATION_ITEMS,
   ...LOCAL_AUDIT_ITEMS,
-  ...EXISTING_TOOL_ITEMS,
   ...LEGACY_ITEMS,
 ];
 
@@ -88,9 +113,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       ? state.settingCases.find((item) => item.id === openedFromCaseId)
       : undefined
   );
-  const [toolsOpen, setToolsOpen] = useState(
-    EXISTING_TOOL_ITEMS.some((item) => item.id === tab)
-  );
+  const [comingSoonOpen, setComingSoonOpen] = useState(false);
   const [legacyOpen, setLegacyOpen] = useState(
     LEGACY_ITEMS.some((item) => item.id === tab)
   );
@@ -197,27 +220,30 @@ export function AppShell({ children }: { children: ReactNode }) {
             <div>
               <button
                 type="button"
-                onClick={() => setToolsOpen((open) => !open)}
-                className="mb-1 flex w-full items-center justify-between px-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-600 hover:text-amber-700"
-                aria-expanded={toolsOpen}
+                onClick={() => setComingSoonOpen((open) => !open)}
+                className="mb-1 flex w-full items-center justify-between px-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400 hover:text-slate-600"
+                aria-expanded={comingSoonOpen}
               >
-                <span>Existing Tools · not case-gated</span>
-                {toolsOpen ? (
+                <span>Segera Hadir</span>
+                {comingSoonOpen ? (
                   <ChevronDown className="h-3.5 w-3.5" />
                 ) : (
                   <ChevronRight className="h-3.5 w-3.5" />
                 )}
               </button>
-              {toolsOpen && (
+              {comingSoonOpen && (
                 <div className="space-y-0.5">
-                  {EXISTING_TOOL_ITEMS.map((item) => (
-                    <NavButton
+                  {COMING_SOON_ITEMS.map((item) => (
+                    <div
                       key={item.id}
-                      item={item}
-                      active={tab === item.id}
-                      onClick={() => goToTab(item.id)}
-                      compact
-                    />
+                      title={item.description}
+                      className="cursor-not-allowed rounded-lg px-2 py-1.5 text-xs text-slate-300"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-slate-300">{item.icon}</span>
+                        <span className="font-medium">{item.label}</span>
+                      </div>
+                    </div>
                   ))}
                 </div>
               )}
@@ -258,7 +284,8 @@ export function AppShell({ children }: { children: ReactNode }) {
               Case-driven
             </div>
             <p className="mt-1 text-[11px] leading-4 text-slate-500">
-              Sprint 5: gate Calculation dibuka. Tool lain masih belum case-gated.
+              Sprint 5: gate Calculation & Coordination dibuka. Setiap tool
+              (P2) hanya dibuka dari case yang sedang aktif.
             </p>
           </div>
         </aside>
@@ -271,7 +298,10 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <span className="font-semibold">
                   {openedFromCase ? openedFromCase.title : openedFromCaseId}
                 </span>{" "}
-                — tool ini belum otomatis menyimpan hasil ke case tersebut.
+                —{" "}
+                {tab === "calculation" || tab === "coverage"
+                  ? "hasil yang disimpan di sini otomatis ter-link ke case ini."
+                  : "tool ini belum otomatis menyimpan hasil ke case tersebut."}
               </p>
               <button
                 type="button"
@@ -298,7 +328,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </div>
 
       <footer className="border-t border-slate-200 bg-white px-6 py-3 text-xs text-slate-500">
-        PLMS · Sprint 5: Calculation gate dibuka · Coordination dan tahap setelahnya masih terkunci.
+        PLMS · Sprint 5: Calculation & Coordination gate dibuka · Review/Approval dan tahap setelahnya masih terkunci.
       </footer>
     </div>
   );

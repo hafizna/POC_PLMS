@@ -435,13 +435,31 @@ export function buildAnchorTopology(
     // section, which scope.kind alone can't tell apart (a GISTET scope
     // entry could itself be either level depending on which record anchored
     // it). Falls back to 150, matching every other GI/GIS substation here.
+    // shortCode lookups need the FUZZY form (no "gi"/"gis"/"gistet" token —
+    // matches how DIgSILENT's own fromSubstation/toSubstation text is
+    // normalized, e.g. "DURIKOSAMBI" -> "durikosambi"), NOT `key`, which is
+    // scoped.identityKey and deliberately PRESERVES that token (see the
+    // dedup-key comment above — needed to keep GI/GISTET Durikosambi as two
+    // separate substations). Using `key` here silently missed every
+    // scope-matched station's real shortCode (SHORTCODE_OVERRIDE["durikosambi"]
+    // or digsilentShortCodes.get("durikosambi") never matched
+    // key="gi durikosambi"), always falling through to buildShortCode's
+    // generic 3-letter guess ("DUR" for Durikosambi, "ANG" for Angke) even
+    // when the real DIgSILENT-derived code was sitting right there —
+    // confirmed via user catching "DUR" in Line Registry's UI, same root
+    // cause as the ANGKE/DKSBI/KBJRK fixes in ULTG_INVENTORY_NODES (which
+    // fixed a different, mostly-unused static list, NOT this live path).
+    const shortCodeKey = normalizeStationName(rawName);
     const sub: UnifiedSubstation = {
       id,
       name: rawName,
-      shortCode: SHORTCODE_OVERRIDE[key] ?? digsilentShortCodes.get(key) ?? buildShortCode(rawName),
+      shortCode:
+        SHORTCODE_OVERRIDE[shortCodeKey] ??
+        digsilentShortCodes.get(shortCodeKey) ??
+        buildShortCode(rawName),
       voltageKv: observedVoltageKv.get(key) ?? 150,
       kind: scoped?.kind ?? "GI",
-      normalizedName: normalizeStationName(rawName),
+      normalizedName: shortCodeKey,
     };
     substations.set(key, sub);
     return sub;
