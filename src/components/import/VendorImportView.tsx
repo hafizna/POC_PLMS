@@ -728,6 +728,7 @@ function RelayCatalogPanel({
                           <DigsilentBadge
                             status={asset.digsilentMatch.status}
                             confidence={asset.digsilentMatch.confidence}
+                            reason={asset.digsilentMatch.reason}
                           />
                         </td>
                       </tr>
@@ -759,22 +760,48 @@ function CatalogFact({ label, value }: { label: string; value: string }) {
   );
 }
 
+// Action-oriented tooltip per status — a raw "unmatched"/"candidate" label
+// tells an engineer something is wrong but not what to do about it. The two
+// non-matched statuses need different actions: "unmatched" means this GI has
+// no entry at all in the DIgSILENT line database (commonly a site energized
+// after the 2021 snapshot) — the fix is registering/uploading its topology,
+// not fixing a name. "candidate" means the GI IS in the database but the
+// name match is ambiguous (e.g. multiple parallel circuits/sites scoring
+// equally) — the fix is a naming/alias review, not new data.
+const DIGSILENT_STATUS_GUIDANCE: Record<string, string> = {
+  matched:
+    "Bay ini sudah ter-anchor otomatis ke database DIgSILENT (nama & sirkit cocok jelas).",
+  candidate:
+    "Nama GI ditemukan di database DIgSILENT tapi ada lebih dari satu kandidat yang cocok — perlu peninjauan manual sebelum bay ini bisa dipakai untuk audit/setting otomatis.",
+  unmatched:
+    "GI ini TIDAK ditemukan di database DIgSILENT sama sekali (kemungkinan site baru pasca snapshot terakhir). Perlu registrasi ulang / upload topologi baru untuk GI ini sebelum bay-nya bisa diproses otomatis.",
+  "not-applicable":
+    "Bay ini bukan bay penghantar (line) — pencocokan DIgSILENT tidak berlaku.",
+};
+
 function DigsilentBadge({
   status,
   confidence,
+  reason,
 }: {
   status: string;
   confidence: number;
+  reason?: string;
 }) {
   const style =
     status === "matched"
       ? "border-emerald-200 bg-emerald-50 text-emerald-700"
       : status === "candidate"
         ? "border-amber-200 bg-amber-50 text-amber-700"
-        : "border-slate-200 bg-slate-50 text-slate-500";
+        : status === "unmatched"
+          ? "border-red-200 bg-red-50 text-red-700"
+          : "border-slate-200 bg-slate-50 text-slate-500";
+  const guidance = DIGSILENT_STATUS_GUIDANCE[status];
+  const title = [guidance, reason].filter(Boolean).join(" — ");
   return (
     <span
       className={`rounded-full border px-1.5 py-0.5 text-[8px] font-bold uppercase ${style}`}
+      title={title || undefined}
     >
       {status}
       {confidence > 0 ? ` ${Math.round(confidence * 100)}%` : ""}

@@ -8,6 +8,72 @@ arsitektur dan roadmap produk, rujuk:
 - [`README.md`](./README.md) — MVP roadmap, status implementasi per tahap, dan
   demo flow.
 
+## Update 2026-07-31 — Survei 122 Aset "Candidate": Dua Penyebab Berbeda, Alert DIgSILENT-Status
+
+**Konteks**: setelah fix circuit-detection (entry di atas) menaikkan matched
+45→133, masih ada 122 aset relay-catalog berstatus `"candidate"` (skor
+terbaik ambigu). Disurvei untuk tahu apakah bisa diperbaiki lagi tanpa
+menebak — ternyata ada 2 penyebab yang sama sekali berbeda:
+
+1. **~38 aset (di dalam ULTG Durikosambi)**: skor selalu seri di 0.65 karena
+   nama GI dari data relay-catalog Excel (mis. "Karet Lama") berbeda ejaan
+   dengan nama substation di sheet DIgSILENT (`Backup DB Juli 2019` — dicek
+   langsung kolom `Name`/`Terminal i`/`Terminal j`), yang untuk site ini
+   cuma menulis "KARET" polos. Ini persis pola yang SUDAH dikonfirmasi user
+   sebelumnya dan sudah difix di `graph-builder.ts`'s `SHORTCODE_OVERRIDE`
+   (`"karet" -> "KARET"`, karena "KRLMA" dicadangkan untuk "Karet Baru") —
+   tapi fix itu HANYA ada di `graph-builder.ts`, tidak pernah disalin ke
+   `scripts/index-relay-catalog.mjs`'s `stationAliases()` yang independen.
+   GI serupa yang juga kena (Cengkareng Baru, Ciledug, Durikosambi, Grogol,
+   Kembangan, Tangerang) belum diperbaiki — user mengonfirmasi variasi
+   penamaan Baru/II per situs TIDAK punya pola seragam ("keep it as it is"),
+   jadi tidak ditebak lebih lanjut sesi ini.
+2. **~50 aset (Alam Sutera, GISTET Durikosambi, GISTET Kembangan, Grogol
+   Baru, Metland, Summarecon Gading Serpong, Ulujami)**: bukan soal
+   penamaan — `digsilentMatch.reason` = `"Tidak ada endpoint lokal pada
+   DIgSILENT line database"`, artinya GI ini memang TIDAK ADA sama sekali
+   di snapshot `digsilentLineDb` (konsisten dengan catatan README soal
+   site-site pasca-2021 yang belum di-input manual). Ini bukan bug — bukan
+   sesuatu yang bisa "diperbaiki" lewat matching, harus di-upload/registrasi
+   ulang datanya.
+
+**Keputusan user**: jangan kejar 122 kandidat itu satu-satu sekarang.
+Prioritas: (a) UPT Durikosambi bare-minimum jalan untuk demo dulu, (b)
+kalau GI memang belum register di database, USER harus dapat alert yang
+jelas ("GI belum register — upload/registrasi ulang"), bukan silent
+fallback, (c) skema bulk-upload data baru (GI + setting baru) adalah arah
+jangka panjang terpisah, dicatat sebagai backlog — bukan dikerjakan
+sekarang.
+
+**Yang dikerjakan sesi ini** (alert, bukan lagi fix alias satu-satu):
+`DigsilentBadge` di `VendorImportView.tsx` (tabel "Installed relay catalog")
+sekarang punya tooltip (`title`) yang membedakan makna tiap status secara
+actionable, bukan cuma label mentah:
+- `matched` — sudah ter-anchor otomatis.
+- `candidate` — GI ditemukan tapi nama ambigu, perlu peninjauan manual.
+- `unmatched` — **GI ini tidak ada di database DIgSILENT sama sekali**,
+  perlu registrasi ulang/upload topologi baru (badge diberi warna merah,
+  sebelumnya abu-abu/tidak dibedakan dari status lain).
+- `not-applicable` — bukan bay penghantar, matching tidak berlaku.
+- Prop `reason` (sudah ada di data, sebelumnya tidak dipakai UI) ikut
+  ditampilkan di tooltip yang sama untuk detail teknis tambahan.
+
+**Yang TIDAK dikerjakan**: (1) tidak menambah alert serupa di level
+dashboard/ringkasan baru — `VendorImportView`'s metric bar (`DIgSILENT
+match` / `Join candidates`) sudah ada sebagai sinyal agregat, dan
+pembuatan dashboard baru sengaja ditunda user sejak awal sesi ini; (2)
+tidak memperbaiki alias 6 GI candidate lain di dalam Durikosambi (Cengkareng
+Baru, Ciledug, Durikosambi, Grogol, Kembangan, Tangerang) — user
+mengonfirmasi pola penamaannya tidak seragam, butuh klarifikasi per-GI yang
+belum diberikan; (3) tidak mendesain skema bulk-upload data baru — itu
+arah terpisah, backlog jangka menengah, bukan bagian dari perbaikan
+matching kali ini; (4) `needsManualTopology` (badge "Perlu mapping" di
+`SettingCaseWizard.tsx`) sudah punya alert serupa di level topologi/bay
+sejak sebelumnya — tidak diubah, karena sudah mengikuti pola yang sama
+(pesan actionable + CTA), sengaja tidak diduplikasi ke level relay-catalog.
+- Regression: `npm run build`, `npx tsc --noEmit` — semua lolos (tidak ada
+  test otomatis untuk komponen UI ini; hanya diverifikasi lewat build/typecheck).
+
 ## Update 2026-07-31 — Fix: Salah Baca Kode Terminal sebagai Nomor Sirkit di Relay-Catalog Matching
 
 **Pertanyaan user yang memicu investigasi**: kalau data Z1-Z3 sudah match
