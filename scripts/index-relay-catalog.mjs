@@ -548,6 +548,24 @@ function stationAliases(value) {
     "kebon jeruk": ["kbjer", "kbj"],
     "new senayan": ["senay", "nsy"],
     "kembangan": ["kmbng", "kmb"],
+    // Confirmed 2026-07-31 against MASTER_PHT's REAL/ALIAS station-name
+    // columns + direct digsilentLineDb lookup (same source graph-builder.ts
+    // anchors against) — these are genuinely different spellings of the
+    // same physical site, not abbreviations to guess at:
+    //  - "karet" alone is DIgSILENT's name for "Karet Lama" (a distinct
+    //    neighboring site, "Karet Baru", has its own separate code) — same
+    //    pattern already fixed in graph-builder.ts's SHORTCODE_OVERRIDE.
+    //  - "grogol ii" is DIgSILENT's name for "Grogol Baru" — confirmed same
+    //    physical site, already aliased in graph-builder.ts's
+    //    DIGSILENT_TO_SLD_ALIAS but never ported to this independent
+    //    matcher (same gap class as the Karet fix).
+    //  - "cengkareng"/"tangerang" alone (no qualifier) are DIgSILENT's names
+    //    for the "Lama" site, distinguishing them from "Cengkareng Baru"/
+    //    "Tangerang Baru" which keep their own separate codes.
+    "karet lama": ["karet"],
+    "grogol baru": ["grogol ii"],
+    "cengkareng": ["cengkareng lama"],
+    "tangerang": ["tangerang lama"],
   };
   for (const [canonical, values] of Object.entries(table)) {
     if (normalized === canonical || values.includes(normalized)) {
@@ -571,6 +589,16 @@ function circuitFromRecord(record) {
   const name = record.name ?? "";
   const nameMatch = name.match(/-\s*([12])\s*$/);
   if (nameMatch) return nameMatch[1];
+  // Some pairs use a trailing Roman numeral instead of an arabic digit as
+  // the SAME kind of name-suffix circuit marker — confirmed real case:
+  // "DKSBI-GGLII I" / "DKSBI-GGLII II" (both circuits Roman), and even a
+  // MIXED pair "GRGOL-GGLII 1" (arabic) / "GRGOL-GGLII II" (Roman) for the
+  // same two physical circuits. Must be anchored at the end of the name
+  // (not just "contains II" — many station codes themselves contain "II",
+  // e.g. "GGLII" = Grogol II's own station code) so this doesn't misfire on
+  // the station-code token itself.
+  const romanNameMatch = name.match(/\s(I|II)\s*$/);
+  if (romanNameMatch) return romanNameMatch[1] === "II" ? "2" : "1";
   const terminal = `${record.fromTerminal ?? ""} ${record.toTerminal ?? ""}`;
   if (/(?:^|[-\s])2(?:$|[-\s])|II-?5/i.test(terminal)) return "2";
   if (/(?:^|[-\s])1(?:$|[-\s])|I-?5/i.test(terminal)) return "1";

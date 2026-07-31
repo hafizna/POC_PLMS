@@ -11,6 +11,16 @@ import {
   mergeMasterRelationsIntoCase,
   networkLinesFromGraph,
 } from "../domain/network-graph";
+// graph-builder.ts's getFullAnchoredNetwork is intentionally NOT imported
+// statically here: useProsetStore.ts is eagerly imported by App.tsx (it's
+// not behind a lazy route), and graph-builder.ts pulls in every generated
+// JSON registry (relay-catalog.json, crosscheck-workbook-registry.json,
+// lcd-dist-registry.json — over 2MB combined). A static import would ship
+// all of that in the app's main bundle for every user on first load, just
+// so selectLine's fallback branch (below) can reach it on the rare path
+// where a line isn't in any NETWORK_CASES subset. Dynamic import() keeps it
+// in graph-builder's own lazy chunk (already loaded by SettingCaseWizard/
+// InboxView/CoverageView/CalculationView, which need the same data anyway).
 import type {
   Bay,
   Busbar,
@@ -636,7 +646,38 @@ export const useProsetStore = create<State>()(
           );
           return Boolean(effective && networkLinesFromGraph(effective).some((l) => l.id === lineId));
         });
-        if (!owningCase) return;
+        if (!owningCase) {
+          // Not in any hand-picked NETWORK_CASES subset (e.g. the 4-substation
+          // demo seed) — fall back to the LIVE full anchor+overlay network
+          // (buildGraphForUltg via getFullAnchoredNetwork) before giving up.
+          // This is what makes a real bay outside every demo subset (e.g.
+          // Angke-Ancol) selectable at all from any of the 8 call sites that
+          // route through this single action. Dynamic import (see top of
+          // file) — this makes the fallback branch async, but selectLine's
+          // public signature stays `(lineId) => void` and every caller
+          // already fires it without awaiting, so this is invisible to them.
+          import("../domain/graph-builder").then(({ getFullAnchoredNetwork }) => {
+            const fullNetwork = getFullAnchoredNetwork();
+            const fullLine = networkLinesFromGraph(fullNetwork).find((l) => l.id === lineId);
+            if (!fullLine) return;
+            const compareBay = findComparisonBayIdForLine(lineId);
+            const relayId = `rel_${fullLine.fromNodeId}_fwd_${fullLine.toNodeId}`;
+            set({
+              activeNetworkLineId: lineId,
+              activeNetworkCaseId: INVENTORY_MASTER_CASE_ID,
+              selectedRelayId: relayId,
+              ...(compareBay ? { comparisonBayId: compareBay } : {}),
+            });
+            appendAuditEvent(get, set, {
+              action: "line_selected",
+              scope: INVENTORY_MASTER_CASE_ID,
+              targetId: lineId,
+              summary: `Selected line ${fullLine.circuit}`,
+              detail: `${fullLine.fromNodeId} -> ${fullLine.toNodeId}`,
+            });
+          });
+          return;
+        }
         const effective = mergeMasterRelationsIntoCase(
           getEffectiveNetworkGraph(owningCase.id, state.networkGraphOverrides[owningCase.id], buildUnifiedNetwork(owningCase)),
           masterNetworkGraph

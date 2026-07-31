@@ -23,8 +23,8 @@
     "ultgCount": 5,
     "stationCount": 37,
     "withSerialCount": 459,
-    "digsilentMatchedCount": 133,
-    "digsilentCandidateCount": 122
+    "digsilentMatchedCount": 161,
+    "digsilentCandidateCount": 104
   },
   "modelCatalog": [
     {
@@ -2008,9 +2008,30 @@
         }
       ],
       "digsilentMatch": {
-        "status": "candidate",
-        "confidence": 0.65,
+        "status": "matched",
+        "confidence": 1,
+        "matchedRow": 18,
+        "matchedName": "ANGKE-KRLMA-1",
         "candidates": [
+          {
+            "row": 18,
+            "name": "ANGKE-KRLMA-1",
+            "score": 1,
+            "reasons": [
+              "local station",
+              "remote endpoint",
+              "circuit"
+            ]
+          },
+          {
+            "row": 19,
+            "name": "ANGKE-KRLMA-2",
+            "score": 0.9,
+            "reasons": [
+              "local station",
+              "remote endpoint"
+            ]
+          },
           {
             "row": 16,
             "name": "ANGKE-ANCOL -1",
@@ -2019,27 +2040,9 @@
               "local station",
               "circuit"
             ]
-          },
-          {
-            "row": 18,
-            "name": "ANGKE-KRLMA-1",
-            "score": 0.65,
-            "reasons": [
-              "local station",
-              "circuit"
-            ]
-          },
-          {
-            "row": 20,
-            "name": "ANGKE-KTPNG-1",
-            "score": 0.65,
-            "reasons": [
-              "local station",
-              "circuit"
-            ]
           }
         ],
-        "reason": "Perlu review karena kandidat masih ambigu."
+        "reason": "local station + remote endpoint + circuit"
       }
     },
     {
@@ -2076,9 +2079,30 @@
         }
       ],
       "digsilentMatch": {
-        "status": "candidate",
-        "confidence": 0.65,
+        "status": "matched",
+        "confidence": 1,
+        "matchedRow": 18,
+        "matchedName": "ANGKE-KRLMA-1",
         "candidates": [
+          {
+            "row": 18,
+            "name": "ANGKE-KRLMA-1",
+            "score": 1,
+            "reasons": [
+              "local station",
+              "remote endpoint",
+              "circuit"
+            ]
+          },
+          {
+            "row": 19,
+            "name": "ANGKE-KRLMA-2",
+            "score": 0.9,
+            "reasons": [
+              "local station",
+              "remote endpoint"
+            ]
+          },
           {
             "row": 16,
             "name": "ANGKE-ANCOL -1",
@@ -2087,27 +2111,9 @@
               "local station",
               "circuit"
             ]
-          },
-          {
-            "row": 18,
-            "name": "ANGKE-KRLMA-1",
-            "score": 0.65,
-            "reasons": [
-              "local station",
-              "circuit"
-            ]
-          },
-          {
-            "row": 20,
-            "name": "ANGKE-KTPNG-1",
-            "score": 0.65,
-            "reasons": [
-              "local station",
-              "circuit"
-            ]
           }
         ],
-        "reason": "Perlu review karena kandidat masih ambigu."
+        "reason": "local station + remote endpoint + circuit"
       }
     },
     {
@@ -2140,9 +2146,30 @@
         }
       ],
       "digsilentMatch": {
-        "status": "candidate",
-        "confidence": 0.65,
+        "status": "matched",
+        "confidence": 1,
+        "matchedRow": 19,
+        "matchedName": "ANGKE-KRLMA-2",
         "candidates": [
+          {
+            "row": 19,
+            "name": "ANGKE-KRLMA-2",
+            "score": 1,
+            "reasons": [
+              "local station",
+              "remote endpoint",
+              "circuit"
+            ]
+          },
+          {
+            "row": 18,
+            "name": "ANGKE-KRLMA-1",
+            "score": 0.9,
+            "reasons": [
+              "local station",
+              "remote endpoint"
+            ]
+          },
           {
             "row": 17,
             "name": "ANGKE-ANCOL -2",
@@ -2151,27 +2178,9 @@
               "local station",
               "circuit"
             ]
-          },
-          {
-            "row": 19,
-            "name": "ANGKE-KRLMA-2",
-            "score": 0.65,
-            "reasons": [
-              "local station",
-              "circuit"
-            ]
-          },
-          {
-            "row": 21,
-            "name": "ANGKE-KTPNG-2",
-            "score": 0.65,
-            "reasons": [
-              "local station",
-              "circuit"
-            ]
           }
         ],
-        "reason": "Perlu review karena kandidat masih ambigu."
+        "reason": "local station + remote endpoint + circuit"
       }
     },
     {
@@ -2208,9 +2217,30 @@
         }
       ],
       "digsilentMatch": {
-        "status": "candidate",
-        "confidence": 0.65,
+        "status": "matched",
+        "confidence": 1,
+        "matchedRow": 19,
+        "matchedName": "ANGKE-KRLMA-2",
         "candidates": [
+          {
+            "row": 19,
+            "name": "ANGKE-KRLMA-2",
+            "score": 1,
+            "reasons": [
+              "local station",
+              "remote endpoint",
+              "circuit"
+            ]
+          },
+          {
+            "row": 18,
+            "name": "ANGKE-KRLMA-1",
+            "score": 0.9,
+            "reasons": [
+              "local station",
+              "remote endpoint"
+            ]
+          },
           {
             "row": 17,
             "name": "ANGKE-ANCOL -2",
@@ -2219,27 +2249,9 @@
               "local station",
               "circuit"
             ]
-          },
-          {
-            "row": 19,
-            "name": "ANGKE-KRLMA-2",
-            "score": 0.65,
-            "reasons": [
-              "local station",
-              "circuit"
-            ]
-          },
-          {
-            "row": 21,
-            "name": "ANGKE-KTPNG-2",
-            "score": 0.65,
-            "reasons": [
-              "local station",
-              "circuit"
-            ]
           }
         ],
-        "reason": "Perlu review karena kandidat masih ambigu."
+        "reason": "local station + remote endpoint + circuit"
       }
     },
     {
@@ -4455,10 +4467,41 @@
         }
       ],
       "digsilentMatch": {
-        "status": "unmatched",
-        "confidence": 0,
-        "candidates": [],
-        "reason": "Tidak ada endpoint lokal pada DIgSILENT line database."
+        "status": "matched",
+        "confidence": 1,
+        "matchedRow": 381,
+        "matchedName": "DKSBI-GGLII I",
+        "candidates": [
+          {
+            "row": 381,
+            "name": "DKSBI-GGLII I",
+            "score": 1,
+            "reasons": [
+              "local station",
+              "remote endpoint",
+              "circuit"
+            ]
+          },
+          {
+            "row": 382,
+            "name": "DKSBI-GGLII II",
+            "score": 0.9,
+            "reasons": [
+              "local station",
+              "remote endpoint"
+            ]
+          },
+          {
+            "row": 483,
+            "name": "GRGOL-GGLII 1",
+            "score": 0.65,
+            "reasons": [
+              "local station",
+              "circuit"
+            ]
+          }
+        ],
+        "reason": "local station + remote endpoint + circuit"
       }
     },
     {
@@ -4495,10 +4538,41 @@
         }
       ],
       "digsilentMatch": {
-        "status": "unmatched",
-        "confidence": 0,
-        "candidates": [],
-        "reason": "Tidak ada endpoint lokal pada DIgSILENT line database."
+        "status": "matched",
+        "confidence": 1,
+        "matchedRow": 381,
+        "matchedName": "DKSBI-GGLII I",
+        "candidates": [
+          {
+            "row": 381,
+            "name": "DKSBI-GGLII I",
+            "score": 1,
+            "reasons": [
+              "local station",
+              "remote endpoint",
+              "circuit"
+            ]
+          },
+          {
+            "row": 382,
+            "name": "DKSBI-GGLII II",
+            "score": 0.9,
+            "reasons": [
+              "local station",
+              "remote endpoint"
+            ]
+          },
+          {
+            "row": 483,
+            "name": "GRGOL-GGLII 1",
+            "score": 0.65,
+            "reasons": [
+              "local station",
+              "circuit"
+            ]
+          }
+        ],
+        "reason": "local station + remote endpoint + circuit"
       }
     },
     {
@@ -4531,10 +4605,41 @@
         }
       ],
       "digsilentMatch": {
-        "status": "unmatched",
-        "confidence": 0,
-        "candidates": [],
-        "reason": "Tidak ada endpoint lokal pada DIgSILENT line database."
+        "status": "matched",
+        "confidence": 1,
+        "matchedRow": 382,
+        "matchedName": "DKSBI-GGLII II",
+        "candidates": [
+          {
+            "row": 382,
+            "name": "DKSBI-GGLII II",
+            "score": 1,
+            "reasons": [
+              "local station",
+              "remote endpoint",
+              "circuit"
+            ]
+          },
+          {
+            "row": 381,
+            "name": "DKSBI-GGLII I",
+            "score": 0.9,
+            "reasons": [
+              "local station",
+              "remote endpoint"
+            ]
+          },
+          {
+            "row": 484,
+            "name": "GRGOL-GGLII II",
+            "score": 0.65,
+            "reasons": [
+              "local station",
+              "circuit"
+            ]
+          }
+        ],
+        "reason": "local station + remote endpoint + circuit"
       }
     },
     {
@@ -4571,10 +4676,41 @@
         }
       ],
       "digsilentMatch": {
-        "status": "unmatched",
-        "confidence": 0,
-        "candidates": [],
-        "reason": "Tidak ada endpoint lokal pada DIgSILENT line database."
+        "status": "matched",
+        "confidence": 1,
+        "matchedRow": 382,
+        "matchedName": "DKSBI-GGLII II",
+        "candidates": [
+          {
+            "row": 382,
+            "name": "DKSBI-GGLII II",
+            "score": 1,
+            "reasons": [
+              "local station",
+              "remote endpoint",
+              "circuit"
+            ]
+          },
+          {
+            "row": 381,
+            "name": "DKSBI-GGLII I",
+            "score": 0.9,
+            "reasons": [
+              "local station",
+              "remote endpoint"
+            ]
+          },
+          {
+            "row": 484,
+            "name": "GRGOL-GGLII II",
+            "score": 0.65,
+            "reasons": [
+              "local station",
+              "circuit"
+            ]
+          }
+        ],
+        "reason": "local station + remote endpoint + circuit"
       }
     },
     {
@@ -4607,10 +4743,41 @@
         }
       ],
       "digsilentMatch": {
-        "status": "unmatched",
-        "confidence": 0,
-        "candidates": [],
-        "reason": "Tidak ada endpoint lokal pada DIgSILENT line database."
+        "status": "matched",
+        "confidence": 1,
+        "matchedRow": 483,
+        "matchedName": "GRGOL-GGLII 1",
+        "candidates": [
+          {
+            "row": 483,
+            "name": "GRGOL-GGLII 1",
+            "score": 1,
+            "reasons": [
+              "local station",
+              "remote endpoint",
+              "circuit"
+            ]
+          },
+          {
+            "row": 484,
+            "name": "GRGOL-GGLII II",
+            "score": 0.9,
+            "reasons": [
+              "local station",
+              "remote endpoint"
+            ]
+          },
+          {
+            "row": 381,
+            "name": "DKSBI-GGLII I",
+            "score": 0.65,
+            "reasons": [
+              "local station",
+              "circuit"
+            ]
+          }
+        ],
+        "reason": "local station + remote endpoint + circuit"
       }
     },
     {
@@ -4647,10 +4814,41 @@
         }
       ],
       "digsilentMatch": {
-        "status": "unmatched",
-        "confidence": 0,
-        "candidates": [],
-        "reason": "Tidak ada endpoint lokal pada DIgSILENT line database."
+        "status": "matched",
+        "confidence": 1,
+        "matchedRow": 483,
+        "matchedName": "GRGOL-GGLII 1",
+        "candidates": [
+          {
+            "row": 483,
+            "name": "GRGOL-GGLII 1",
+            "score": 1,
+            "reasons": [
+              "local station",
+              "remote endpoint",
+              "circuit"
+            ]
+          },
+          {
+            "row": 484,
+            "name": "GRGOL-GGLII II",
+            "score": 0.9,
+            "reasons": [
+              "local station",
+              "remote endpoint"
+            ]
+          },
+          {
+            "row": 381,
+            "name": "DKSBI-GGLII I",
+            "score": 0.65,
+            "reasons": [
+              "local station",
+              "circuit"
+            ]
+          }
+        ],
+        "reason": "local station + remote endpoint + circuit"
       }
     },
     {
@@ -4683,10 +4881,41 @@
         }
       ],
       "digsilentMatch": {
-        "status": "unmatched",
-        "confidence": 0,
-        "candidates": [],
-        "reason": "Tidak ada endpoint lokal pada DIgSILENT line database."
+        "status": "matched",
+        "confidence": 1,
+        "matchedRow": 484,
+        "matchedName": "GRGOL-GGLII II",
+        "candidates": [
+          {
+            "row": 484,
+            "name": "GRGOL-GGLII II",
+            "score": 1,
+            "reasons": [
+              "local station",
+              "remote endpoint",
+              "circuit"
+            ]
+          },
+          {
+            "row": 483,
+            "name": "GRGOL-GGLII 1",
+            "score": 0.9,
+            "reasons": [
+              "local station",
+              "remote endpoint"
+            ]
+          },
+          {
+            "row": 382,
+            "name": "DKSBI-GGLII II",
+            "score": 0.65,
+            "reasons": [
+              "local station",
+              "circuit"
+            ]
+          }
+        ],
+        "reason": "local station + remote endpoint + circuit"
       }
     },
     {
@@ -4723,10 +4952,41 @@
         }
       ],
       "digsilentMatch": {
-        "status": "unmatched",
-        "confidence": 0,
-        "candidates": [],
-        "reason": "Tidak ada endpoint lokal pada DIgSILENT line database."
+        "status": "matched",
+        "confidence": 1,
+        "matchedRow": 484,
+        "matchedName": "GRGOL-GGLII II",
+        "candidates": [
+          {
+            "row": 484,
+            "name": "GRGOL-GGLII II",
+            "score": 1,
+            "reasons": [
+              "local station",
+              "remote endpoint",
+              "circuit"
+            ]
+          },
+          {
+            "row": 483,
+            "name": "GRGOL-GGLII 1",
+            "score": 0.9,
+            "reasons": [
+              "local station",
+              "remote endpoint"
+            ]
+          },
+          {
+            "row": 382,
+            "name": "DKSBI-GGLII II",
+            "score": 0.65,
+            "reasons": [
+              "local station",
+              "circuit"
+            ]
+          }
+        ],
+        "reason": "local station + remote endpoint + circuit"
       }
     },
     {
@@ -4834,25 +5094,28 @@
         }
       ],
       "digsilentMatch": {
-        "status": "candidate",
-        "confidence": 0.65,
+        "status": "matched",
+        "confidence": 1,
+        "matchedRow": 483,
+        "matchedName": "GRGOL-GGLII 1",
         "candidates": [
           {
             "row": 483,
             "name": "GRGOL-GGLII 1",
-            "score": 0.65,
+            "score": 1,
             "reasons": [
               "local station",
+              "remote endpoint",
               "circuit"
             ]
           },
           {
             "row": 484,
             "name": "GRGOL-GGLII II",
-            "score": 0.65,
+            "score": 0.9,
             "reasons": [
               "local station",
-              "circuit"
+              "remote endpoint"
             ]
           },
           {
@@ -4865,7 +5128,7 @@
             ]
           }
         ],
-        "reason": "Perlu review karena kandidat masih ambigu."
+        "reason": "local station + remote endpoint + circuit"
       }
     },
     {
@@ -4897,25 +5160,28 @@
         }
       ],
       "digsilentMatch": {
-        "status": "candidate",
-        "confidence": 0.65,
+        "status": "matched",
+        "confidence": 1,
+        "matchedRow": 483,
+        "matchedName": "GRGOL-GGLII 1",
         "candidates": [
           {
             "row": 483,
             "name": "GRGOL-GGLII 1",
-            "score": 0.65,
+            "score": 1,
             "reasons": [
               "local station",
+              "remote endpoint",
               "circuit"
             ]
           },
           {
             "row": 484,
             "name": "GRGOL-GGLII II",
-            "score": 0.65,
+            "score": 0.9,
             "reasons": [
               "local station",
-              "circuit"
+              "remote endpoint"
             ]
           },
           {
@@ -4928,7 +5194,7 @@
             ]
           }
         ],
-        "reason": "Perlu review karena kandidat masih ambigu."
+        "reason": "local station + remote endpoint + circuit"
       }
     },
     {
@@ -4961,25 +5227,28 @@
         }
       ],
       "digsilentMatch": {
-        "status": "candidate",
-        "confidence": 0.65,
+        "status": "matched",
+        "confidence": 1,
+        "matchedRow": 483,
+        "matchedName": "GRGOL-GGLII 1",
         "candidates": [
           {
             "row": 483,
             "name": "GRGOL-GGLII 1",
-            "score": 0.65,
+            "score": 1,
             "reasons": [
               "local station",
+              "remote endpoint",
               "circuit"
             ]
           },
           {
             "row": 484,
             "name": "GRGOL-GGLII II",
-            "score": 0.65,
+            "score": 0.9,
             "reasons": [
               "local station",
-              "circuit"
+              "remote endpoint"
             ]
           },
           {
@@ -4992,7 +5261,7 @@
             ]
           }
         ],
-        "reason": "Perlu review karena kandidat masih ambigu."
+        "reason": "local station + remote endpoint + circuit"
       }
     },
     {
@@ -5029,9 +5298,30 @@
         }
       ],
       "digsilentMatch": {
-        "status": "candidate",
-        "confidence": 0.65,
+        "status": "matched",
+        "confidence": 1,
+        "matchedRow": 484,
+        "matchedName": "GRGOL-GGLII II",
         "candidates": [
+          {
+            "row": 484,
+            "name": "GRGOL-GGLII II",
+            "score": 1,
+            "reasons": [
+              "local station",
+              "remote endpoint",
+              "circuit"
+            ]
+          },
+          {
+            "row": 483,
+            "name": "GRGOL-GGLII 1",
+            "score": 0.9,
+            "reasons": [
+              "local station",
+              "remote endpoint"
+            ]
+          },
           {
             "row": 496,
             "name": "GROGOL-TOMANG-2",
@@ -5040,25 +5330,9 @@
               "local station",
               "circuit"
             ]
-          },
-          {
-            "row": 483,
-            "name": "GRGOL-GGLII 1",
-            "score": 0.55,
-            "reasons": [
-              "local station"
-            ]
-          },
-          {
-            "row": 484,
-            "name": "GRGOL-GGLII II",
-            "score": 0.55,
-            "reasons": [
-              "local station"
-            ]
           }
         ],
-        "reason": "Perlu review karena kandidat masih ambigu."
+        "reason": "local station + remote endpoint + circuit"
       }
     },
     {
@@ -5090,9 +5364,30 @@
         }
       ],
       "digsilentMatch": {
-        "status": "candidate",
-        "confidence": 0.65,
+        "status": "matched",
+        "confidence": 1,
+        "matchedRow": 484,
+        "matchedName": "GRGOL-GGLII II",
         "candidates": [
+          {
+            "row": 484,
+            "name": "GRGOL-GGLII II",
+            "score": 1,
+            "reasons": [
+              "local station",
+              "remote endpoint",
+              "circuit"
+            ]
+          },
+          {
+            "row": 483,
+            "name": "GRGOL-GGLII 1",
+            "score": 0.9,
+            "reasons": [
+              "local station",
+              "remote endpoint"
+            ]
+          },
           {
             "row": 496,
             "name": "GROGOL-TOMANG-2",
@@ -5101,25 +5396,9 @@
               "local station",
               "circuit"
             ]
-          },
-          {
-            "row": 483,
-            "name": "GRGOL-GGLII 1",
-            "score": 0.55,
-            "reasons": [
-              "local station"
-            ]
-          },
-          {
-            "row": 484,
-            "name": "GRGOL-GGLII II",
-            "score": 0.55,
-            "reasons": [
-              "local station"
-            ]
           }
         ],
-        "reason": "Perlu review karena kandidat masih ambigu."
+        "reason": "local station + remote endpoint + circuit"
       }
     },
     {
@@ -5152,9 +5431,30 @@
         }
       ],
       "digsilentMatch": {
-        "status": "candidate",
-        "confidence": 0.65,
+        "status": "matched",
+        "confidence": 1,
+        "matchedRow": 484,
+        "matchedName": "GRGOL-GGLII II",
         "candidates": [
+          {
+            "row": 484,
+            "name": "GRGOL-GGLII II",
+            "score": 1,
+            "reasons": [
+              "local station",
+              "remote endpoint",
+              "circuit"
+            ]
+          },
+          {
+            "row": 483,
+            "name": "GRGOL-GGLII 1",
+            "score": 0.9,
+            "reasons": [
+              "local station",
+              "remote endpoint"
+            ]
+          },
           {
             "row": 496,
             "name": "GROGOL-TOMANG-2",
@@ -5163,25 +5463,9 @@
               "local station",
               "circuit"
             ]
-          },
-          {
-            "row": 483,
-            "name": "GRGOL-GGLII 1",
-            "score": 0.55,
-            "reasons": [
-              "local station"
-            ]
-          },
-          {
-            "row": 484,
-            "name": "GRGOL-GGLII II",
-            "score": 0.55,
-            "reasons": [
-              "local station"
-            ]
           }
         ],
-        "reason": "Perlu review karena kandidat masih ambigu."
+        "reason": "local station + remote endpoint + circuit"
       }
     },
     {
@@ -5413,11 +5697,12 @@
             ]
           },
           {
-            "row": 483,
-            "name": "GRGOL-GGLII 1",
-            "score": 0.55,
+            "row": 484,
+            "name": "GRGOL-GGLII II",
+            "score": 0.65,
             "reasons": [
-              "local station"
+              "local station",
+              "circuit"
             ]
           }
         ],
@@ -5483,11 +5768,12 @@
             ]
           },
           {
-            "row": 483,
-            "name": "GRGOL-GGLII 1",
-            "score": 0.55,
+            "row": 484,
+            "name": "GRGOL-GGLII II",
+            "score": 0.65,
             "reasons": [
-              "local station"
+              "local station",
+              "circuit"
             ]
           }
         ],
@@ -22616,9 +22902,30 @@
         }
       ],
       "digsilentMatch": {
-        "status": "candidate",
-        "confidence": 0.65,
+        "status": "matched",
+        "confidence": 1,
+        "matchedRow": 381,
+        "matchedName": "DKSBI-GGLII I",
         "candidates": [
+          {
+            "row": 381,
+            "name": "DKSBI-GGLII I",
+            "score": 1,
+            "reasons": [
+              "local station",
+              "remote endpoint",
+              "circuit"
+            ]
+          },
+          {
+            "row": 382,
+            "name": "DKSBI-GGLII II",
+            "score": 0.9,
+            "reasons": [
+              "local station",
+              "remote endpoint"
+            ]
+          },
           {
             "row": 325,
             "name": "CNKRG-DKSBI -1",
@@ -22627,27 +22934,9 @@
               "local station",
               "circuit"
             ]
-          },
-          {
-            "row": 359,
-            "name": "DAAN MOGOT - DURIKOSAMBI 1",
-            "score": 0.65,
-            "reasons": [
-              "local station",
-              "circuit"
-            ]
-          },
-          {
-            "row": 383,
-            "name": "DKSBI-KBJRK-1",
-            "score": 0.65,
-            "reasons": [
-              "local station",
-              "circuit"
-            ]
           }
         ],
-        "reason": "Perlu review karena kandidat masih ambigu."
+        "reason": "local station + remote endpoint + circuit"
       }
     },
     {
@@ -22679,9 +22968,30 @@
         }
       ],
       "digsilentMatch": {
-        "status": "candidate",
-        "confidence": 0.65,
+        "status": "matched",
+        "confidence": 1,
+        "matchedRow": 381,
+        "matchedName": "DKSBI-GGLII I",
         "candidates": [
+          {
+            "row": 381,
+            "name": "DKSBI-GGLII I",
+            "score": 1,
+            "reasons": [
+              "local station",
+              "remote endpoint",
+              "circuit"
+            ]
+          },
+          {
+            "row": 382,
+            "name": "DKSBI-GGLII II",
+            "score": 0.9,
+            "reasons": [
+              "local station",
+              "remote endpoint"
+            ]
+          },
           {
             "row": 325,
             "name": "CNKRG-DKSBI -1",
@@ -22690,27 +23000,9 @@
               "local station",
               "circuit"
             ]
-          },
-          {
-            "row": 359,
-            "name": "DAAN MOGOT - DURIKOSAMBI 1",
-            "score": 0.65,
-            "reasons": [
-              "local station",
-              "circuit"
-            ]
-          },
-          {
-            "row": 383,
-            "name": "DKSBI-KBJRK-1",
-            "score": 0.65,
-            "reasons": [
-              "local station",
-              "circuit"
-            ]
           }
         ],
-        "reason": "Perlu review karena kandidat masih ambigu."
+        "reason": "local station + remote endpoint + circuit"
       }
     },
     {
@@ -22743,9 +23035,30 @@
         }
       ],
       "digsilentMatch": {
-        "status": "candidate",
-        "confidence": 0.65,
+        "status": "matched",
+        "confidence": 1,
+        "matchedRow": 381,
+        "matchedName": "DKSBI-GGLII I",
         "candidates": [
+          {
+            "row": 381,
+            "name": "DKSBI-GGLII I",
+            "score": 1,
+            "reasons": [
+              "local station",
+              "remote endpoint",
+              "circuit"
+            ]
+          },
+          {
+            "row": 382,
+            "name": "DKSBI-GGLII II",
+            "score": 0.9,
+            "reasons": [
+              "local station",
+              "remote endpoint"
+            ]
+          },
           {
             "row": 325,
             "name": "CNKRG-DKSBI -1",
@@ -22754,27 +23067,9 @@
               "local station",
               "circuit"
             ]
-          },
-          {
-            "row": 359,
-            "name": "DAAN MOGOT - DURIKOSAMBI 1",
-            "score": 0.65,
-            "reasons": [
-              "local station",
-              "circuit"
-            ]
-          },
-          {
-            "row": 383,
-            "name": "DKSBI-KBJRK-1",
-            "score": 0.65,
-            "reasons": [
-              "local station",
-              "circuit"
-            ]
           }
         ],
-        "reason": "Perlu review karena kandidat masih ambigu."
+        "reason": "local station + remote endpoint + circuit"
       }
     },
     {
@@ -22811,9 +23106,30 @@
         }
       ],
       "digsilentMatch": {
-        "status": "candidate",
-        "confidence": 0.65,
+        "status": "matched",
+        "confidence": 1,
+        "matchedRow": 382,
+        "matchedName": "DKSBI-GGLII II",
         "candidates": [
+          {
+            "row": 382,
+            "name": "DKSBI-GGLII II",
+            "score": 1,
+            "reasons": [
+              "local station",
+              "remote endpoint",
+              "circuit"
+            ]
+          },
+          {
+            "row": 381,
+            "name": "DKSBI-GGLII I",
+            "score": 0.9,
+            "reasons": [
+              "local station",
+              "remote endpoint"
+            ]
+          },
           {
             "row": 326,
             "name": "CNKRG-DKSBI -2",
@@ -22822,27 +23138,9 @@
               "local station",
               "circuit"
             ]
-          },
-          {
-            "row": 360,
-            "name": "DAAN MOGOT - DURIKOSAMBI 2",
-            "score": 0.65,
-            "reasons": [
-              "local station",
-              "circuit"
-            ]
-          },
-          {
-            "row": 381,
-            "name": "DKSBI-GGLII I",
-            "score": 0.65,
-            "reasons": [
-              "local station",
-              "circuit"
-            ]
           }
         ],
-        "reason": "Perlu review karena kandidat masih ambigu."
+        "reason": "local station + remote endpoint + circuit"
       }
     },
     {
@@ -22874,9 +23172,30 @@
         }
       ],
       "digsilentMatch": {
-        "status": "candidate",
-        "confidence": 0.65,
+        "status": "matched",
+        "confidence": 1,
+        "matchedRow": 382,
+        "matchedName": "DKSBI-GGLII II",
         "candidates": [
+          {
+            "row": 382,
+            "name": "DKSBI-GGLII II",
+            "score": 1,
+            "reasons": [
+              "local station",
+              "remote endpoint",
+              "circuit"
+            ]
+          },
+          {
+            "row": 381,
+            "name": "DKSBI-GGLII I",
+            "score": 0.9,
+            "reasons": [
+              "local station",
+              "remote endpoint"
+            ]
+          },
           {
             "row": 326,
             "name": "CNKRG-DKSBI -2",
@@ -22885,27 +23204,9 @@
               "local station",
               "circuit"
             ]
-          },
-          {
-            "row": 360,
-            "name": "DAAN MOGOT - DURIKOSAMBI 2",
-            "score": 0.65,
-            "reasons": [
-              "local station",
-              "circuit"
-            ]
-          },
-          {
-            "row": 381,
-            "name": "DKSBI-GGLII I",
-            "score": 0.65,
-            "reasons": [
-              "local station",
-              "circuit"
-            ]
           }
         ],
-        "reason": "Perlu review karena kandidat masih ambigu."
+        "reason": "local station + remote endpoint + circuit"
       }
     },
     {
@@ -22938,9 +23239,30 @@
         }
       ],
       "digsilentMatch": {
-        "status": "candidate",
-        "confidence": 0.65,
+        "status": "matched",
+        "confidence": 1,
+        "matchedRow": 382,
+        "matchedName": "DKSBI-GGLII II",
         "candidates": [
+          {
+            "row": 382,
+            "name": "DKSBI-GGLII II",
+            "score": 1,
+            "reasons": [
+              "local station",
+              "remote endpoint",
+              "circuit"
+            ]
+          },
+          {
+            "row": 381,
+            "name": "DKSBI-GGLII I",
+            "score": 0.9,
+            "reasons": [
+              "local station",
+              "remote endpoint"
+            ]
+          },
           {
             "row": 326,
             "name": "CNKRG-DKSBI -2",
@@ -22949,27 +23271,9 @@
               "local station",
               "circuit"
             ]
-          },
-          {
-            "row": 360,
-            "name": "DAAN MOGOT - DURIKOSAMBI 2",
-            "score": 0.65,
-            "reasons": [
-              "local station",
-              "circuit"
-            ]
-          },
-          {
-            "row": 381,
-            "name": "DKSBI-GGLII I",
-            "score": 0.65,
-            "reasons": [
-              "local station",
-              "circuit"
-            ]
           }
         ],
-        "reason": "Perlu review karena kandidat masih ambigu."
+        "reason": "local station + remote endpoint + circuit"
       }
     },
     {
@@ -25200,10 +25504,41 @@
         }
       ],
       "digsilentMatch": {
-        "status": "unmatched",
-        "confidence": 0,
-        "candidates": [],
-        "reason": "Tidak ada endpoint lokal pada DIgSILENT line database."
+        "status": "matched",
+        "confidence": 1,
+        "matchedRow": 381,
+        "matchedName": "DKSBI-GGLII I",
+        "candidates": [
+          {
+            "row": 381,
+            "name": "DKSBI-GGLII I",
+            "score": 1,
+            "reasons": [
+              "local station",
+              "remote endpoint",
+              "circuit"
+            ]
+          },
+          {
+            "row": 382,
+            "name": "DKSBI-GGLII II",
+            "score": 0.9,
+            "reasons": [
+              "local station",
+              "remote endpoint"
+            ]
+          },
+          {
+            "row": 483,
+            "name": "GRGOL-GGLII 1",
+            "score": 0.65,
+            "reasons": [
+              "local station",
+              "circuit"
+            ]
+          }
+        ],
+        "reason": "local station + remote endpoint + circuit"
       }
     },
     {
@@ -25235,10 +25570,41 @@
         }
       ],
       "digsilentMatch": {
-        "status": "unmatched",
-        "confidence": 0,
-        "candidates": [],
-        "reason": "Tidak ada endpoint lokal pada DIgSILENT line database."
+        "status": "matched",
+        "confidence": 1,
+        "matchedRow": 382,
+        "matchedName": "DKSBI-GGLII II",
+        "candidates": [
+          {
+            "row": 382,
+            "name": "DKSBI-GGLII II",
+            "score": 1,
+            "reasons": [
+              "local station",
+              "remote endpoint",
+              "circuit"
+            ]
+          },
+          {
+            "row": 381,
+            "name": "DKSBI-GGLII I",
+            "score": 0.9,
+            "reasons": [
+              "local station",
+              "remote endpoint"
+            ]
+          },
+          {
+            "row": 484,
+            "name": "GRGOL-GGLII II",
+            "score": 0.65,
+            "reasons": [
+              "local station",
+              "circuit"
+            ]
+          }
+        ],
+        "reason": "local station + remote endpoint + circuit"
       }
     },
     {
@@ -25270,25 +25636,28 @@
         }
       ],
       "digsilentMatch": {
-        "status": "candidate",
-        "confidence": 0.65,
+        "status": "matched",
+        "confidence": 1,
+        "matchedRow": 483,
+        "matchedName": "GRGOL-GGLII 1",
         "candidates": [
           {
             "row": 483,
             "name": "GRGOL-GGLII 1",
-            "score": 0.65,
+            "score": 1,
             "reasons": [
               "local station",
+              "remote endpoint",
               "circuit"
             ]
           },
           {
             "row": 484,
             "name": "GRGOL-GGLII II",
-            "score": 0.65,
+            "score": 0.9,
             "reasons": [
               "local station",
-              "circuit"
+              "remote endpoint"
             ]
           },
           {
@@ -25301,7 +25670,7 @@
             ]
           }
         ],
-        "reason": "Perlu review karena kandidat masih ambigu."
+        "reason": "local station + remote endpoint + circuit"
       }
     },
     {
@@ -25333,9 +25702,30 @@
         }
       ],
       "digsilentMatch": {
-        "status": "candidate",
-        "confidence": 0.65,
+        "status": "matched",
+        "confidence": 1,
+        "matchedRow": 484,
+        "matchedName": "GRGOL-GGLII II",
         "candidates": [
+          {
+            "row": 484,
+            "name": "GRGOL-GGLII II",
+            "score": 1,
+            "reasons": [
+              "local station",
+              "remote endpoint",
+              "circuit"
+            ]
+          },
+          {
+            "row": 483,
+            "name": "GRGOL-GGLII 1",
+            "score": 0.9,
+            "reasons": [
+              "local station",
+              "remote endpoint"
+            ]
+          },
           {
             "row": 496,
             "name": "GROGOL-TOMANG-2",
@@ -25344,25 +25734,9 @@
               "local station",
               "circuit"
             ]
-          },
-          {
-            "row": 483,
-            "name": "GRGOL-GGLII 1",
-            "score": 0.55,
-            "reasons": [
-              "local station"
-            ]
-          },
-          {
-            "row": 484,
-            "name": "GRGOL-GGLII II",
-            "score": 0.55,
-            "reasons": [
-              "local station"
-            ]
           }
         ],
-        "reason": "Perlu review karena kandidat masih ambigu."
+        "reason": "local station + remote endpoint + circuit"
       }
     },
     {

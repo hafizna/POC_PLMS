@@ -8,6 +8,143 @@ arsitektur dan roadmap produk, rujuk:
 - [`README.md`](./README.md) — MVP roadmap, status implementasi per tahap, dan
   demo flow.
 
+## Update 2026-07-31 — Ancol Nyala di Coverage/Calculation: selectLine() Buta Terhadap Data Nyata di Luar NETWORK_CASES
+
+**Masalah**: setelah relay-catalog matching diperbaiki (entri di bawah), Ancol
+seharusnya sudah punya `RelaySetting` real dan diagnostic Z1_UNDERREACH/
+Z2_SHORT nyata — tapi mencoba melihatnya di `CoverageView`/`CalculationView`
+tetap gagal. Investigasi menemukan akar masalah yang JAUH lebih dalam dari
+sekadar dua view itu: **`selectLine()`** (satu action tunggal di
+`useProsetStore.ts` yang dipanggil dari 8 file — `SettingCaseDetail`,
+`NetworkGraphEditor`, `StudyDashboardView`, `LineRegistryView`, `LineDetailPanel`,
+`InboxView`, `HomeView` — untuk "pilih line ini, propagate ke seluruh
+context") **hanya mengenali line dari `NETWORK_CASES`** (case lama, termasuk
+`case_dks_dm_pik_mkb` yang cuma subset 4-substation beku dari
+`buildGraphForUltg()`, dan `case_ultg_dks_inventory` yang sengaja
+`lines: []` sejak awal). Ancol (dan hampir semua bay nyata lain dari
+`buildGraphForUltg()`) tidak ada di `NETWORK_CASES` manapun, jadi
+`selectLine()` selalu silent no-op (`if (!owningCase) return`) untuk line
+itu — `activeNetworkLineId` tidak pernah berubah, dan `CoverageView`/
+`CalculationView` (yang sama-sama membaca `activeCase`/`buildUnifiedNetwork`
+dari `NETWORK_CASES`) juga tidak punya jalan untuk menampilkannya.
+
+**Fix (disetujui user: perbaiki `selectLine()`, bukan cuma dua view)**:
+- `getFullAnchoredNetwork()` (baru, di `graph-builder.ts`) — versi
+  memoized dari `buildGraphForUltg()` + `buildCaseFromGraphGroups()` untuk
+  SELURUH substation (bukan subset pilihan), di-cache di module scope
+  karena `buildGraphForUltg()` makan ~160ms/panggilan (parsing JSON +
+  matching) dan dipanggil dari Zustand action (bukan komponen React, jadi
+  tidak bisa pakai `useMemo`).
+- `selectLine()`: kalau `lineId` tidak ditemukan di `NETWORK_CASES` manapun,
+  fallback ke `getFullAnchoredNetwork()` sebelum menyerah — `activeNetworkCaseId`
+  di-set ke `INVENTORY_MASTER_CASE_ID` untuk kasus ini.
+- `CoverageView.tsx`/`CalculationView.tsx`: deteksi kalau `activeLineId`
+  bukan bagian dari network graph yang case-scoped, lalu pakai
+  `getFullAnchoredNetwork()` sebagai basis. Banner "Context from Line
+  Registry" baru ditambahkan khusus untuk kasus ini (menampilkan nama bay
+  asli, bukan silsilah case lama).
+- **Regresi bundle-size ditemukan+diperbaiki saat verifikasi**: import
+  statis `getFullAnchoredNetwork` di `useProsetStore.ts` (yang di-import
+  eager oleh `App.tsx`, bukan di balik lazy route) menyeret seluruh
+  registry JSON `graph-builder.ts` (relay-catalog.json, crosscheck-workbook-
+  registry.json, lcd-dist-registry.json — >2MB gabungan) ke main bundle —
+  ukurannya melonjak 618kB → 1.714kB. Fix: `selectLine()`'s fallback branch
+  pakai dynamic `import("../domain/graph-builder")` alih-alih import statis
+  — signature publik `selectLine: (lineId) => void` tidak berubah (semua 8
+  pemanggil sudah fire-and-forget, tidak pernah `await`), main bundle
+  kembali ke 618kB.
+- Diverifikasi end-to-end (Playwright): `selectLine("anchor_line_16")`
+  (line Ancol) sekarang benar mengisi `activeNetworkLineId`/
+  `activeNetworkCaseId`, `CoverageView` menampilkan banner + 12 diagnostic
+  nyata untuk Ancol, `CalculationView` menampilkan "Context: ANG -> ANCOL
+  #1 | IED: MiCOM / Schneider MiCOM P142 | Xline 0.329 ohm — Prefilled dari
+  network graph IED" dengan Line Z1 terhitung otomatis (0.333 ohm).
+- Regression: seluruh 13 test suite + `npm run build` (bundle size
+  dikonfirmasi kembali ~618kB) — semua lolos.
+- **Yang TIDAK dikerjakan**: `DiagnosticsPanel` masih menampilkan SELURUH
+  diagnostic jaringan penuh, tidak difilter ke line yang sedang aktif saja
+  — ini perilaku yang sudah ada sebelumnya (bukan regresi baru), belum
+  disentuh sesi ini. `CorridorDiagram` (visual d3) tetap belum graph-aware,
+  sesuai catatan lama.
+
+## Update 2026-07-31 — Koreksi shortCode GI: "ANG" untuk Angke Salah, Ditemukan Saat Cek Ancol
+
+**Masalah yang ditemukan user**: saat verifikasi Ancol di atas,
+`CalculationView` menampilkan "Context: ANG -> ANCOL #1" — user menegur
+bahwa "ANG" bukan singkatan yang benar untuk Angke, dan menduga
+`ULTG_INVENTORY_NODES` (daftar shortCode 17 GI di `seed-network-registry.ts`,
+ditulis manual sebelum ada data DIgSILENT nyata) mungkin salah di banyak
+tempat lain juga, khususnya untuk GI-GI di ULTG Durikosambi.
+
+**Investigasi**: "ANG" ternyata bukan dari `ULTG_INVENTORY_NODES` (yang
+sudah benar menulis "AGK") — melainkan dari `buildShortCode()`'s fallback
+generik di `graph-builder.ts` (`words[0].slice(0,3)` untuk nama satu kata),
+yang seharusnya kalah prioritas dari `digsilentShortCodes` (hasil ekstraksi
+frekuensi token dari `digsilentLineDb` asli) tapi entah kenapa tidak
+terpakai untuk kasus ini — perlu investigasi lanjut kenapa lookup itu
+gagal untuk "angke" spesifik (dicurigai variasi `key` yang sama dengan bug
+`isAliased` sebelumnya, tapi belum dikonfirmasi tuntas).
+
+Yang SUDAH dikonfirmasi lewat pengecekan langsung ke `digsilentLineDb`
+(1183 record) dan sheet `MASTER_PHT`'s kolom REAL/ALIAS (data setting UPT,
+sumber independen dari DIgSILENT):
+
+- **Angke**: DIgSILENT menulis nama INI UTUH sebagai "ANGKE" (10 kemunculan,
+  tanpa saingan dekat) — tidak disingkat sama sekali. `ULTG_INVENTORY_NODES`'s
+  "AGK" adalah singkatan buatan yang tidak pernah cocok dengan kenyataan.
+- **Durikosambi**: kode asli "DKSBI" (11×) — inventory lama "DKS" dekat
+  tapi tidak persis.
+- **Kebon Jeruk**: kode asli "KBJRK" (4×) — inventory lama "KBJ" dekat
+  tapi tidak persis.
+- **Grogol Baru** = "GROGOL II" di DIgSILENT (situs fisik sama, konfirmasi
+  user) — alias `DIGSILENT_TO_SLD_ALIAS["grogol ii"]` di `graph-builder.ts`
+  ternyata SUDAH ada dari sesi sebelumnya, tapi tidak pernah di-porting ke
+  `scripts/index-relay-catalog.mjs`'s `stationAliases()` yang independen
+  (gap yang sama seperti kasus Karet).
+- **Cengkareng** = "Cengkareng Lama", **Tangerang** = "Tangerang Lama" di
+  DIgSILENT (pola sama seperti Karet/Karet Lama — nama polos = situs lama,
+  situs baru punya kualifier "Baru" sendiri).
+- **Dadap, Ulujami, Muarakarang, Muarakarang Baru**: NOL kemunculan di
+  `digsilentLineDb` — genuinely tidak ter-anchor (konsisten dengan catatan
+  README soal situs pasca-2021), bukan soal singkatan salah.
+- **Daan Mogot**: DIgSILENT menulis "DAAN MOGOT GIS" (deskriptif penuh,
+  bukan disingkat "DM").
+- **Kembangan**: muncul utuh sebagai "KEMBANGAN" (dengan suffix voltase
+  5/7 yang sudah ditangani terpisah) — "KMB" tetap singkatan yang wajar,
+  bukan salah eja seperti Angke.
+
+**Fix yang dilakukan** (3 kasus yang jelas & tidak ambigu):
+- `seed-network-registry.ts`: `ULTG_INVENTORY_NODES` — Angke AGK→ANGKE,
+  Durikosambi DKS→DKSBI, Kebon Jeruk KBJ→KBJRK.
+- `scripts/index-relay-catalog.mjs`: `stationAliases()` ditambah
+  `"karet lama": ["karet"]`, `"grogol baru": ["grogol ii"]`,
+  `"cengkareng": ["cengkareng lama"]`, `"tangerang": ["tangerang lama"]` —
+  memporting alias yang sudah confirmed di `graph-builder.ts`/investigasi
+  MASTER_PHT ke pipeline matching yang independen ini.
+- **Bug kedua ditemukan saat verifikasi**: `circuitFromRecord()` (fix
+  sebelumnya, arabic-suffix `-1`/`-2`) ternyata tidak menangani pasangan
+  yang pakai suffix ANGKA ROMAWI di nama record sendiri — kasus nyata:
+  `"DKSBI-GGLII I"` / `"DKSBI-GGLII II"` (bahkan ada pasangan CAMPURAN,
+  `"GRGOL-GGLII 1"` arabic vs `"GRGOL-GGLII II"` romawi, untuk 2 sirkit
+  fisik yang sama). Ditambahkan pengecekan suffix ` I`/` II` di akhir nama
+  (dengan word-boundary spasi, supaya tidak salah kena kode stasiun
+  "GGLII" yang literally berakhiran "II" tanpa spasi) sebagai prioritas
+  kedua setelah arabic.
+- Hasil setelah regenerate `relay-catalog.json`: DIgSILENT matched naik
+  133→137 (alias GI) →161 (setelah fix Romawi) — kenaikan besar terakhir
+  ini menjangkau lebih dari sekadar Grogol karena pola suffix Romawi ini
+  ternyata dipakai di banyak pasangan lain di seluruh registry, bukan
+  cuma DKSBI. `relay-catalog-builder.ts` resolve RelayIED naik 82→110.
+- Regression: seluruh 13 test suite + `npm run build` — lolos.
+- **Yang TIDAK dikerjakan**: kenapa lookup `digsilentShortCodes.get(key)`
+  gagal untuk "angke" spesifik di `graph-builder.ts` (menghasilkan fallback
+  ke `buildShortCode`) belum ditelusuri tuntas ke akar penyebabnya — hanya
+  gejalanya (ULTG_INVENTORY_NODES's shortCode) yang diperbaiki. GISTET
+  Durikosambi/Kembangan (2 entri terpisah dengan voltase 500kV) belum
+  dicek ulang. 7 GI tanpa sinyal DIgSILENT (Dadap dst.) sengaja tidak
+  ditebak — perlu sumber/dokumen lain di luar `digsilentLineDb` untuk
+  verifikasi, backlog terpisah.
+
 ## Update 2026-07-31 — Logo PLMS & Halaman Login (branding, UI-only)
 
 **Permintaan user**: buatkan logo aplikasi dan halaman login/landing dengan

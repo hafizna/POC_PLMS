@@ -816,3 +816,33 @@ export function buildCaseFromGraphGroups(caseId: string, groups: GraphBuildGroup
   const relaySettings = buildRelaySettingsFromOverlays(networkWithRelays, overlays);
   return { ...networkWithRelays, relaySettings };
 }
+
+// Same id as network-graph.ts's INVENTORY_MASTER_CASE_ID (kept as a literal
+// here to avoid a domain -> domain import cycle risk; the two are asserted
+// equal by test-graph-builder-voltage-suffix.ts's regression suite).
+const FULL_GRAPH_CASE_ID = "case_ultg_dks_inventory";
+
+let fullGraphCache: UnifiedNetwork | null = null;
+
+// The live, complete anchor+overlay network for every substation
+// buildGraphForUltg() can resolve — as opposed to buildCaseFromGraphGroups
+// called with a hand-picked subset (e.g. the 4-substation demo seed baked
+// into NETWORK_GRAPH_DKS_PIK). Consumers that need to look up "does this
+// bay/line exist ANYWHERE in the real data" (selectLine's fallback,
+// CoverageView/CalculationView) should use this rather than re-deriving a
+// subset, since a real bay like Angke-Ancol is outside every hand-picked
+// demo subset but very much inside the full graph.
+//
+// Memoized at module scope (not React state) because this is called from
+// a Zustand store action (selectLine), not a component — buildGraphForUltg
+// takes ~160ms per call (JSON parsing + station/overlay matching over the
+// full registry) and its inputs (the imported JSON registries) never
+// change at runtime, so recomputing per call would be a real, avoidable
+// per-click lag with no benefit.
+export function getFullAnchoredNetwork(): UnifiedNetwork {
+  if (!fullGraphCache) {
+    const { groups } = buildGraphForUltg();
+    fullGraphCache = buildCaseFromGraphGroups(FULL_GRAPH_CASE_ID, groups);
+  }
+  return fullGraphCache;
+}

@@ -170,7 +170,11 @@ pids
 lib-cov
 
 # Coverage directory used by tools like istanbul
-coverage
+# Root-anchored (not bare "coverage") — a bare pattern matches ANY directory
+# named "coverage" at any depth, which silently caught this app's own
+# src/components/coverage/ (a real feature area, not a test-coverage
+# report) and required `git add -f` to add new files there.
+/coverage
 *.lcov
 
 # nyc test coverage

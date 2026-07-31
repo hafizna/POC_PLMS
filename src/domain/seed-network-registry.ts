@@ -160,15 +160,24 @@ export const NETWORK_LINES: NetworkLine[] = NETWORK_GRAPH_LINES;
 export const RELAY_ASSETS: RelayAsset[] = NETWORK_GRAPH_RELAY_ASSETS;
 
 export const ULTG_INVENTORY_NODES: NetworkNode[] = [
-  { id: "angke", name: "Angke", shortCode: "AGK", type: "GI", voltageKv: 150, sldSourceId: "src_sld_folder" },
+  // shortCode values below are cross-checked against the real DIgSILENT line
+  // database (crosscheck-workbook-registry.json's digsilentLineDb — the same
+  // source graph-builder.ts anchors against), not hand-guessed abbreviations.
+  // ANGKE/DKSBI/KBJRK corrected 2026-07-31 after user flagged "ANG" (a
+  // buildShortCode() 3-letter fallback, wrong — DIgSILENT spells this
+  // station's name out in full as "ANGKE", it isn't abbreviated there at
+  // all) surfacing in CalculationView; the same check found "DKS"/"KBJ" were
+  // close-but-not-exact vs the codes DIgSILENT lines actually reference
+  // (10-11 occurrences each, no close runner-up — not ambiguous).
+  { id: "angke", name: "Angke", shortCode: "ANGKE", type: "GI", voltageKv: 150, sldSourceId: "src_sld_folder" },
   { id: "dadap", name: "Dadap", shortCode: "DDP", type: "GI", voltageKv: 150, sldSourceId: "src_sld_folder" },
-  { id: "durikosambi", name: "Durikosambi", shortCode: "DKS", type: "GI", voltageKv: 150, sldSourceId: "src_sld_folder" },
+  { id: "durikosambi", name: "Durikosambi", shortCode: "DKSBI", type: "GI", voltageKv: 150, sldSourceId: "src_sld_folder" },
   { id: "muarakarang", name: "Muarakarang", shortCode: "MKR", type: "GI", voltageKv: 150, sldSourceId: "src_sld_folder" },
   { id: "muarakarang_baru_gi", name: "Muarakarang Baru", shortCode: "MKB", type: "GI", voltageKv: 150, sldSourceId: "src_sld_folder" },
   { id: "daan_mogot", name: "Daan Mogot", shortCode: "DM", type: "GIS", voltageKv: 150, sldSourceId: "src_sld_folder" },
   { id: "grogol", name: "Grogol", shortCode: "GRG", type: "GIS", voltageKv: 150, sldSourceId: "src_sld_folder" },
   { id: "grogol_baru", name: "Grogol Baru", shortCode: "GRB", type: "GIS", voltageKv: 150, sldSourceId: "src_sld_folder" },
-  { id: "kebon_jeruk", name: "Kebon Jeruk", shortCode: "KBJ", type: "GIS", voltageKv: 150, sldSourceId: "src_sld_folder" },
+  { id: "kebon_jeruk", name: "Kebon Jeruk", shortCode: "KBJRK", type: "GIS", voltageKv: 150, sldSourceId: "src_sld_folder" },
   { id: "kembangan", name: "Kembangan", shortCode: "KMB", type: "GIS", voltageKv: 150, sldSourceId: "src_sld_folder" },
   { id: "muarakarang_baru_gis", name: "Muarakarang Baru", shortCode: "MKB-GIS", type: "GIS", voltageKv: 150, sldSourceId: "src_sld_folder" },
   { id: "new_senayan", name: "New Senayan", shortCode: "NSY", type: "GIS", voltageKv: 150, sldSourceId: "src_sld_folder" },

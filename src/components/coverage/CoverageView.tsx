@@ -13,6 +13,7 @@ import {
   mergeMasterRelationsIntoCase,
 } from "../../domain/network-graph";
 import { buildUnifiedNetwork } from "../../domain/unified";
+import { getFullAnchoredNetwork } from "../../domain/graph-builder";
 
 export function CoverageView() {
   const corridors = useProsetStore((s) => s.corridors);
@@ -26,13 +27,35 @@ export function CoverageView() {
   const activeCase = NETWORK_CASES.find((item) =>
     item.lines.some((line) => line.id === activeLineId)
   ) ?? NETWORK_CASES.find((item) => item.id === activeCaseId) ?? NETWORK_CASES[0];
-  const activeLine = activeCase?.lines.find((line) => line.id === activeLineId);
+  // The active line may live outside every hand-picked NETWORK_CASES subset
+  // (e.g. Angke-Ancol, only reachable via the live buildGraphForUltg graph —
+  // see getFullAnchoredNetwork's doc comment and selectLine's fallback in
+  // useProsetStore.ts). Detect that case so the banner/diagnostics below use
+  // the real bay/line instead of silently falling back to activeCase's
+  // unrelated first line.
+  const isLineOutsideNetworkCases = Boolean(
+    activeLineId && !activeCase.lines.some((line) => line.id === activeLineId)
+  );
+  const fullNetwork = useMemo(
+    () => (isLineOutsideNetworkCases ? getFullAnchoredNetwork() : undefined),
+    [isLineOutsideNetworkCases]
+  );
+  const fullLine = fullNetwork?.lineRelations.find((r) => r.id === activeLineId);
+  const activeLine = fullLine
+    ? undefined
+    : activeCase?.lines.find((line) => line.id === activeLineId);
   const fromNode = activeLine
     ? activeCase?.nodes.find((node) => node.id === activeLine.fromNodeId)
     : null;
   const toNode = activeLine
     ? activeCase?.nodes.find((node) => node.id === activeLine.toNodeId)
     : null;
+  const fullLineFromBay = fullLine
+    ? fullNetwork?.bays.find((b) => b.id === fullLine.fromBayId)
+    : undefined;
+  const fullLineToBay = fullLine
+    ? fullNetwork?.bays.find((b) => b.id === fullLine.toBayId)
+    : undefined;
 
   // Coordination diagnostics now run against the same UnifiedNetwork graph
   // CalculationView/VerifiedReportView use (graph-coordination.ts, lapis 2),
@@ -55,7 +78,7 @@ export function CoverageView() {
       ),
     [networkGraphOverrides, masterFallbackNetworkGraph]
   );
-  const networkGraph = useMemo(
+  const caseNetworkGraph = useMemo(
     () =>
       mergeMasterRelationsIntoCase(
         getEffectiveNetworkGraph(activeCase.id, networkGraphOverrides[activeCase.id], fallbackNetworkGraph),
@@ -63,6 +86,7 @@ export function CoverageView() {
       ),
     [activeCase.id, networkGraphOverrides, fallbackNetworkGraph, masterNetworkGraph]
   );
+  const networkGraph = fullLine ? fullNetwork : caseNetworkGraph;
   const diagnostics = useMemo(
     () => (networkGraph ? runGraphCoordinationChecks(networkGraph) : []),
     [networkGraph]
@@ -87,6 +111,25 @@ export function CoverageView() {
             </div>
             <span className="text-blue-700">
               Topology derived from network graph via seed-corridor adapter.
+            </span>
+          </div>
+        )}
+        {fullLine && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 text-xs text-blue-900 flex items-center justify-between gap-3 flex-wrap">
+            <div>
+              Context from Line Registry:{" "}
+              <span className="font-semibold">
+                {fullLineFromBay?.rawName ?? fullLine.fromBayId} -{" "}
+                {fullLineToBay?.rawName ?? fullLine.toBayId}
+              </span>
+              <span className="text-blue-700">
+                {" "}
+                | Xline {fullLine.x1Ohm?.toFixed(3) ?? fullLine.lineXOhm?.toFixed(3) ?? "?"} ohm
+              </span>
+            </div>
+            <span className="text-blue-700">
+              Topology dari buildGraphForUltg() (anchor DIgSILENT langsung) —
+              bay ini di luar case demo bawaan.
             </span>
           </div>
         )}

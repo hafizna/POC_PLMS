@@ -29,6 +29,7 @@ import {
 } from "../../domain/network-graph";
 import { buildUnifiedNetwork } from "../../domain/unified";
 import type { RelayIED } from "../../domain/unified";
+import { getFullAnchoredNetwork } from "../../domain/graph-builder";
 import {
   calculateDistanceSetting,
   DEFAULT_DISTANCE_INPUT,
@@ -101,7 +102,7 @@ export function CalculationView() {
       ),
     [networkGraphOverrides, masterFallbackNetworkGraph]
   );
-  const networkGraph = useMemo(
+  const caseNetworkGraph = useMemo(
     () =>
       mergeMasterRelationsIntoCase(
         getEffectiveNetworkGraph(activeCase.id, networkGraphOverrides[activeCase.id], fallbackNetworkGraph),
@@ -109,6 +110,20 @@ export function CalculationView() {
       ),
     [activeCase.id, networkGraphOverrides, fallbackNetworkGraph, masterNetworkGraph]
   );
+  // activeLineId may point at a bay outside every hand-picked NETWORK_CASES
+  // subset (e.g. Angke-Ancol, only reachable via the live buildGraphForUltg
+  // graph — see getFullAnchoredNetwork's doc comment and selectLine's
+  // fallback in useProsetStore.ts). Fall back to the full graph rather than
+  // silently showing whatever line the case-scoped graph happens to default
+  // to.
+  const isLineOutsideCaseGraph = Boolean(
+    activeLineId && caseNetworkGraph && !caseNetworkGraph.lineRelations.some((r) => r.id === activeLineId)
+  );
+  const fullNetworkGraph = useMemo(
+    () => (isLineOutsideCaseGraph ? getFullAnchoredNetwork() : undefined),
+    [isLineOutsideCaseGraph]
+  );
+  const networkGraph = fullNetworkGraph ?? caseNetworkGraph;
   const nodes = useMemo(
     () => (networkGraph ? networkNodesFromGraph(networkGraph) : activeCase.nodes),
     [activeCase.nodes, networkGraph]
