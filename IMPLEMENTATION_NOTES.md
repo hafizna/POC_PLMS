@@ -63,6 +63,36 @@ alih-alih `0 vs 0` — nilai actual real sudah ikut terbawa ke kedua sisi.
 sisi bay fisik yang sama sekarang selalu mendapat status yang sama,
 sesuai prinsip "1 unit perbandingan" yang diminta user.
 
+**Kesimpulan Angke-Muarakarang (belum match/mismatch, masih "missing-data")**:
+audit ini TIDAK menyimpulkan setting sirkuit UGC Angke↔Muarakarang Lama
+sudah benar atau salah. Nilai `actual.z1PhPh = 2.5 Ω` itu real (terbaca dari
+relay), tapi **tidak ada nilai `tap` atau `distance` (reference) tercatat
+sama sekali** untuk sirkuit ini di kedua sisi — jadi tidak ada apa pun untuk
+dibandingkan terhadap 2.5Ω itu. Fix hari ini menghentikan false-positive
+"match" (yang sebelumnya keliru muncul dari `0 vs 0`) dan menggantinya
+dengan status yang jujur: "data belum lengkap, perlu dokumen TAP resmi
+sirkuit ini di-input dulu sebelum bisa disimpulkan". Ini murni gap data
+sumber, bukan sesuatu yang bisa diperbaiki lewat kode.
+
+**Pembanding kasus yang berhasil penuh — Angke↔Ancol#1/#2** (relay GE MICOM
+P545, TAP `LCD_546_ANGKE BAY ANCOL 1,2.pdf`, dokumen sama untuk kedua
+sirkuit paralel): `distance` vs `tap` match persis (Z1 0.263 / Z2 0.403 /
+Z3 0.951 Ω, t2 0.4s / t3 1.6s), dan `tap` vs `actual` **within-tolerance**
+(actual Z1 0.264Ω, selisih 0.001Ω vs toleransi ±0.01Ω) — status readiness
+`ready` untuk Ancol#1. Ancol#2 punya `actual` kosong (0) di barisnya sendiri,
+tapi karena satu dokumen TAP yang sama juga mencakup Ancol#1, `effectiveSource()`
+membawa nilai actual Ancol#1 ke perbandingan Ancol#2 juga — readiness-nya ikut
+`ready`, bukan `missing-data`. Ini contoh nyata kenapa merge-per-grup relevan
+di luar kasus gap data: dua sirkuit paralel yang secara fisik identik (relay
+sama, TAP sama) semestinya memang berbagi kesimpulan readiness yang sama.
+
+**Next step yang disepakati** (bukan dashboard dulu — tetap fokus function-wise):
+tuntaskan cakupan Z1-Z3/timer dulu (identifikasi/list bay-bay dengan status
+`missing-data` seperti Angke-Muarakarang di atas supaya actionable — mis. jadi
+daftar prioritas dokumen TAP yang perlu dilengkapi) sebelum melebarkan audit
+ke topik lain (OCR/GFR trafo & penghantar, lalu fungsi tambahan seperti
+autoreclose/load blinder yang belum ada di model `RelaySetting` sama sekali).
+
 - Regression: seluruh 13 test suite existing + `npm run build` — semua
   lolos tanpa perubahan (tidak ada test lama yang bergantung pada perilaku
   lama `auditRecordPair`/`isSourceEmpty` per-baris).
