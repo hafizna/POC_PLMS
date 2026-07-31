@@ -31,7 +31,8 @@
     "test:graph-coordination": "tsx scripts/test-graph-coordination.ts",
     "test:relay-setting-builder": "tsx scripts/test-relay-setting-builder.ts",
     "test:graph-builder-voltage-suffix": "tsx scripts/test-graph-builder-voltage-suffix.ts",
-    "test:relay-catalog-builder": "tsx scripts/test-relay-catalog-builder.ts"
+    "test:relay-catalog-builder": "tsx scripts/test-relay-catalog-builder.ts",
+    "test:rio-xrio-import": "tsx scripts/test-rio-xrio-import.ts"
   },
   "dependencies": {
     "d3": "^7.9.0",

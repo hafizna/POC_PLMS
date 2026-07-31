@@ -8,6 +8,78 @@ arsitektur dan roadmap produk, rujuk:
 - [`README.md`](./README.md) — MVP roadmap, status implementasi per tahap, dan
   demo flow.
 
+## Update 2026-08-01 — Modul Baru: Parser .rio/XRIO untuk Crosscheck Actual Setting
+
+**Konteks**: menindaklanjuti temuan bahwa alur "Crosscheck Actual Setting"
+mentok total (0 tahap kerja terimplementasi setelah `baseline_frozen`),
+langkah pertama adalah bahan bakunya: actual setting relay biasanya
+diekspor vendor sebagai file `.rio` (Sifang/Siemens plaintext) atau XRIO
+(XML — MiCOM/GE/Siemens/ABB). User mengarahkan ke referensi nyata di
+proyek lain (`base_ai_tfa`'s `ImpedanceLocus.tsx`) yang sudah py
+parser untuk kedua format, lalu memberi 4 file asli (2 `.rio`, 2 XRIO)
+untuk verifikasi langsung — bukan cuma percaya kode referensi.
+
+- **`src/domain/rio-xrio-import.ts`** (baru) — `parseRio()`/`parseXrio()`/
+  `parseRioOrXrio()`. Hanya logic parsing yang diadopsi dari referensi
+  (bukan kode chart R-X plane-nya, sesuai keputusan user — PLMS sudah
+  punya `RXPlaneModal` sendiri). Bentuk output DIRANCANG ULANG (bukan
+  port apa adanya): satu `RioImportZone` = satu `DistanceZoneSetting`-shaped
+  record (xReachOhm, rfppOhmPerLoop, rfpeOhmPerLoop, timeDelayPpS,
+  timeDelayPeS) — bukan dua daftar `phGnd`/`phPh` terpisah ala kode
+  referensi — supaya cocok 1:1 dengan tipe `DistanceZoneSetting` PLMS
+  sendiri (`src/domain/unified.ts`) tanpa konversi lebih lanjut.
+- **4 bug nyata ditemukan & diperbaiki**, semuanya lewat verifikasi
+  langsung terhadap file asli (bukan tebakan):
+  1. **Timer diam-diam tidak pernah dibaca** di kode referensi untuk
+     SEMUA format, padahal datanya genuinely ada: `.rio` Siemens 7SA522
+     PROTECTIONDEVICE punya `TIME1`/`TIMEM` per zona (dikonfirmasi file
+     "Mrica 2...rio": Z1 0.000/0.000, Z2 0.400/0.400, Z3 1.600/1.600);
+     SIPROTEC 5 TESTOBJECT punya `TRIPTIME` tunggal; XRIO MiCOM P54x
+     punya `tZn Ph. Delay`/`tZn Gnd. Delay`; XRIO ABB punya
+     `tPPZn`/`tPEZn`. Semua sekarang ditangkap sebagai `timeDelayPpS`/
+     `timeDelayPeS`.
+  2. **ABB asli pakai format `ZMFPDIS` (full-scheme)**, bukan `ZMQ...PDIS`
+     (quadrilateral) yang di-hardcode kode referensi — struktur beda
+     total (`Zone 1`/`Zone 2`/`Zone 3` sub-block eksplisit, parameter
+     `X1PPZ1`/`X1PEZ1`/`RFPPZ1`/`RFPEZ1`/`tPPZ1`/`tPEZ1`). Fungsi
+     `buildAbbFullSchemeZones()` baru ditulis khusus untuk shape ini;
+     `buildAbbQuadZones()` (shape lama) dipertahankan sebagai fallback
+     tapi belum ada sampel asli yang memvalidasinya.
+  3. **SIPROTEC 5 `.rio` bisa pakai `BEGIN MHOSHAPE`** (lingkaran mho
+     langsung: ANGLE/REACH/OFFSET) untuk zona FAULTLOOP LL — kode
+     referensi cuma tangani `BEGIN SHAPE` (polygon LINE-clipped), jadi
+     SEMUA zona fasa-fasa di file 7SL87 asli akan hilang total. Ditambah
+     dukungan `MHOSHAPE`.
+  4. **Konvensi indexing LN/LL berbeda antar sumber**: `.rio` Siemens
+     7SA522 memakai INDEX yang SAMA untuk sisi ground (LN) dan phase (LL)
+     satu zona fisik; SIPROTEC 5 7SL87 justru memakai INDEX offset
+     (index 1-3 = ground, 4-6 = phase zona fisik YANG SAMA, dipasangkan
+     lewat TRIPTIME yang identik pairwise). Kode referensi tidak
+     menghadapi masalah ini sama sekali (modelnya per-baris, bukan
+     gabungan) — parser baru mendeteksi pola mana yang berlaku dan
+     menggabungkan pasangan yang benar jadi satu `RioImportZone`.
+- Diverifikasi: regression test (`scripts/test-rio-xrio-import.ts`,
+  fixture sintetis meniru struktur file asli persis — `.rio` saja, sebab
+  `DOMParser` tidak ada di Node) + verifikasi langsung browser
+  (Playwright) terhadap KEEMPAT file asli user (2 `.rio` via regression
+  test, 2 XRIO — termasuk file Trenggalek F87L 15.8MB — via browser
+  check manual). Semua 4 file menghasilkan Z1-Z3 dengan reach dan timer
+  yang masuk akal (grading time 0/0.4/1.6s dan 0/0.8/1.6s, konsisten
+  dengan praktik zone timing).
+- Regression: seluruh 14 test suite (13 lama + 1 baru) + `npm run build`
+  — semua lolos, bundle size tidak berubah (modul belum dipakai UI
+  manapun).
+- **Yang TIDAK dikerjakan**: modul ini BELUM disambungkan ke
+  `VendorImportView`/gate `document_audit`/`actual_readback_intake` —
+  itu langkah berikutnya (upload file → decode → link ke case → buka
+  gate crosscheck), sengaja dipisah jadi pekerjaan tersendiri. Format
+  `ZMQ...PDIS` (ABB quadrilateral lama) belum ada sampel asli untuk
+  divalidasi. Disarankan ke user: kalau tujuannya dokumentasi setting
+  selengkap TAP (bukan cuma cross-check Z1-Z3), sarankan upload XRIO,
+  bukan `.rio` — XRIO jauh lebih kaya (tiap parameter individual dengan
+  nama/deskripsi/unit, mencakup fungsi di luar distance seperti F87L
+  differential), `.rio` cuma geometri zona.
+
 ## Update 2026-08-01 — Fix: Pencarian Bay di Wizard Buntu Tanpa Penjelasan untuk GI di Luar ULTG Durikosambi
 
 **Pertanyaan user**: "case-nya balik lagi, apa yang terjadi bila bay yang
