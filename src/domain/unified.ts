@@ -182,6 +182,7 @@ export type ProtectionFunction = {
 export type SettingSourceKind =
   | "lcd-dist-import"
   | "ocr-import"
+  | "hel-pht-tap-import"
   | "tap-pdf"
   | "actual-set"
   | "manual";

@@ -13,6 +13,7 @@
     "lint": "eslint src --ext ts,tsx",
     "import:lcd-dist": "node scripts/extract-lcd-dist.mjs",
     "import:ocr": "node scripts/extract-ocr.mjs",
+    "import:hel-pht-tap": "node scripts/extract-hel-pht-tap.mjs",
     "index:sld": "node scripts/index-sld-folder.mjs",
     "index:pdf": "node scripts/index-pdf-sources.mjs",
     "index:mathcad": "node scripts/index-mathcad-templates.mjs",
@@ -32,7 +33,8 @@
     "test:relay-setting-builder": "tsx scripts/test-relay-setting-builder.ts",
     "test:graph-builder-voltage-suffix": "tsx scripts/test-graph-builder-voltage-suffix.ts",
     "test:relay-catalog-builder": "tsx scripts/test-relay-catalog-builder.ts",
-    "test:rio-xrio-import": "tsx scripts/test-rio-xrio-import.ts"
+    "test:rio-xrio-import": "tsx scripts/test-rio-xrio-import.ts",
+    "test:hel-pht-tap-import": "tsx scripts/test-hel-pht-tap-import.ts"
   },
   "dependencies": {
     "d3": "^7.9.0",
