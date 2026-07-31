@@ -76,6 +76,16 @@ Detail lengkap tiap sprint (apa yang dicek, tipe data, bug yang ditemukan) ada d
 
 **Urutan kerja saat ini: D1 → O1 → E1 → C1 → N1** (dipilih 2026-08-01) — engineering track lain butuh data nyata dulu sebelum bisa diuji dengan input yang representatif, bukan urutan nomor F1-N1 di atas yang cuma label kategori.
 
+**Next to-do (per 2026-08-01):**
+1. **D1 lanjutan** — wiring importer `HEL_PHT_TAP` (13 model, sudah selesai extract) ke UI/`SettingRecord`/`RelaySetting` population; belum ada consumer yang membaca hasil `promoteMatchedHelPhtTapCandidates` sama sekali.
+2. **O1 lanjutan** — sambungkan `rio-xrio-import.ts` (parser .rio/XRIO, sudah selesai) ke `VendorImportView.tsx`/alur crosscheck; buka gerbang stage `document_audit`/`actual_readback_intake` yang saat ini masih di luar `EXECUTABLE_SETTING_CASE_STAGES`.
+3. **Backlog F1/foundation-health, disebutkan tapi di luar scope fix 2026-08-01** ("Fix: Konteks GI Tidak Mengikuti Kerja User" — lihat `IMPLEMENTATION_NOTES.md`):
+   - Dropdown "Active Study" (`NetworkModelView.tsx`) masih di-filter ke `STUDY_CASE_IDS` statis, belum bisa menampilkan `INVENTORY_MASTER_CASE_ID` sebagai Study bernama walau datanya sudah benar ter-merge.
+   - `SourceIndexView.tsx` belum merge master inventory (sama seperti Network Builder sebelum diperbaiki).
+   - `Study.substationIds` tetap snapshot statis — Study yang sudah ada tidak otomatis "tumbuh" cakupannya kalau ada GI baru dikonfirmasi setelahnya.
+   - Status "SLD Endpoint Candidates/Promote to master" (matcher per-record lama) relatif terhadap Graph Builder (per-GI, lebih baru) belum diputuskan — apakah dipensiunkan atau tetap dipertahankan berdampingan.
+4. **E1** (setelah D1/O1 cukup matang) — port formula XMCD P545 ke rule module TypeScript (MVP 2B.2), pekerjaan terbesar yang tersisa di seluruh roadmap.
+
 <details>
 <summary>Tabel padanan skema lama (MVP 1A-3) → track baru (F1/O1/D1/E1/C1/N1), untuk membaca histori sebelum 2026-08-01</summary>
 
