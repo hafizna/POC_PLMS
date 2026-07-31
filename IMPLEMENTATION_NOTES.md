@@ -8,6 +8,74 @@ arsitektur dan roadmap produk, rujuk:
 - [`README.md`](./README.md) — MVP roadmap, status implementasi per tahap, dan
   demo flow.
 
+## Update 2026-07-31 — Logo PLMS & Halaman Login (branding, UI-only)
+
+**Permintaan user**: buatkan logo aplikasi dan halaman login/landing dengan
+ciri khas PLN, mengacu ke referensi visual aplikasi PLN lain ("TFA" —
+gradient biru split-panel) tapi diarahkan ulang ke tone lebih modern/bersih
+("vibes vantis.sh") setelah didiskusikan — bukan meniru gradient korporat
+referensi awal secara literal.
+
+- **`src/components/brand/PlmsLogo.tsx`** (baru): `PlmsMark` — satu sel
+  heksagonal (melambangkan node graph substation/line yang jadi model data
+  aplikasi ini) dibelah simbol petir (keputusan trip relay proteksi).
+  Monoline, `currentColor` untuk stroke heksagon (ikut warna teks parent,
+  jadi satu mark bekerja di header gelap maupun konteks terang), bolt selalu
+  warna aksen amber (`fill-brand-accent`) sebagai satu-satunya aksen warna.
+  `PlmsWordmark` untuk pemakaian mark+teks bersisian.
+- **`tailwind.config.js`**: token baru `brand.accent` (`#ffb100`, amber PLN),
+  `brand.accent-dark`, `brand.ink` (`#0b0f14`) — dipisah dari palette
+  `zone1/2/3` yang sudah ada (itu warna semantik Z1-Z3 proteksi, bukan
+  warna brand, sengaja tidak disentuh).
+- **`src/components/auth/LoginView.tsx`** (baru): halaman login UI-only —
+  form tidak validasi kredensial sungguhan (POC, belum ada backend auth),
+  tombol "Masuk ke aplikasi" langsung set state `isAuthed` di `App.tsx` dan
+  lanjut ke `AppShell`. Layout: panel form putih mengambang di tengah latar
+  `brand-ink` gelap dengan tekstur grid teknis sangat halus (opacity 0.07,
+  radial-mask supaya pudar ke tepi) — bukan split gradient dua-panel seperti
+  referensi awal, sesuai arah "lebih modern" yang diminta user.
+- **`src/App.tsx`**: state `isAuthed` (local `useState`, sengaja TIDAK
+  di-persist — refresh kembali ke login adalah perilaku yang benar untuk
+  gate UI tanpa auth sungguhan, bukan bug).
+- **`src/components/layout/TopBar.tsx`**: diselaraskan ke identitas yang
+  sama per permintaan eksplisit user ("pastikan ui/ux didalamnya senada
+  dengan login pagenya") — kotak amber+`Zap` lama diganti `PlmsMark`,
+  `bg-slate-950` diganti `bg-brand-ink` (token yang sama dengan login).
+- **Bug ditemukan+fix saat verifikasi**: `PlmsMark`'s `<path>` stroke sempat
+  punya `className` sendiri (`text-[var(--plms-ink)] dark:...`) yang
+  override `currentColor` dari `className` yang di-pass parent — akibatnya
+  warna putih di header/login tidak pernah kepakai. App ini tidak punya
+  dark-mode sama sekali (`color-scheme: light` global), jadi varian
+  `dark:` dihapus; `currentColor` sekarang murni ikut `className` svg
+  terluar.
+- **Insiden verifikasi Playwright**: screenshot pertama menunjukkan
+  `bg-brand-ink` tidak ter-apply sama sekali (background tetap abu-abu
+  terang default) walau class benar-benar ada di DOM dan config Tailwind
+  benar (diverifikasi via `npx tailwindcss` CLI standalone, rule
+  `.bg-brand-ink` memang ter-generate). Root cause: **3 proses `vite` dev
+  server berjalan bersamaan** dari sesi-sesi sebelumnya (`Get-CimInstance
+  Win32_Process` di PowerShell menemukannya — `pkill` via Git-Bash tidak
+  menjangkau proses node Windows-native ini), salah satunya menyajikan
+  build lama dari sebelum config diedit. Fix: matikan seluruh proses vite
+  via `Stop-Process` (PowerShell, bukan `pkill`), start satu instance
+  bersih. Dicatat karena pola ini (proses dev server menumpuk lintas sesi)
+  kemungkinan terulang.
+- Diverifikasi visual end-to-end (Playwright, dev server bersih): login
+  page tampil sesuai desain (mark putih+amber, grid halus, panel form
+  putih, tombol submit hitam pekat saat form terisi), lanjut sukses ke
+  `AppShell` dengan TopBar yang senada.
+- Regression: `npx tsc --noEmit`, `npm run build` — lolos (bundle utama
+  613→618 kB, wajar karena `LoginView`/`PlmsLogo` tidak lazy-loaded, sama
+  seperti `AppShell` yang sudah ada di jalur render awal).
+- **Yang TIDAK dikerjakan**: tidak ada backend/validasi auth sungguhan
+  (di luar scope — ini POC); tidak menambah SSO/logout flow (referensi
+  gambar user menampilkan tombol "Login SSO", sengaja tidak diikutkan
+  karena tidak ada sistem SSO nyata untuk disambungkan); sidebar
+  (`AppShell.tsx`) belum disentuh untuk restyle penuh ke token brand baru
+  — hanya TopBar yang eksplisit diminta diselaraskan; tidak membuat
+  favicon/app-icon baru dari `PlmsMark` (bisa jadi tindak lanjut kecil
+  terpisah kalau dibutuhkan).
+
 ## Update 2026-07-31 — Survei 122 Aset "Candidate": Dua Penyebab Berbeda, Alert DIgSILENT-Status
 
 **Konteks**: setelah fix circuit-detection (entry di atas) menaikkan matched

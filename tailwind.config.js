@@ -32,6 +32,14 @@ export default {
           2: "#eef1f5",
         },
         panel: "#eef2f7",
+        // Shared brand accent (PLN amber) — introduced with the login page
+        // as the app's single accent color; TopBar's amber square should
+        // move onto this token too so the two surfaces read as one product.
+        brand: {
+          accent: "#ffb100",
+          "accent-dark": "#c98400",
+          ink: "#0b0f14",
+        },
         zone1: {
           DEFAULT: "#dc2626",
           fill: "rgba(220, 38, 38, 0.4)",

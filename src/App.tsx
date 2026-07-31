@@ -1,5 +1,6 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useState } from "react";
 import { AppShell } from "./components/layout/AppShell";
+import { LoginView } from "./components/auth/LoginView";
 import { useProsetStore } from "./store/useProsetStore";
 
 // Lazy-load each view so the initial JS bundle stays small. Each view has
@@ -63,6 +64,15 @@ const AuditTrailView = lazy(() =>
 
 export function App() {
   const tab = useProsetStore((s) => s.currentTab);
+  // Session-only, not persisted: this POC has no real auth backend, so the
+  // login screen is a UI gate only — refreshing the page returns to it,
+  // which is the correct behavior for a demo login rather than a bug to fix.
+  const [isAuthed, setIsAuthed] = useState(false);
+
+  if (!isAuthed) {
+    return <LoginView onLogin={() => setIsAuthed(true)} />;
+  }
+
   return (
     <AppShell>
       <Suspense fallback={<LoadingFallback />}>

@@ -1,5 +1,6 @@
-import { RotateCcw, User, Zap } from "lucide-react";
+import { RotateCcw, User } from "lucide-react";
 import { useProsetStore, type Tab } from "../../store/useProsetStore";
+import { PlmsMark } from "../brand/PlmsLogo";
 
 const TAB_LABELS: Record<Tab, string> = {
   cases: "Setting Cases",
@@ -27,11 +28,9 @@ export function TopBar() {
   const resetAll = useProsetStore((state) => state.resetAll);
 
   return (
-    <header className="flex min-h-16 items-center justify-between gap-4 bg-slate-950 px-4 py-3 text-white sm:px-6">
+    <header className="flex min-h-16 items-center justify-between gap-4 bg-brand-ink px-4 py-3 text-white sm:px-6">
       <div className="flex min-w-0 items-center gap-3">
-        <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-amber-400 text-slate-950">
-          <Zap className="h-5 w-5" strokeWidth={2.5} />
-        </div>
+        <PlmsMark size={32} className="shrink-0 text-white" />
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <span className="font-bold tracking-tight">PLMS</span>
