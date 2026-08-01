@@ -12,24 +12,17 @@ import {
 } from "lucide-react";
 import { NumberInput } from "../shared/NumberInput";
 import { useProsetStore } from "../../store/useProsetStore";
-import {
-  NETWORK_CASES,
-  NetworkLine,
-} from "../../domain/seed-network-registry";
+import { NetworkLine } from "../../domain/seed-network-registry";
 import {
   LCD_DIST_REGISTRY,
   promoteMatchedLcdDistCandidates,
 } from "../../domain/lcd-dist-import";
 import {
-  getEffectiveNetworkGraph,
   INVENTORY_MASTER_CASE_ID,
-  mergeMasterRelationsIntoCase,
   networkLinesFromGraph,
   networkNodesFromGraph,
 } from "../../domain/network-graph";
-import { buildUnifiedNetwork } from "../../domain/unified";
 import type { RelayIED } from "../../domain/unified";
-import { getFullAnchoredNetwork } from "../../domain/graph-builder";
 import {
   calculateDistanceSetting,
   DEFAULT_DISTANCE_INPUT,
@@ -58,15 +51,15 @@ import {
   type P545InputStatus,
 } from "../../domain/p545-input-contract";
 import { OcrWorkbook } from "./OcrWorkbook";
+import { deriveStudyNetwork, getConfirmedMasterNetwork } from "../../domain/study-network";
 
 type InputKey = keyof DistanceCalculationInput;
 
 export function CalculationView() {
   const activeLineId = useProsetStore((s) => s.activeNetworkLineId);
-  const activeCaseId = useProsetStore((s) => s.activeNetworkCaseId);
   const networkGraphOverrides = useProsetStore((s) => s.networkGraphOverrides);
   const ctVtOverrides = useProsetStore((s) => s.ctVtOverrides);
-  const setActiveLine = useProsetStore((s) => s.setActiveNetworkLine);
+  const ensureStudyForLine = useProsetStore((s) => s.ensureStudyForLine);
   const addCalculationSnapshot = useProsetStore((s) => s.addCalculationSnapshot);
   const linkToSettingCase = useProsetStore((s) => s.linkToSettingCase);
   const activeStudy = useProsetStore((s) => s.studies.find((study) => study.id === s.activeStudyId));
@@ -87,51 +80,25 @@ export function CalculationView() {
   );
   const selectedTemplate = getCalculationTemplate(selectedTemplateId);
   const result = useMemo(() => calculateDistanceSetting(input), [input]);
-  const activeCase =
-    NETWORK_CASES.find((item) => item.id === activeCaseId) ?? NETWORK_CASES[0];
-  const inventoryCase =
-    NETWORK_CASES.find((item) => item.id === INVENTORY_MASTER_CASE_ID) ?? activeCase;
-  const fallbackNetworkGraph = useMemo(() => buildUnifiedNetwork(activeCase), [activeCase]);
-  const masterFallbackNetworkGraph = useMemo(() => buildUnifiedNetwork(inventoryCase), [inventoryCase]);
   const masterNetworkGraph = useMemo(
-    () =>
-      getEffectiveNetworkGraph(
-        INVENTORY_MASTER_CASE_ID,
-        networkGraphOverrides[INVENTORY_MASTER_CASE_ID],
-        masterFallbackNetworkGraph
-      ),
-    [networkGraphOverrides, masterFallbackNetworkGraph]
+    () => getConfirmedMasterNetwork(networkGraphOverrides[INVENTORY_MASTER_CASE_ID]),
+    [networkGraphOverrides]
   );
-  const caseNetworkGraph = useMemo(
-    () =>
-      mergeMasterRelationsIntoCase(
-        getEffectiveNetworkGraph(activeCase.id, networkGraphOverrides[activeCase.id], fallbackNetworkGraph),
-        masterNetworkGraph
-      ),
-    [activeCase.id, networkGraphOverrides, fallbackNetworkGraph, masterNetworkGraph]
+  const studyResolution = useMemo(
+    () => deriveStudyNetwork(masterNetworkGraph, activeStudy),
+    [activeStudy, masterNetworkGraph]
   );
-  // activeLineId may point at a bay outside every hand-picked NETWORK_CASES
-  // subset (e.g. Angke-Ancol, only reachable via the live buildGraphForUltg
-  // graph — see getFullAnchoredNetwork's doc comment and selectLine's
-  // fallback in useProsetStore.ts). Fall back to the full graph rather than
-  // silently showing whatever line the case-scoped graph happens to default
-  // to.
-  const isLineOutsideCaseGraph = Boolean(
-    activeLineId && caseNetworkGraph && !caseNetworkGraph.lineRelations.some((r) => r.id === activeLineId)
-  );
-  const fullNetworkGraph = useMemo(
-    () => (isLineOutsideCaseGraph ? getFullAnchoredNetwork() : undefined),
-    [isLineOutsideCaseGraph]
-  );
-  const networkGraph = fullNetworkGraph ?? caseNetworkGraph;
+  const networkGraph = studyResolution.network;
   const nodes = useMemo(
-    () => (networkGraph ? networkNodesFromGraph(networkGraph) : activeCase.nodes),
-    [activeCase.nodes, networkGraph]
+    () => (networkGraph ? networkNodesFromGraph(networkGraph) : []),
+    [networkGraph]
   );
   const lines = useMemo(
-    () => (networkGraph ? networkLinesFromGraph(networkGraph) : activeCase.lines),
-    [activeCase.lines, networkGraph]
+    () => (networkGraph ? networkLinesFromGraph(networkGraph) : []),
+    [networkGraph]
   );
+  const masterNodes = useMemo(() => networkNodesFromGraph(masterNetworkGraph), [masterNetworkGraph]);
+  const masterLines = useMemo(() => networkLinesFromGraph(masterNetworkGraph), [masterNetworkGraph]);
   const activeLine = lines.find((line) => line.id === activeLineId);
   const relation = networkGraph?.lineRelations.find((r) => r.id === activeLineId);
   const fromIed = relation
@@ -143,14 +110,12 @@ export function CalculationView() {
   const calcIed: RelayIED | undefined = side === "from" ? fromIed : toIed;
   const promotedLine = useMemo(
     () =>
-      activeCase
-        ? promoteMatchedLcdDistCandidates(
+      promoteMatchedLcdDistCandidates(
           LCD_DIST_REGISTRY.records,
           nodes,
           lines
-        ).find((line) => line.matchedLineId === activeLineId)
-        : undefined,
-    [activeCase, nodes, lines, activeLineId]
+        ).find((line) => line.matchedLineId === activeLineId),
+    [nodes, lines, activeLineId]
   );
   const fromNode = activeLine
     ? nodes.find((node) => node.id === activeLine.fromNodeId)
@@ -206,7 +171,7 @@ export function CalculationView() {
       z2DelayS: promotedLine?.zones.t2 ?? current.z2DelayS,
       z3DelayS: promotedLine?.zones.t3 ?? current.z3DelayS,
     }));
-  }, [activeLine, activeCase, fromNode, toNode, promotedLine, calcIed, side, ctVtOverrides]);
+  }, [activeLine, fromNode, toNode, promotedLine, calcIed, side, ctVtOverrides]);
 
   const updateNumber = (key: InputKey, value: number) => {
     setSavedSnapshotId(null);
@@ -218,7 +183,7 @@ export function CalculationView() {
     const outputValues = buildDistanceOutputValues(result);
     const inputValues = buildDistanceInputValues(input);
     const snapshotId = addCalculationSnapshot({
-      caseId: activeCase.id,
+      caseId: INVENTORY_MASTER_CASE_ID,
       lineId: activeLine.id,
       templateId: selectedTemplate.id,
       templateName: selectedTemplate.name,
@@ -234,6 +199,42 @@ export function CalculationView() {
     }
     setSavedSnapshotId(snapshotId);
   };
+
+  if (!studyResolution.ready || !activeLine) {
+    return (
+      <div className="space-y-4">
+        <section className="rounded-lg border border-amber-200 bg-amber-50 p-5">
+          <h2 className="text-sm font-semibold text-amber-950">Calculation membutuhkan Study berbasis bay/line</h2>
+          <p className="mt-1 text-xs text-amber-800">
+            Pilih relasi dari confirmed master graph. PLMS akan membuat atau mengaktifkan Study untuk relasi tersebut; tidak ada fallback ke DKS-DM-PIK-MKB.
+          </p>
+          {studyResolution.blockers.length > 0 && (
+            <ul className="mt-3 space-y-1 text-xs text-red-800">
+              {studyResolution.blockers.map((message) => <li key={message}>- {message}</li>)}
+            </ul>
+          )}
+          <select
+            className="mt-4 w-full max-w-xl rounded border border-amber-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+            value=""
+            onChange={(event) => {
+              if (event.target.value) void ensureStudyForLine(event.target.value);
+            }}
+          >
+            <option value="" disabled>Pilih bay/line untuk dianalisis...</option>
+            {masterLines.map((line) => {
+              const from = masterNodes.find((node) => node.id === line.fromNodeId);
+              const to = masterNodes.find((node) => node.id === line.toNodeId);
+              return (
+                <option key={line.id} value={line.id}>
+                  {from?.shortCode ?? line.fromNodeId} - {to?.shortCode ?? line.toNodeId} {line.circuit}
+                </option>
+              );
+            })}
+          </select>
+        </section>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -293,34 +294,6 @@ export function CalculationView() {
           </div>
         </div>
         <TemplateOverview template={selectedTemplate} />
-        {!activeLine && (
-          <div className="mt-4 border border-amber-200 bg-amber-50 rounded-md px-3 py-2 text-xs text-amber-900 flex items-center justify-between gap-3 flex-wrap">
-            <div>
-              Belum ada line yang dipilih. Pilih dari dropdown atau dari Line Registry.
-            </div>
-            <select
-              className="bg-white text-xs px-2 py-1 rounded border border-amber-300 focus:border-blue-500 focus:outline-none"
-              value=""
-              onChange={(e) => setActiveLine(e.target.value)}
-            >
-              <option value="" disabled>
-                Pilih line...
-              </option>
-              {NETWORK_CASES.flatMap((c) =>
-                (c.id === activeCase.id ? lines : c.lines).map((line) => {
-                  const caseNodes = c.id === activeCase.id ? nodes : c.nodes;
-                  const f = caseNodes.find((n) => n.id === line.fromNodeId);
-                  const t = caseNodes.find((n) => n.id === line.toNodeId);
-                  return (
-                    <option key={line.id} value={line.id}>
-                      {f?.shortCode} - {t?.shortCode} {line.circuit}
-                    </option>
-                  );
-                })
-              )}
-            </select>
-          </div>
-        )}
         {activeLine && (
           <div className="mt-4 border border-blue-200 bg-blue-50 rounded-md px-3 py-2 text-xs text-blue-900 flex items-center justify-between gap-3 flex-wrap">
             <div className="flex items-center gap-3 flex-wrap">
@@ -435,7 +408,7 @@ export function CalculationView() {
       ) : selectedTemplateId === "ocr-gfr-backup-150kv" ? (
         <OcrWorkbook
           lineId={activeLineId || ""}
-          caseId={activeCase.id}
+          caseId={INVENTORY_MASTER_CASE_ID}
           onSave={(snapshot) => {
             const snapshotId = addCalculationSnapshot(snapshot);
             if (linkedSettingCase) {

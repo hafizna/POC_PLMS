@@ -58,30 +58,27 @@ const LOCAL_AUDIT_ITEMS: NavItem[] = [
 // gated and one not) until the case-driven path covered everything P2
 // (new_setting) needs — see IMPLEMENTATION_NOTES.md.
 //
-// What remains here is P1 (crosscheck) tooling whose stages
-// (document_audit, actual_readback_intake, verification) are NOT YET
-// case-gated at all — rather than leave them freely accessible (which
-// would just recreate the same confusion for the crosscheck flow) or
-// remove them outright (which would look like the feature vanished),
-// they're shown as disabled "Segera hadir" until that gate is built.
+// P1 crosscheck tools are implemented but deliberately unavailable as direct
+// navigation: open them from a Crosscheck Setting Case so the intake manifest
+// and saved Verification Run retain their case context.
 const COMING_SOON_ITEMS: NavItem[] = [
   {
     id: "comparison",
     label: "Actual Verification",
     icon: <GitCompareArrows className="h-4 w-4" />,
-    description: "Menunggu gate P1: actual_readback_intake",
+    description: "Buka dari Crosscheck Case: intake/verification",
   },
   {
     id: "vendor-import",
     label: "Vendor Import",
     icon: <PackageOpen className="h-4 w-4" />,
-    description: "Menunggu gate P1: actual_readback_intake",
+    description: "Buka dari Crosscheck Case: document/readback intake",
   },
   {
     id: "verified-report",
     label: "Verified Report",
     icon: <FileCheck2 className="h-4 w-4" />,
-    description: "Menunggu gate P1: verification",
+    description: "Buka dari Crosscheck Case: verification evidence",
   },
 ];
 
@@ -90,8 +87,8 @@ const LEGACY_ITEMS: NavItem[] = [
   { id: "study-dashboard", label: "Bay List", icon: <BookOpen className="h-4 w-4" /> },
 ];
 
-// COMING_SOON_ITEMS deliberately excluded: their tabs are disabled/not
-// case-gated, so they shouldn't be reachable from the mobile dropdown
+// COMING_SOON_ITEMS deliberately excluded: their tabs are case-gated, so
+// they shouldn't be reachable directly from the mobile dropdown
 // either (unlike the desktop sidebar, a <select> has no way to show
 // "disabled, here's why" inline).
 const ALL_ITEMS = [
@@ -224,7 +221,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 className="mb-1 flex w-full items-center justify-between px-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400 hover:text-slate-600"
                 aria-expanded={comingSoonOpen}
               >
-                <span>Segera Hadir</span>
+                <span>Case-gated Tools</span>
                 {comingSoonOpen ? (
                   <ChevronDown className="h-3.5 w-3.5" />
                 ) : (
@@ -284,8 +281,8 @@ export function AppShell({ children }: { children: ReactNode }) {
               Case-driven
             </div>
             <p className="mt-1 text-[11px] leading-4 text-slate-500">
-              Sprint 5: gate Calculation & Coordination dibuka. Setiap tool
-              (P2) hanya dibuka dari case yang sedang aktif.
+              D1/O1: Calculation, Coordination, dan Crosscheck dibuka melalui
+              case aktif agar evidence dan keputusan tetap terikat konteks.
             </p>
           </div>
         </aside>
@@ -299,7 +296,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   {openedFromCase ? openedFromCase.title : openedFromCaseId}
                 </span>{" "}
                 —{" "}
-                {tab === "calculation" || tab === "coverage"
+                {tab === "calculation" || tab === "coverage" || tab === "comparison" || tab === "vendor-import"
                   ? "hasil yang disimpan di sini otomatis ter-link ke case ini."
                   : "tool ini belum otomatis menyimpan hasil ke case tersebut."}
               </p>

@@ -8,6 +8,68 @@ arsitektur dan roadmap produk, rujuk:
 - [`README.md`](./README.md) — MVP roadmap, status implementasi per tahap, dan
   demo flow.
 
+## Update 2026-08-01 — Active Study mengikuti bay/line, tanpa fallback demo
+
+- Data Quality Queue tidak lagi merender bulk-confirm seluruh GI. Topology
+  Remediation sekarang dikelompokkan sebagai card per Setting Case/Study,
+  kemudian card per kandidat `LineRelation`; approve/reject disimpan dengan
+  key case/study + relation dan hanya payload endpoint/bay relation tersebut
+  yang dipromosikan. Membuka remediation dari Setting Case otomatis membatasi
+  queue ke scope case itu. Jika tidak ada kandidat, UI meminta source endpoint
+  + circuit dan tidak menawarkan relasi tebakan.
+- Detail Setting Case menampilkan `Topology readiness` sebelum stage chain:
+  siap bila subject/endpoint sudah berada pada confirmed master dan tidak ada
+  candidate card pending/rejected; selain itu tombol membawa engineer langsung
+  ke remediation workspace yang terisolasi untuk case tersebut.
+- Runtime engineering sekarang punya satu authority: confirmed master graph
+  (`getConfirmedMasterNetwork`). Demo `case_dks_dm_pik_mkb` tetap boleh hidup
+  sebagai fixture/historical benchmark, tetapi tidak lagi menjadi default atau
+  fallback untuk Home, Master Data, Setting Register, Working Network,
+  Calculation, Coverage, dan Verified Report.
+- `selectLine` hanya menerima `LineRelation` yang ada di confirmed master.
+  `ensureStudyForLine` mengaktifkan Study existing atau membuat Study baru dari
+  subject line X–Y dengan scope satu-hop. Bila relasi belum tersedia, UI
+  meminta konfirmasi/update melalui Graph Builder dan tidak memilih koridor
+  lain secara diam-diam.
+- `deriveStudyNetwork` memproyeksikan frozen Study scope dari master graph,
+  mempertahankan provenance/fingerprint, dan mengeluarkan blocker untuk Study
+  tanpa subject, relation yang hilang/rejected/superseded, atau impedansi yang
+  belum tersedia.
+- Store baru mulai tanpa seeded Active Study. Migrasi v25 menghapus seed Study
+  demo lama dari persisted state dan mengembalikan network context ke master.
+- Coverage legacy 1D corridor dilepas dari jalur kerja utama; diagnostics kini
+  hanya berjalan atas graph Study yang dipilih user.
+- Regression baru `test:study-network` mengunci tiga hal: master tidak boleh
+  resolve ke demo corridor, arbitrary confirmed line menghasilkan graph Study,
+  dan missing relation harus fail closed. Build produksi serta regression
+  graph-coordination, graph-builder, dan Setting Case lulus.
+
+## Update 2026-08-01 — D1/O1 takeover: confidence, HEL population, dan closed-loop crosscheck
+
+- Confidence Graph Builder dipisah menjadi indikator topology authority,
+  electrical completeness, setting-overlay coverage, evidence count,
+  reciprocal evidence, dan freshness. Dadap serta Ulujami menjadi
+  `corroborated_candidate`; keduanya tetap di luar live graph sampai engineer
+  menekan confirm. GI Muarakarang Baru tetap `identity_conflict` dan tidak
+  dapat dipromosikan sambil menunggu topology resmi/TAP baru.
+- Foundation-health backlog ditutup: Active Study membaca Zustand Studies,
+  Source Index merge inventory master, scope Study berubah hanya melalui
+  revision eksplisit, dan SLD Endpoint menjadi evidence-only menuju Graph
+  Builder (tidak lagi menjadi topology authority kedua).
+- HEL_PHT_TAP kini punya consumer UI dan typed population. Mapping yang valid
+  membentuk `SettingRecord` dan `RelaySetting`; record hanya dibuat bila
+  LineRelation, RelayIED, dan ProtectionFunction DIST konkret tersedia sehingga
+  tidak ada dangling reference.
+- Adapter RIO/XRIO tersambung ke Vendor Import dan semantic crosscheck.
+  Authority actual readback membutuhkan device identity, active setting group,
+  official vendor tool + version, waktu Read from IED, dan SHA-256 file.
+  File tanpa manifest tetap `derived_candidate`.
+- Crosscheck case sekarang menjalankan gate `document_audit` atau
+  `actual_readback_intake`, lalu `verification` sampai `closed`. Mismatch dan
+  missing actual wajib mendapat disposition sebelum Verification Run dapat
+  disimpan dan ditautkan ke case.
+- Regression: seluruh 14 `test:*` script dan `npm run build` lolos.
+
 ## Update 2026-08-01 — Fix: Konteks GI Tidak Mengikuti Kerja User (Study/Network Builder Nyangkut ke Demo Case)
 
 **Konteks**: menindaklanjuti temuan sesi sebelumnya (entri "Batch-confirm" di

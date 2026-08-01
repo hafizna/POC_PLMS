@@ -13,7 +13,7 @@ import {
   Undo2,
   XCircle,
 } from "lucide-react";
-import { NETWORK_CASES } from "../../domain/seed-network-registry";
+import { NETWORK_CASES, type NetworkLine, type NetworkNode } from "../../domain/seed-network-registry";
 import {
   LCD_DIST_REGISTRY,
   LcdDistLineCandidate,
@@ -38,7 +38,18 @@ import {
 } from "../../domain/network-graph";
 import { looseTokenMatch, normalizeStationName } from "../../domain/normalization";
 import { buildGraphForUltg, type GraphBuildGroup } from "../../domain/graph-builder";
+import {
+  HEL_PHT_TAP_REGISTRY,
+  buildHelPhtTapArtifacts,
+  mapHelPhtTapCandidatesToLines,
+} from "../../domain/hel-pht-tap-import";
 import { useProsetStore } from "../../store/useProsetStore";
+import { getConfirmedMasterNetwork } from "../../domain/study-network";
+import {
+  buildScopedTopologyCandidates,
+  findGraphSubstation,
+  topologyDecisionKey,
+} from "../../domain/topology-remediation";
 
 const statusClass: Record<LifecycleStatus, string> = {
   imported: "bg-slate-50 text-slate-600 border-slate-200",
@@ -73,6 +84,10 @@ type CandidateRow = {
 export function InboxView() {
   const [showDecided, setShowDecided] = useState(false);
   const [showExpansion, setShowExpansion] = useState(false);
+  const openedFromCaseId = useProsetStore((state) => state.openedFromCaseId);
+  const openedFromCase = useProsetStore((state) =>
+    state.settingCases.find((item) => item.id === state.openedFromCaseId)
+  );
   const activeCaseId = useProsetStore((s) => s.activeNetworkCaseId);
   const setTab = useProsetStore((s) => s.setTab);
   const decisions = useProsetStore((s) => s.candidateDecisions);
@@ -113,6 +128,33 @@ export function InboxView() {
   const effectiveLines = useMemo(
     () => (effectiveNetworkGraph ? networkLinesFromGraph(effectiveNetworkGraph) : activeCase.lines),
     [activeCase.lines, effectiveNetworkGraph]
+  );
+  const helMappingOverrides = useMemo(
+    () =>
+      Object.fromEntries(
+        HEL_PHT_TAP_REGISTRY.records.flatMap((record) => {
+          const lineId = decisions[`candidate_${record.id}`]?.overrideLineId;
+          return lineId ? [[record.id, lineId]] : [];
+        })
+      ),
+    [decisions]
+  );
+  const helCandidates = useMemo(
+    () =>
+      mapHelPhtTapCandidatesToLines(
+        HEL_PHT_TAP_REGISTRY.records,
+        effectiveNodes,
+        effectiveLines,
+        helMappingOverrides
+      ),
+    [effectiveLines, effectiveNodes, helMappingOverrides]
+  );
+  const helArtifacts = useMemo(
+    () =>
+      effectiveNetworkGraph
+        ? buildHelPhtTapArtifacts(effectiveNetworkGraph, helMappingOverrides)
+        : { settingRecords: [], relaySettings: [] },
+    [effectiveNetworkGraph, helMappingOverrides]
   );
 
   const lcdCandidates = useMemo(
@@ -422,6 +464,21 @@ export function InboxView() {
     return { busbarsToAdd, terminalsToAdd };
   };
 
+  if (openedFromCaseId && openedFromCase) {
+    return (
+      <div className="space-y-4">
+        <section className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3">
+          <div className="text-[10px] font-semibold uppercase tracking-wider text-blue-700">Case-scoped workspace</div>
+          <h2 className="mt-1 text-sm font-semibold text-blue-950">{openedFromCase.title}</h2>
+          <p className="mt-1 text-xs text-blue-800">
+            Hanya kandidat topology yang menyentuh subject bay/line atau GI pada scope case ini yang ditampilkan. Mapping queue global tidak ikut dimuat.
+          </p>
+        </section>
+        <CaseScopedGraphBuilderSection />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       {/* Status ringkas / dashboard tile */}
@@ -481,7 +538,17 @@ export function InboxView() {
 
       {/* Graph Builder: per-GI topology confirmation, upstream of the
           per-record sections below. */}
-      <GraphBuilderSection />
+      <CaseScopedGraphBuilderSection />
+      <HelPhtTapMappingPanel
+        candidates={helCandidates}
+        lines={effectiveLines}
+        nodes={effectiveNodes}
+        settingRecordCount={helArtifacts.settingRecords.length}
+        relaySettingCount={helArtifacts.relaySettings.length}
+        onMap={(candidateId, lineId) =>
+          decideCandidate(candidateId, "reviewed", "HEL_PHT_TAP engineer mapping", lineId)
+        }
+      />
 
       {/* Section 1: Functional Drift */}
       <PrioritySection
@@ -1034,6 +1101,301 @@ function EmptyState({ message }: { message: string }) {
   );
 }
 
+function HelPhtTapMappingPanel({
+  candidates,
+  lines,
+  nodes,
+  settingRecordCount,
+  relaySettingCount,
+  onMap,
+}: {
+  candidates: ReturnType<typeof mapHelPhtTapCandidatesToLines>;
+  lines: NetworkLine[];
+  nodes: NetworkNode[];
+  settingRecordCount: number;
+  relaySettingCount: number;
+  onMap: (candidateId: string, lineId: string) => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const matched = candidates.filter((item) => item.matchStatus === "matched");
+  const ambiguous = candidates.filter((item) => item.matchStatus === "ambiguous");
+  const unresolved = candidates.filter(
+    (item) => item.matchStatus !== "matched" && item.matchStatus !== "ambiguous"
+  );
+  const lineLabel = (lineId: string) => {
+    const line = lines.find((item) => item.id === lineId);
+    if (!line) return lineId;
+    const from = nodes.find((item) => item.id === line.fromNodeId);
+    const to = nodes.find((item) => item.id === line.toNodeId);
+    return `${from?.shortCode ?? "?"}-${to?.shortCode ?? "?"} #${line.circuit}`;
+  };
+  return (
+    <section className="rounded-lg border border-violet-200 bg-white overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setExpanded((value) => !value)}
+        className="flex w-full items-center justify-between gap-3 bg-violet-50 px-4 py-3 text-left"
+      >
+        <div>
+          <div className="text-xs font-semibold uppercase tracking-wider text-violet-800">HEL_PHT_TAP mapping · D1</div>
+          <div className="mt-0.5 text-[11px] text-violet-700">
+            {matched.length}/{candidates.length} mapped ke LineRelation · {settingRecordCount} SettingRecord · {relaySettingCount} RelaySetting · {ambiguous.length} perlu pilih sirkit · {unresolved.length} menunggu topology
+          </div>
+        </div>
+        {expanded ? <ChevronDown className="h-4 w-4 text-violet-600" /> : <ChevronRight className="h-4 w-4 text-violet-600" />}
+      </button>
+      {expanded && (
+        <div className="divide-y divide-slate-100">
+          <div className="px-4 py-2 text-[11px] text-slate-600">
+            Raw payload 13 model tetap dipertahankan. Mapping yang dikonfirmasi menghasilkan SettingRecord dan RelaySetting tanpa meratakan field vendor secara paksa.
+          </div>
+          {ambiguous.slice(0, 40).map((candidate) => (
+            <div key={candidate.id} className="grid gap-2 px-4 py-2 text-xs md:grid-cols-[1fr_180px_1fr] md:items-center">
+              <div>
+                <div className="font-medium text-slate-800">{candidate.substation} → {candidate.remoteBay}</div>
+                <div className="text-[10px] text-slate-500">{candidate.model} · row {candidate.sourceRow}</div>
+              </div>
+              <span className="w-fit rounded border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[10px] text-amber-700">ambiguous circuit</span>
+              <select
+                defaultValue=""
+                onChange={(event) => event.target.value && onMap(candidate.id, event.target.value)}
+                className="rounded border border-slate-300 bg-white px-2 py-1 text-xs"
+              >
+                <option value="" disabled>Pilih LineRelation…</option>
+                {candidate.candidateLineIds.map((lineId) => (
+                  <option key={lineId} value={lineId}>{lineLabel(lineId)}</option>
+                ))}
+              </select>
+            </div>
+          ))}
+          {ambiguous.length > 40 && (
+            <div className="px-4 py-2 text-[10px] text-slate-500">Menampilkan 40 dari {ambiguous.length} ambiguity. Gunakan filter/bay-specific workflow untuk sisanya.</div>
+          )}
+        </div>
+      )}
+    </section>
+  );
+}
+
+type TopologyReviewContext = {
+  id: string;
+  kind: "case" | "study";
+  title: string;
+  subjectLabel?: string;
+  subjectLineId?: string;
+  subjectBayId?: string;
+  substationIds: string[];
+};
+
+function CaseScopedGraphBuilderSection() {
+  const openedFromCaseId = useProsetStore((state) => state.openedFromCaseId);
+  const settingCases = useProsetStore((state) => state.settingCases);
+  const studies = useProsetStore((state) => state.studies);
+  const activeStudyId = useProsetStore((state) => state.activeStudyId);
+  const decisions = useProsetStore((state) => state.graphBuildDecisions);
+  const masterOverride = useProsetStore(
+    (state) => state.networkGraphOverrides[INVENTORY_MASTER_CASE_ID]
+  );
+  const confirmCandidate = useProsetStore((state) => state.confirmGraphBuildGroup);
+  const rejectCandidate = useProsetStore((state) => state.rejectGraphBuildGroup);
+  const clearDecision = useProsetStore((state) => state.clearGraphBuildDecision);
+  const [expandedContextId, setExpandedContextId] = useState<string | null>(openedFromCaseId);
+
+  const result = useMemo(() => buildGraphForUltg(), []);
+  const master = useMemo(() => getConfirmedMasterNetwork(masterOverride), [masterOverride]);
+  const contexts = useMemo<TopologyReviewContext[]>(() => {
+    const openedCase = settingCases.find((item) => item.id === openedFromCaseId);
+    if (openedCase) {
+      return [{
+        id: openedCase.id,
+        kind: "case",
+        title: openedCase.title,
+        subjectLabel: openedCase.protectedScope.subjectLabel,
+        subjectLineId: openedCase.protectedScope.subjectLineId,
+        subjectBayId: openedCase.protectedScope.subjectBayId,
+        substationIds: openedCase.protectedScope.substationIds,
+      }];
+    }
+
+    const openCaseContexts: TopologyReviewContext[] = settingCases
+      .filter((item) => !["closed", "cancelled", "rejected"].includes(item.stage))
+      .map((item) => ({
+        id: item.id,
+        kind: "case",
+        title: item.title,
+        subjectLabel: item.protectedScope.subjectLabel,
+        subjectLineId: item.protectedScope.subjectLineId,
+        subjectBayId: item.protectedScope.subjectBayId,
+        substationIds: item.protectedScope.substationIds,
+      }));
+    const activeStudy = studies.find((item) => item.id === activeStudyId);
+    if (
+      activeStudy &&
+      !openCaseContexts.some((item) => item.subjectLineId === activeStudy.subjectLineId)
+    ) {
+      openCaseContexts.unshift({
+        id: activeStudy.id,
+        kind: "study",
+        title: activeStudy.name,
+        subjectLabel: activeStudy.subjectLabel,
+        subjectLineId: activeStudy.subjectLineId,
+        subjectBayId: activeStudy.subjectBayId,
+        substationIds: activeStudy.substationIds,
+      });
+    }
+    return openCaseContexts;
+  }, [activeStudyId, openedFromCaseId, settingCases, studies]);
+
+  const contextCandidates = useMemo(
+    () => new Map(contexts.map((context) => [context.id, buildScopedTopologyCandidates(result.groups, context)])),
+    [contexts, result.groups]
+  );
+  const pendingCount = contexts.reduce(
+    (sum, context) => sum + (contextCandidates.get(context.id) ?? []).filter((candidate) => {
+      const decisionKey = topologyDecisionKey(context.id, candidate.relation.id);
+      return !master.lineRelations.some((relation) => relation.id === candidate.relation.id) && !decisions[decisionKey];
+    }).length,
+    0
+  );
+
+  return (
+    <PrioritySection
+      title="Topology Remediation — approval per Case"
+      subtitle="Satu group card mewakili satu Case/Study. Di dalamnya, engineer approve atau reject LineRelation yang dibutuhkan scope itu saja—bukan seluruh GI dan bukan bulk 200 bay."
+      count={pendingCount}
+      tone={pendingCount > 0 ? "amber" : "blue"}
+      icon={<Network className="h-4 w-4" />}
+    >
+      {contexts.length === 0 ? (
+        <EmptyState message="Belum ada Case atau Study aktif yang membutuhkan topology. Buka Topology Remediation dari case yang sedang diuji." />
+      ) : (
+        <div className="divide-y divide-slate-100">
+          {contexts.map((context) => {
+            const candidates = contextCandidates.get(context.id) ?? [];
+            const expanded = contexts.length === 1 || expandedContextId === context.id;
+            const pending = candidates.filter((candidate) => {
+              const decisionKey = topologyDecisionKey(context.id, candidate.relation.id);
+              return !master.lineRelations.some((relation) => relation.id === candidate.relation.id) && !decisions[decisionKey];
+            }).length;
+            return (
+              <div key={context.id} className="px-4 py-3">
+                <button
+                  type="button"
+                  onClick={() => setExpandedContextId((current) => current === context.id ? null : context.id)}
+                  className="flex w-full items-start justify-between gap-3 text-left"
+                >
+                  <div className="flex min-w-0 items-start gap-2">
+                    {expanded ? <ChevronDown className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" /> : <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />}
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-sm font-semibold text-slate-900">{context.title}</span>
+                        <span className="rounded border border-blue-200 bg-blue-50 px-1.5 py-0.5 text-[10px] uppercase text-blue-700">{context.kind}</span>
+                      </div>
+                      <div className="mt-0.5 text-xs text-slate-500">
+                        {context.subjectLabel ?? context.subjectLineId ?? `${context.substationIds.length} GI dalam scope`}
+                      </div>
+                    </div>
+                  </div>
+                  <span className={`shrink-0 rounded border px-2 py-0.5 text-[10px] ${pending > 0 ? "border-amber-200 bg-amber-50 text-amber-700" : "border-emerald-200 bg-emerald-50 text-emerald-700"}`}>
+                    {pending > 0 ? `${pending} perlu keputusan` : "scope ready"}
+                  </span>
+                </button>
+
+                {expanded && (
+                  <div className="ml-6 mt-3 grid grid-cols-1 gap-3 xl:grid-cols-2">
+                    {candidates.length === 0 ? (
+                      <div className="xl:col-span-2 rounded-md border border-red-200 bg-red-50 px-3 py-3 text-xs text-red-800">
+                        Tidak ada kandidat LineRelation untuk scope ini. Tambahkan source yang menyebut endpoint dan circuit terkait; PLMS tidak akan membuat relasi tebakan.
+                      </div>
+                    ) : candidates.map((candidate) => {
+                      const relation = candidate.relation;
+                      const decisionKey = topologyDecisionKey(context.id, relation.id);
+                      const decision = decisions[decisionKey];
+                      const inMaster = master.lineRelations.some((item) => item.id === relation.id);
+                      const from = findGraphSubstation(result.groups, relation.fromSubstationId);
+                      const to = findGraphSubstation(result.groups, relation.toSubstationId);
+                      const blocked = candidate.group.indicators.topology === "identity_conflict";
+                      return (
+                        <article key={relation.id} className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <div className="text-sm font-semibold text-slate-900">
+                                {from?.shortCode ?? relation.fromSubstationId} — {to?.shortCode ?? relation.toSubstationId} #{relation.circuit}
+                              </div>
+                              <div className="mt-0.5 font-mono text-[10px] text-slate-500">{relation.id}</div>
+                            </div>
+                            <TopologyCardStatus inMaster={inMaster} decision={decision?.status} />
+                          </div>
+                          <div className="mt-3 flex flex-wrap gap-1.5 text-[10px]">
+                            <span className="rounded border border-slate-200 bg-white px-1.5 py-0.5 text-slate-600">{candidate.group.indicators.topology.replace(/_/g, " ")}</span>
+                            <span className="rounded border border-slate-200 bg-white px-1.5 py-0.5 text-slate-600">Electrical {candidate.group.indicators.electricalCoveragePercent}%</span>
+                            <span className="rounded border border-blue-200 bg-blue-50 px-1.5 py-0.5 text-blue-700">Setting {candidate.group.indicators.settingOverlayCoveragePercent}%</span>
+                            <span className="rounded border border-violet-200 bg-violet-50 px-1.5 py-0.5 text-violet-700">{candidate.group.indicators.evidenceSourceCount} evidence</span>
+                          </div>
+                          <div className="mt-2 text-[11px] text-slate-500">
+                            X={relation.lineXOhm?.toFixed(3) ?? "?"} Ω{relation.physicalLengthKm != null ? ` · ${relation.physicalLengthKm} km` : ""}
+                          </div>
+                          {candidate.group.needsManualTopology && (
+                            <div className={`mt-2 rounded border px-2 py-1.5 text-[11px] ${blocked ? "border-red-200 bg-red-50 text-red-800" : "border-amber-200 bg-amber-50 text-amber-800"}`}>
+                              {candidate.group.indicators.topologyReason}
+                            </div>
+                          )}
+                          <div className="mt-3 flex justify-end gap-2">
+                            {decision?.status === "rejected" ? (
+                              <button type="button" onClick={() => clearDecision(decisionKey)} className="inline-flex items-center gap-1 rounded border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-600 hover:bg-slate-100">
+                                <Undo2 className="h-3 w-3" /> Reset decision
+                              </button>
+                            ) : !decision && !inMaster && (
+                              <>
+                                <button type="button" onClick={() => rejectCandidate(decisionKey)} className="inline-flex items-center gap-1 rounded border border-red-200 bg-white px-2 py-1 text-[11px] text-red-700 hover:bg-red-50">
+                                  <XCircle className="h-3 w-3" /> Reject
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={blocked}
+                                  onClick={() => confirmCandidate(INVENTORY_MASTER_CASE_ID, {
+                                    substation: candidate.group.station,
+                                    supportingSubstations: candidate.supportingSubstations,
+                                    bays: candidate.bays,
+                                    relations: [relation],
+                                    decisionKey,
+                                  })}
+                                  className="inline-flex items-center gap-1 rounded border border-emerald-300 bg-emerald-600 px-2 py-1 text-[11px] text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:border-slate-300 disabled:bg-slate-300"
+                                >
+                                  <CheckCircle2 className="h-3 w-3" /> Approve relation
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </article>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </PrioritySection>
+  );
+}
+
+function TopologyCardStatus({
+  inMaster,
+  decision,
+}: {
+  inMaster: boolean;
+  decision?: "confirmed" | "rejected";
+}) {
+  if (decision === "confirmed") return <span className="rounded border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] text-emerald-700">User approved</span>;
+  if (decision === "rejected") return <span className="rounded border border-red-200 bg-red-50 px-2 py-0.5 text-[10px] text-red-700">Rejected</span>;
+  if (inMaster) return <span className="rounded border border-blue-200 bg-blue-50 px-2 py-0.5 text-[10px] text-blue-700">Source anchored</span>;
+  return <span className="rounded border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] text-amber-700">Needs approval</span>;
+}
+
+// Legacy per-GI graph builder retained temporarily as a code reference while
+// persisted station-level decisions migrate; it is no longer rendered.
 // Per-GI graph builder confirmation. Unlike the per-record sections below
 // (Functional Drift, Pending Mapping, etc. — one Inbox item per bay/row),
 // this reviews one substation at a time: all of its anchored bays and line
@@ -1043,7 +1405,6 @@ function GraphBuilderSection() {
   const activeCaseId = useProsetStore((s) => s.activeNetworkCaseId);
   const decisions = useProsetStore((s) => s.graphBuildDecisions);
   const confirmGroup = useProsetStore((s) => s.confirmGraphBuildGroup);
-  const confirmGroupsBatch = useProsetStore((s) => s.confirmGraphBuildGroupsBatch);
   const rejectGroup = useProsetStore((s) => s.rejectGraphBuildGroup);
   const clearDecision = useProsetStore((s) => s.clearGraphBuildDecision);
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -1063,15 +1424,6 @@ function GraphBuilderSection() {
     (sum, g) => sum + g.overlays.filter((o) => o.matchStatus === "unmatched").length,
     0
   );
-  // High-confidence groups (digsilentLineDb anchor matched — needsManualTopology
-  // false) have nothing left for a human to disambiguate; the per-GI review is
-  // still real for needsManualTopology groups (alias/name conflicts, missing
-  // anchor), but forcing the same 1-by-1 expand+confirm ritual on every
-  // already-unambiguous GI reads as pointless friction, not diligence.
-  const highConfidencePending = pendingGroups.filter(
-    (g) => !g.needsManualTopology && (g.bays.length > 0 || g.lineRelations.length > 0)
-  );
-
   return (
     <PrioritySection
       title="Graph Builder — Konfirmasi Topology per GI"
@@ -1091,28 +1443,6 @@ function GraphBuilderSection() {
           tampilkan yang sudah diputuskan
         </label>
       </div>
-      {highConfidencePending.length > 0 && (
-        <div className="px-4 py-2.5 flex items-center justify-between gap-3 border-b border-slate-100 bg-emerald-50/60 flex-wrap">
-          <p className="text-[11px] text-emerald-800 max-w-2xl">
-            {highConfidencePending.length} GI sudah anchor eksplisit ke digsilentLineDb (tidak butuh disambiguasi manual) — bisa di-confirm sekaligus.
-          </p>
-          <button
-            className="text-xs px-2.5 py-1 rounded border border-emerald-300 bg-emerald-600 text-white hover:bg-emerald-700 flex items-center gap-1.5 shrink-0"
-            onClick={() =>
-              confirmGroupsBatch(
-                activeCaseId,
-                highConfidencePending.map((group) => ({
-                  substation: group.station,
-                  bays: group.bays,
-                  relations: group.lineRelations,
-                }))
-              )
-            }
-          >
-            <CheckCircle2 className="w-3.5 h-3.5" /> Confirm {highConfidencePending.length} GI high-confidence sekaligus
-          </button>
-        </div>
-      )}
       {pendingGroups.length === 0 && decidedGroups.length === 0 ? (
         <EmptyState message="Tidak ada GI dalam scope SLD untuk case ini." />
       ) : (
@@ -1135,6 +1465,7 @@ function GraphBuilderSection() {
               onConfirm={() =>
                 confirmGroup(activeCaseId, {
                   substation: group.station,
+                  supportingSubstations: group.supportingSubstations,
                   bays: group.bays,
                   relations: group.lineRelations,
                 })
@@ -1193,6 +1524,7 @@ function GraphBuildGroupRow({
   onReject: () => void;
 }) {
   const unmatchedOverlays = group.overlays.filter((o) => o.matchStatus === "unmatched");
+  const indicators = group.indicators;
   return (
     <div className="px-4 py-3">
       <div className="flex items-start justify-between gap-3 flex-wrap">
@@ -1210,7 +1542,11 @@ function GraphBuildGroupRow({
               </span>
               {group.needsManualTopology ? (
                 <span className="text-[10px] px-1.5 py-0.5 rounded border bg-amber-50 text-amber-700 border-amber-200">
-                  Perlu topology manual
+                  {indicators.topology === "identity_conflict"
+                    ? "Identity conflict"
+                    : indicators.topology === "corroborated_candidate"
+                      ? "Corroborated candidate"
+                      : "Perlu topology manual"}
                 </span>
               ) : (
                 <span className="text-[10px] px-1.5 py-0.5 rounded border bg-emerald-50 text-emerald-700 border-emerald-200">
@@ -1222,6 +1558,13 @@ function GraphBuildGroupRow({
               {group.bays.length} bay, {group.lineRelations.length} relasi
               {unmatchedOverlays.length > 0 && `, ${unmatchedOverlays.length} setting-doc row belum ter-match`}
             </p>
+            <div className="mt-1 flex flex-wrap gap-1.5 text-[10px]">
+              <span className="rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-slate-600">Electrical {indicators.electricalCoveragePercent}%</span>
+              <span className="rounded border border-blue-200 bg-blue-50 px-1.5 py-0.5 text-blue-700">Setting overlay {indicators.settingOverlayCoveragePercent}%</span>
+              <span className="rounded border border-violet-200 bg-violet-50 px-1.5 py-0.5 text-violet-700">
+                {indicators.evidenceSourceCount} evidence source{indicators.reciprocalEvidence ? " · reciprocal" : ""}
+              </span>
+            </div>
           </div>
         </button>
         <div className="flex flex-col items-end gap-1 shrink-0">
@@ -1235,7 +1578,11 @@ function GraphBuildGroupRow({
             <button
               className="text-xs px-2.5 py-1 rounded border border-emerald-300 bg-emerald-600 text-white hover:bg-emerald-700 flex items-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:border-slate-300"
               onClick={onConfirm}
-              disabled={!reviewed || (group.bays.length === 0 && group.lineRelations.length === 0)}
+              disabled={
+                !reviewed ||
+                (group.bays.length === 0 && group.lineRelations.length === 0) ||
+                indicators.topology === "identity_conflict"
+              }
               title={!reviewed ? "Buka detail GI ini dulu sebelum confirm" : undefined}
             >
               <CheckCircle2 className="w-3.5 h-3.5" /> Confirm GI
@@ -1286,7 +1633,9 @@ function GraphBuildGroupRow({
           )}
           {group.needsManualTopology && (
             <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1.5">
-              GI ini tidak punya entri eksplisit di digsilentLineDb (mungkin GI baru pasca-2021, atau butuh alias/disambiguasi manual). Confirm akan menyimpan substation ini tanpa relasi topology — lengkapi manual via Network Builder.
+              {indicators.topologyReason}
+              {indicators.topology === "corroborated_candidate" &&
+                " Confirm menyimpan relasi sebagai reviewed candidate; nilai electrical tetap kosong sampai sumber resmi tersedia."}
             </p>
           )}
         </div>

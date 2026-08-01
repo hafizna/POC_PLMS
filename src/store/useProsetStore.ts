@@ -33,7 +33,10 @@ import type {
 } from "../domain/unified";
 import type { CtSpec, VtSpec } from "../domain/instrument-transformers";
 import type { GraphDiagnostic } from "../lib/graph-coordination";
-import type { VerificationReferenceDraft } from "../domain/setting-verification";
+import type {
+  VerificationReferenceDraft,
+  VerificationRunRecord,
+} from "../domain/setting-verification";
 import type { VendorImportHandoffDraft } from "../domain/vendor-import";
 import {
   LEGACY_STUDY_SCENARIO_ID,
@@ -132,6 +135,14 @@ export type Study = {
   createdAt: string;
   updatedAt: string;
   substationIds: string[];
+  scopeRevision?: number;
+  scopeHistory?: Array<{
+    revision: number;
+    substationIds: string[];
+    changedAt: string;
+    changedBy: Persona;
+    reason: string;
+  }>;
   subjectBayId?: string;
   subjectLineId?: string;
   subjectLabel?: string;
@@ -160,7 +171,9 @@ export type CreateStudyOptions = {
 // their subjectBayId/subjectLineId from NETWORK_GRAPH_DKS_PIK, which is now
 // built from the graph-builder anchor (digsilentLineDb-confirmed shortCodes
 // DKSBI/DNMGT/PINKA/MB), not the retired generateCorridorNmm generator.
-const DEFAULT_STUDIES: Study[] = [
+// Kept only so very old persisted stores can be interpreted before the v25
+// migration removes these historical demo Studies. Never use as runtime seed.
+const LEGACY_MIGRATION_STUDIES: Study[] = [
   {
     id: "study_dksbi_dnmgt",
     name: "Penghantar DKSBI - DNMGT",
@@ -203,6 +216,7 @@ export type AuditEvent = {
     | "study_created"
     | "study_deleted"
     | "study_selected"
+    | "study_scope_revised"
     | "study_scenario_selected"
     | "engineering_change_set_created"
     | "line_selected"
@@ -222,6 +236,7 @@ export type AuditEvent = {
     | "coordination_check_remove"
     | "reference_verification_staged"
     | "vendor_import_staged"
+    | "verification_run_saved"
     | "setting_case_created"
     | "setting_case_baseline_frozen"
     | "setting_case_proposed_revision_saved"
@@ -384,6 +399,7 @@ type State = {
   comparisonBayId: string;
   activeNetworkCaseId: string;
   activeNetworkLineId: string | null;
+  networkSelectionIssue: { lineId: string; message: string } | null;
   // Set when a POC tool tab is opened from inside a Setting Case (via
   // SettingCaseDetail's "Buka <tool>" action), so the tool can show a
   // breadcrumb back to the originating case. Not persisted — this is a
@@ -393,10 +409,9 @@ type State = {
   // Mutations from user edits (persisted)
   relayOverrides: Record<string, RelayOverride>;
   candidateDecisions: Record<string, CandidateDecision>;
-  // Per-GI confirmation decisions from the graph builder (src/domain/graph-builder.ts).
-  // Keyed by the GraphBuildGroup's station id. Unlike candidateDecisions
-  // (one decision per imported record/row), this is one decision per
-  // substation covering all of its bays/relations at once.
+  // Graph-builder approval decisions. New workflow keys these by
+  // case/study + relation so an engineer approves only the requested scope;
+  // historical station-id keys remain readable for persisted data.
   graphBuildDecisions: Record<string, { status: "confirmed" | "rejected"; decidedAt: string }>;
   networkGraphOverrides: Record<string, NetworkGraphOverride>;
   networkUndoStack: Record<string, NetworkUndoEntry[]>;
@@ -406,6 +421,7 @@ type State = {
   pdfTapPromotions: PdfTapPromotion[];
   calculationSnapshots: CalculationSnapshot[];
   coordinationChecks: CoordinationCheckRecord[];
+  verificationRuns: VerificationRunRecord[];
   verificationReferenceDraft: VerificationReferenceDraft | null;
   vendorImportHandoffDraft: VendorImportHandoffDraft | null;
 
@@ -417,6 +433,9 @@ type State = {
   stageVendorImportForVerification: (
     draft: Omit<VendorImportHandoffDraft, "importedAt">
   ) => void;
+  saveVerificationRun: (
+    record: Omit<VerificationRunRecord, "id" | "createdAt" | "createdBy">
+  ) => string;
   setPersona: (p: Persona) => void;
   setActiveCorridor: (id: string) => void;
   selectRelay: (id: string | null) => void;
@@ -430,6 +449,7 @@ type State = {
   // branch below is genuinely async (dynamic import), so firing-and-forgetting
   // it races any synchronous state read/tab-switch immediately after the call.
   selectLine: (lineId: string) => Promise<void>;
+  ensureStudyForLine: (lineId: string) => Promise<string | null>;
   openToolFromCase: (caseId: string, tab: Tab) => void;
   clearOpenedFromCase: () => void;
   // Setting Case actions
@@ -487,7 +507,8 @@ type State = {
     options?: CreateStudyOptions
   ) => Promise<void>;
   deleteStudy: (id: string) => void;
-  setActiveStudy: (id: string) => void;
+  setActiveStudy: (id: string | null) => void;
+  reviseStudyScope: (id: string, substationIds: string[], reason: string) => void;
   setStudyScenario: (studyId: string, scenarioId: string | null) => void;
   updateZone: (relayId: string, zoneId: "Z1" | "Z2" | "Z3", patch: ZoneOverride) => void;
   resetRelay: (relayId: string) => void;
@@ -500,12 +521,11 @@ type State = {
   ) => void;
   clearCandidateDecision: (candidateId: string) => void;
   getCandidateStatus: (candidateId: string, defaultStatus: LifecycleStatus) => LifecycleStatus;
-  // Commits one graph-builder GraphBuildGroup (one GI's substation + all its
-  // bays + line relations) to the network graph override in a single action, so
-  // review happens per-GI instead of per-record.
+  // Commits one case-scoped graph-builder card. The payload may contain a
+  // single requested relation rather than every bay/relation owned by a GI.
   confirmGraphBuildGroup: (
     caseId: string,
-    payload: { substation: UnifiedSubstation; bays: Bay[]; relations: LineRelation[] }
+    payload: { substation: UnifiedSubstation; supportingSubstations?: UnifiedSubstation[]; bays: Bay[]; relations: LineRelation[]; decisionKey?: string }
   ) => void;
   // Same commit as confirmGraphBuildGroup, but for every group in one state
   // update — only ever called with high-confidence groups (digsilentLineDb
@@ -514,7 +534,7 @@ type State = {
   // still go through confirmGraphBuildGroup one at a time.
   confirmGraphBuildGroupsBatch: (
     caseId: string,
-    payloads: Array<{ substation: UnifiedSubstation; bays: Bay[]; relations: LineRelation[] }>
+    payloads: Array<{ substation: UnifiedSubstation; supportingSubstations?: UnifiedSubstation[]; bays: Bay[]; relations: LineRelation[] }>
   ) => void;
   rejectGraphBuildGroup: (stationId: string) => void;
   clearGraphBuildDecision: (stationId: string) => void;
@@ -587,8 +607,8 @@ export const useProsetStore = create<State>()(
       corridors: CORRIDORS,
       comparisonBays: COMPARISON_BAYS,
 
-      studies: DEFAULT_STUDIES,
-      activeStudyId: DEFAULT_STUDIES[0]?.id ?? null,
+      studies: [],
+      activeStudyId: null,
       sourceSnapshots: cloneDefaultSourceSnapshots(),
       studyScenarios: cloneDefaultStudyScenarios(),
       engineeringChangeSets: [],
@@ -603,8 +623,9 @@ export const useProsetStore = create<State>()(
       selectedRelayId: TOPOLOGY.relays.length > 0 ? TOPOLOGY.relays[0].id : "unknown",
       rxModalOpen: false,
       comparisonBayId: COMPARISON_BAYS.length > 0 ? COMPARISON_BAYS[0].bay.id : "unknown",
-      activeNetworkCaseId: "case_dks_dm_pik_mkb",
-      activeNetworkLineId: "unknown", // Will be set by Network Model view
+      activeNetworkCaseId: INVENTORY_MASTER_CASE_ID,
+      activeNetworkLineId: null,
+      networkSelectionIssue: null,
       openedFromCaseId: null,
 
       relayOverrides: {},
@@ -618,6 +639,7 @@ export const useProsetStore = create<State>()(
       pdfTapPromotions: [],
       calculationSnapshots: [],
       coordinationChecks: [],
+      verificationRuns: [],
       verificationReferenceDraft: null,
       vendorImportHandoffDraft: null,
 
@@ -641,6 +663,7 @@ export const useProsetStore = create<State>()(
       stageVendorImportForVerification: (draft) => {
         const staged: VendorImportHandoffDraft = {
           ...draft,
+          caseId: get().openedFromCaseId ?? draft.caseId,
           importedAt: new Date().toISOString(),
         };
         set({
@@ -666,87 +689,92 @@ export const useProsetStore = create<State>()(
         set({ openedFromCaseId: caseId, currentTab: tab }),
       clearOpenedFromCase: () => set({ openedFromCaseId: null }),
 
-      // Single action that propagates a line selection to all related context:
-      // active line + case + comparison bay + corridor + selected relay.
-      // Use this from any "open this line" interaction so other tabs are
-      // already in-context when the user navigates to them.
+      // A line is resolved only against the confirmed master graph. Legacy
+      // NETWORK_CASES must never redirect a user-selected bay to the DKS-MKB
+      // demo corridor. Study context follows the subject line when one exists.
       selectLine: async (lineId) => {
         const state = get();
-        const inventoryCase =
-          NETWORK_CASES.find((c) => c.id === INVENTORY_MASTER_CASE_ID) ?? NETWORK_CASES[0];
-        const masterNetworkGraph = getEffectiveNetworkGraph(
-          INVENTORY_MASTER_CASE_ID,
-          state.networkGraphOverrides[INVENTORY_MASTER_CASE_ID],
-          buildUnifiedNetwork(inventoryCase)
+        const { getConfirmedMasterNetwork } = await import("../domain/study-network");
+        const master = getConfirmedMasterNetwork(
+          state.networkGraphOverrides[INVENTORY_MASTER_CASE_ID]
         );
-        const owningCase = NETWORK_CASES.find((c) => {
-          if (c.lines.some((l) => l.id === lineId)) return true;
-          const effective = mergeMasterRelationsIntoCase(
-            getEffectiveNetworkGraph(c.id, state.networkGraphOverrides[c.id], buildUnifiedNetwork(c)),
-            masterNetworkGraph
-          );
-          return Boolean(effective && networkLinesFromGraph(effective).some((l) => l.id === lineId));
-        });
-        if (!owningCase) {
-          // Not in any hand-picked NETWORK_CASES subset (e.g. the 4-substation
-          // demo seed) — fall back to the LIVE full anchor+overlay network
-          // (buildGraphForUltg via getFullAnchoredNetwork) before giving up.
-          // This is what makes a real bay outside every demo subset (e.g.
-          // Angke-Ancol) selectable at all from any of the 8+ call sites that
-          // route through this single action. Dynamic import (see top of
-          // file, bundle-size reason) — this makes the fallback branch async;
-          // selectLine itself is now `async` so callers that need the
-          // resolved state right after (createStudy) can await it, while
-          // existing fire-and-forget callers are unaffected either way.
-          const { getFullAnchoredNetwork } = await import("../domain/graph-builder");
-          const fullNetwork = getFullAnchoredNetwork();
-          const fullLine = networkLinesFromGraph(fullNetwork).find((l) => l.id === lineId);
-          if (!fullLine) return;
-          const compareBay = findComparisonBayIdForLine(lineId);
-          const relayId = `rel_${fullLine.fromNodeId}_fwd_${fullLine.toNodeId}`;
+        const relation = master.lineRelations.find((item) => item.id === lineId);
+        const line = networkLinesFromGraph(master).find((item) => item.id === lineId);
+        if (!relation || !line) {
           set({
-            activeNetworkLineId: lineId,
-            activeNetworkCaseId: INVENTORY_MASTER_CASE_ID,
-            selectedRelayId: relayId,
-            ...(compareBay ? { comparisonBayId: compareBay } : {}),
-          });
-          appendAuditEvent(get, set, {
-            action: "line_selected",
-            scope: INVENTORY_MASTER_CASE_ID,
-            targetId: lineId,
-            summary: `Selected line ${fullLine.circuit}`,
-            detail: `${fullLine.fromNodeId} -> ${fullLine.toNodeId}`,
+            networkSelectionIssue: {
+              lineId,
+              message:
+                "Line belum tersedia pada confirmed master graph. Konfirmasi topology atau lengkapi source di Graph Builder.",
+            },
           });
           return;
         }
-        const effective = mergeMasterRelationsIntoCase(
-          getEffectiveNetworkGraph(owningCase.id, state.networkGraphOverrides[owningCase.id], buildUnifiedNetwork(owningCase)),
-          masterNetworkGraph
-        );
-        const line =
-          owningCase.lines.find((l) => l.id === lineId) ??
-          (effective ? networkLinesFromGraph(effective).find((l) => l.id === lineId) : undefined);
-        if (!line) return;
         const compareBay = findComparisonBayIdForLine(lineId);
-        const corridorId =
-          owningCase.id === "case_dks_dm_pik_mkb"
-            ? "corr_dks_dm_pik_mkb"
-            : get().activeCorridorId;
-        const relayId = `rel_${line.fromNodeId}_fwd_${line.toNodeId}`;
+        const currentStudy = state.studies.find((study) => study.id === state.activeStudyId);
+        const matchingStudy =
+          currentStudy?.subjectLineId === lineId
+            ? currentStudy
+            : state.studies.find((study) => study.subjectLineId === lineId);
+        const relayId = master.relayIeds.find(
+          (ied) => ied.bayId === relation.fromBayId || ied.bayId === relation.toBayId
+        )?.id ?? null;
         set({
           activeNetworkLineId: lineId,
-          activeNetworkCaseId: owningCase.id,
-          activeCorridorId: corridorId,
+          activeNetworkCaseId: INVENTORY_MASTER_CASE_ID,
+          activeStudyId: matchingStudy?.id ?? null,
           selectedRelayId: relayId,
+          networkSelectionIssue: null,
           ...(compareBay ? { comparisonBayId: compareBay } : {}),
         });
         appendAuditEvent(get, set, {
           action: "line_selected",
-          scope: owningCase.id,
+          scope: matchingStudy?.id ?? INVENTORY_MASTER_CASE_ID,
           targetId: lineId,
           summary: `Selected line ${line.circuit}`,
           detail: `${line.fromNodeId} -> ${line.toNodeId}`,
         });
+      },
+
+      ensureStudyForLine: async (lineId) => {
+        const existing = get().studies.find((study) => study.subjectLineId === lineId);
+        if (existing) {
+          set({ activeStudyId: existing.id });
+          await get().selectLine(lineId);
+          return existing.id;
+        }
+        const { getConfirmedMasterNetwork, suggestedStudyScope } = await import(
+          "../domain/study-network"
+        );
+        const state = get();
+        const master = getConfirmedMasterNetwork(
+          state.networkGraphOverrides[INVENTORY_MASTER_CASE_ID]
+        );
+        const relation = master.lineRelations.find((item) => item.id === lineId);
+        if (!relation) {
+          set({
+            networkSelectionIssue: {
+              lineId,
+              message:
+                "Study tidak dibuat karena LineRelation belum confirmed. Review topology di Graph Builder.",
+            },
+          });
+          return null;
+        }
+        const from = master.substations.find((item) => item.id === relation.fromSubstationId);
+        const to = master.substations.find((item) => item.id === relation.toSubstationId);
+        const name = `Penghantar ${from?.shortCode ?? relation.fromSubstationId} - ${to?.shortCode ?? relation.toSubstationId} #${relation.circuit}`;
+        await get().createStudy(
+          name,
+          `Study dibuat dari confirmed master graph untuk ${from?.name ?? relation.fromSubstationId} - ${to?.name ?? relation.toSubstationId}.`,
+          suggestedStudyScope(master, lineId),
+          {
+            subjectLineId: lineId,
+            subjectBayId: relation.fromBayId,
+            subjectLabel: name,
+          }
+        );
+        return get().studies.find((study) => study.subjectLineId === lineId)?.id ?? null;
       },
 
       openCaseWizard: (caseType) =>
@@ -1145,6 +1173,14 @@ export const useProsetStore = create<State>()(
           studyPackageReady: latestStudyPackage?.status === "compatible",
           crosscheckEvidenceBlockers: crosscheckEvidence.blockers,
           crosscheckEvidenceWarnings: crosscheckEvidence.warnings,
+          crosscheckIntakeReady:
+            settingCase.flowProfile.crosscheckMode === "issued_tap_document_audit"
+              ? state.vendorImportHandoffDraft?.caseId === id &&
+                state.vendorImportHandoffDraft.adapterId === "tap-pdf-profile-v1"
+              : state.vendorImportHandoffDraft?.caseId === id &&
+                state.vendorImportHandoffDraft.evidenceAuthority === "actual_readback" &&
+                Boolean(state.vendorImportHandoffDraft.acquisitionManifest),
+          verificationRunCount: settingCase.links.verificationRunIds?.length ?? 0,
         });
         if (gate.blockers.length > 0) return;
         const next = nextStageOf(settingCase);
@@ -1290,6 +1326,8 @@ export const useProsetStore = create<State>()(
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
           substationIds,
+          scopeRevision: 1,
+          scopeHistory: [],
           subjectBayId: options?.subjectBayId,
           subjectLineId: options?.subjectLineId,
           subjectLabel: options?.subjectLabel,
@@ -1297,34 +1335,10 @@ export const useProsetStore = create<State>()(
           sourceBridge: options?.sourceBridge,
           status: "active",
         };
-        // Resolve activeNetworkCaseId from the study's actual subject/scope
-        // instead of hardcoding the demo corridor — a study about a GI
-        // outside that corridor (e.g. built from a manual substation pick)
-        // should not leave the working context pointed at an unrelated case.
-        let resolvedCaseId: string | undefined;
-        if (!options?.subjectLineId && substationIds.length > 0) {
-          const state = get();
-          const inventoryCase =
-            NETWORK_CASES.find((c) => c.id === INVENTORY_MASTER_CASE_ID) ?? NETWORK_CASES[0];
-          const masterNetworkGraph = getEffectiveNetworkGraph(
-            INVENTORY_MASTER_CASE_ID,
-            state.networkGraphOverrides[INVENTORY_MASTER_CASE_ID],
-            buildUnifiedNetwork(inventoryCase)
-          );
-          const owningCase = NETWORK_CASES.find((c) => {
-            if (c.nodes.some((n) => substationIds.includes(n.id))) return true;
-            const effective = mergeMasterRelationsIntoCase(
-              getEffectiveNetworkGraph(c.id, state.networkGraphOverrides[c.id], buildUnifiedNetwork(c)),
-              masterNetworkGraph
-            );
-            return Boolean(effective && effective.substations.some((s) => substationIds.includes(s.id)));
-          });
-          resolvedCaseId = owningCase?.id ?? INVENTORY_MASTER_CASE_ID;
-        }
         set({
           studies: [...get().studies, newStudy],
           activeStudyId: id,
-          ...(resolvedCaseId ? { activeNetworkCaseId: resolvedCaseId } : {}),
+          activeNetworkCaseId: INVENTORY_MASTER_CASE_ID,
           ...(options?.subjectLineId ? { activeNetworkLineId: options.subjectLineId } : {}),
           currentTab: "study-dashboard",
         });
@@ -1360,12 +1374,86 @@ export const useProsetStore = create<State>()(
       setActiveStudy: (id) => {
         if (get().activeStudyId === id) return;
         set({ activeStudyId: id });
-        const study = get().studies.find((s) => s.id === id);
+        const study = id ? get().studies.find((s) => s.id === id) : undefined;
         appendAuditEvent(get, set, {
           action: "study_selected",
-          scope: id,
-          summary: `Selected study${study ? `: ${study.name}` : ""}`,
+          scope: id ?? undefined,
+          summary: study ? `Selected study: ${study.name}` : "Cleared active study",
         });
+      },
+
+      reviseStudyScope: (id, substationIds, reason) => {
+        const state = get();
+        const study = state.studies.find((item) => item.id === id);
+        if (!study) return;
+        const normalized = [...new Set(substationIds)].sort();
+        const current = [...study.substationIds].sort();
+        if (normalized.join("|") === current.join("|")) return;
+        const changedAt = new Date().toISOString();
+        const nextRevision = (study.scopeRevision ?? 1) + 1;
+        set({
+          studies: state.studies.map((item) =>
+            item.id === id
+              ? {
+                  ...item,
+                  substationIds: normalized,
+                  scopeRevision: nextRevision,
+                  scopeHistory: [
+                    ...(item.scopeHistory ?? []),
+                    {
+                      revision: item.scopeRevision ?? 1,
+                      substationIds: [...item.substationIds],
+                      changedAt,
+                      changedBy: state.currentPersona,
+                      reason,
+                    },
+                  ],
+                  updatedAt: changedAt,
+                }
+              : item
+          ),
+        });
+        appendAuditEvent(get, set, {
+          action: "study_scope_revised",
+          scope: id,
+          summary: `Revised study scope to revision ${nextRevision}`,
+          detail: `${reason} | ${normalized.join(", ")}`,
+        });
+      },
+      saveVerificationRun: (record) => {
+        const state = get();
+        const id = `verification_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+        const run: VerificationRunRecord = {
+          ...record,
+          id,
+          createdAt: new Date().toISOString(),
+          createdBy: state.currentPersona,
+        };
+        set({
+          verificationRuns: [run, ...state.verificationRuns].slice(0, 200),
+          settingCases: state.settingCases.map((item) =>
+            item.id === record.caseId
+              ? {
+                  ...item,
+                  updatedAt: run.createdAt,
+                  links: {
+                    ...item.links,
+                    verificationRunIds: Array.from(
+                      new Set([...(item.links.verificationRunIds ?? []), id])
+                    ),
+                  },
+                }
+              : item
+          ),
+        });
+        appendAuditEvent(get, set, {
+          action: "verification_run_saved",
+          scope: record.caseId,
+          targetId: id,
+          summary: `Saved ${record.report.decision} verification report`,
+          detail: `${record.sourceFileName} | coverage=${record.report.coveragePercent.toFixed(0)}%`,
+        });
+        return id;
       },
 
       setStudyScenario: (studyId, scenarioId) => {
@@ -1631,7 +1719,7 @@ export const useProsetStore = create<State>()(
         const existing = normalizedOverride(next[caseId]);
         next[caseId] = {
           ...existing,
-          substations: upsertById(existing.substations, [payload.substation]),
+          substations: upsertById(existing.substations, [payload.substation, ...(payload.supportingSubstations ?? [])]),
           bays: upsertById(existing.bays, payload.bays),
           relations: upsertById(existing.relations, payload.relations),
         };
@@ -1645,7 +1733,7 @@ export const useProsetStore = create<State>()(
           ),
           graphBuildDecisions: {
             ...current.graphBuildDecisions,
-            [payload.substation.id]: { status: "confirmed", decidedAt: new Date().toISOString() },
+            [payload.decisionKey ?? payload.substation.id]: { status: "confirmed", decidedAt: new Date().toISOString() },
           },
           // Previously nothing set the working context on confirm — a user
           // confirming GI X had no way to land on GI X afterward, since
@@ -1660,8 +1748,8 @@ export const useProsetStore = create<State>()(
         appendAuditEvent(get, set, {
           action: "network_graph_add",
           scope: caseId,
-          targetId: payload.substation.id,
-          summary: "Confirmed graph-builder GI group",
+          targetId: payload.decisionKey ?? payload.substation.id,
+          summary: "Approved case-scoped topology card",
           detail: `${payload.substation.name}: ${payload.bays.length} bay(s), ${payload.relations.length} relation(s)`,
         });
       },
@@ -1676,7 +1764,7 @@ export const useProsetStore = create<State>()(
         for (const payload of payloads) {
           existing = {
             ...existing,
-            substations: upsertById(existing.substations, [payload.substation]),
+            substations: upsertById(existing.substations, [payload.substation, ...(payload.supportingSubstations ?? [])]),
             bays: upsertById(existing.bays, payload.bays),
             relations: upsertById(existing.relations, payload.relations),
           };
@@ -2145,6 +2233,7 @@ export const useProsetStore = create<State>()(
         pdfTapPromotions: state.pdfTapPromotions,
         calculationSnapshots: state.calculationSnapshots,
         coordinationChecks: state.coordinationChecks,
+        verificationRuns: state.verificationRuns,
         verificationReferenceDraft: state.verificationReferenceDraft,
         vendorImportHandoffDraft: state.vendorImportHandoffDraft,
         studies: state.studies,
@@ -2182,8 +2271,8 @@ export const useProsetStore = create<State>()(
         }
         // v6 -> v7: add studies + migrate tab names
         if (version < 7) {
-          persisted.studies = persisted.studies ?? DEFAULT_STUDIES;
-          persisted.activeStudyId = persisted.activeStudyId ?? DEFAULT_STUDIES[0]?.id ?? null;
+          persisted.studies = persisted.studies ?? LEGACY_MIGRATION_STUDIES;
+          persisted.activeStudyId = persisted.activeStudyId ?? LEGACY_MIGRATION_STUDIES[0]?.id ?? null;
           if (persisted.currentTab === "study-dashboard") {
             persisted.currentTab = "home";
           }
@@ -2224,8 +2313,8 @@ export const useProsetStore = create<State>()(
             persisted.studies.length === 1 &&
             persisted.studies[0]?.id === "study_dks_dm_pik_mkb"
           ) {
-            persisted.studies = DEFAULT_STUDIES;
-            persisted.activeStudyId = DEFAULT_STUDIES[0].id;
+            persisted.studies = LEGACY_MIGRATION_STUDIES;
+            persisted.activeStudyId = LEGACY_MIGRATION_STUDIES[0].id;
           }
         }
         // v12 -> v13: MVP 1A is now centred on the workbook-backed
@@ -2256,7 +2345,7 @@ export const useProsetStore = create<State>()(
               : cloneDefaultStudyScenarios();
           if (Array.isArray(persisted.studies)) {
             persisted.studies = persisted.studies.map((study: Study) =>
-              DEFAULT_STUDIES.some(
+              LEGACY_MIGRATION_STUDIES.some(
                 (seed) =>
                   seed.id === study.id &&
                   seed.subjectLineId === study.subjectLineId &&
@@ -2273,6 +2362,50 @@ export const useProsetStore = create<State>()(
           )
             ? persisted.engineeringChangeSets
             : [];
+        }
+        if (version < 24) {
+          persisted.verificationRuns = Array.isArray(persisted.verificationRuns)
+            ? persisted.verificationRuns
+            : [];
+          if (Array.isArray(persisted.settingCases)) {
+            persisted.settingCases = persisted.settingCases.map((settingCase: SettingCase) => ({
+              ...settingCase,
+              links: {
+                ...settingCase.links,
+                verificationRunIds: Array.isArray(settingCase.links?.verificationRunIds)
+                  ? settingCase.links.verificationRunIds
+                  : [],
+              },
+            }));
+          }
+        }
+        if (version < 25) {
+          const legacyStudyIds = new Set([
+            "study_dks_dm_pik_mkb",
+            "study_dksbi_dnmgt",
+            "study_dnmgt_pinka",
+          ]);
+          persisted.studies = Array.isArray(persisted.studies)
+            ? persisted.studies.filter(
+                (study: Study) =>
+                  !legacyStudyIds.has(study.id) &&
+                  !(
+                    !study.subjectLineId &&
+                    /dks\s*-?\s*dm\s*-?\s*pik\s*-?\s*mkb/i.test(study.name ?? "")
+                  )
+              )
+            : [];
+          if (
+            !persisted.studies.some(
+              (study: Study) => study.id === persisted.activeStudyId
+            )
+          ) {
+            persisted.activeStudyId = null;
+          }
+          persisted.activeNetworkCaseId = INVENTORY_MASTER_CASE_ID;
+          if (persisted.activeNetworkLineId === "unknown") {
+            persisted.activeNetworkLineId = null;
+          }
         }
         // v17 -> v18: append newly indexed immutable source snapshots without
         // replacing user-created snapshots or changing existing scenario ids.
@@ -2379,7 +2512,7 @@ export const useProsetStore = create<State>()(
         }
         return persisted;
       },
-      version: 23,
+      version: 25,
     }
   )
 );

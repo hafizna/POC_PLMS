@@ -6,7 +6,7 @@ import {
   Network,
   CircuitBoard,
 } from "lucide-react";
-import type { NetworkCase, NetworkLine } from "../../domain/seed-network-registry";
+import type { NetworkLine, NetworkNode } from "../../domain/seed-network-registry";
 import type { UnifiedNetwork, LifecycleStatus, ProtectionFunctionId } from "../../domain/unified";
 import type { RelationStatus, FunctionPromotion } from "../../domain/relation-status";
 import { findComparisonBayIdForLine } from "../../domain/seed-comparison";
@@ -24,7 +24,8 @@ const statusBadge: Record<LifecycleStatus, string> = {
 
 type Props = {
   line: NetworkLine;
-  activeCase: NetworkCase;
+  nodes: NetworkNode[];
+  scopeTitle: string;
   networkGraph?: UnifiedNetwork;
   status?: RelationStatus;
 };
@@ -42,13 +43,14 @@ const PROTECTION_ORDER: ProtectionFunctionId[] = [
   "TELE",
 ];
 
-export function LineDetailPanel({ line, activeCase, networkGraph, status }: Props) {
+export function LineDetailPanel({ line, nodes, scopeTitle, networkGraph, status }: Props) {
   const setTab = useProsetStore((s) => s.setTab);
   const selectLine = useProsetStore((s) => s.selectLine);
+  const ensureStudyForLine = useProsetStore((s) => s.ensureStudyForLine);
   const ctVtOverrides = useProsetStore((s) => s.ctVtOverrides);
 
-  const fromNode = activeCase.nodes.find((n) => n.id === line.fromNodeId);
-  const toNode = activeCase.nodes.find((n) => n.id === line.toNodeId);
+  const fromNode = nodes.find((n) => n.id === line.fromNodeId);
+  const toNode = nodes.find((n) => n.id === line.toNodeId);
   const relation = networkGraph?.lineRelations.find((r) => r.id === line.id);
   const fromBay = relation ? networkGraph?.bays.find((b) => b.id === relation.fromBayId) : undefined;
   const toBay = relation ? networkGraph?.bays.find((b) => b.id === relation.toBayId) : undefined;
@@ -68,8 +70,16 @@ export function LineDetailPanel({ line, activeCase, networkGraph, status }: Prop
 
   const compareBayId = findComparisonBayIdForLine(line.id);
 
-  const open = (tab: "calculation" | "comparison" | "coverage") => {
-    selectLine(line.id);
+  const open = async (tab: "calculation" | "comparison" | "coverage") => {
+    if (tab === "calculation" || tab === "coverage") {
+      const studyId = await ensureStudyForLine(line.id);
+      if (!studyId) {
+        setTab("network-model");
+        return;
+      }
+    } else {
+      await selectLine(line.id);
+    }
     setTab(tab);
   };
 
@@ -83,7 +93,7 @@ export function LineDetailPanel({ line, activeCase, networkGraph, status }: Prop
               Line Detail: {fromNode?.shortCode} - {toNode?.shortCode} {line.circuit}
             </div>
             <div className="text-[11px] text-blue-700">
-              {activeCase.title} | {line.relayMain || "no relay info"} | Xline {line.lineXOhm?.toFixed(3) ?? "?"} ohm
+              {scopeTitle} | {line.relayMain || "no relay info"} | Xline {line.lineXOhm?.toFixed(3) ?? "?"} ohm
               {line.physicalLengthKm ? ` | ${line.physicalLengthKm} km` : ""}
             </div>
           </div>
@@ -94,14 +104,14 @@ export function LineDetailPanel({ line, activeCase, networkGraph, status }: Prop
               {status.rollup}
             </span>
           )}
-          <ActionButton label="Calculate" icon={<Calculator className="w-3.5 h-3.5" />} onClick={() => open("calculation")} />
+          <ActionButton label="Calculate" icon={<Calculator className="w-3.5 h-3.5" />} onClick={() => void open("calculation")} />
           <ActionButton
             label="Compare"
             icon={<GitCompareArrows className="w-3.5 h-3.5" />}
-            onClick={() => open("comparison")}
+            onClick={() => void open("comparison")}
             disabled={!compareBayId}
           />
-          <ActionButton label="Coverage" icon={<Route className="w-3.5 h-3.5" />} onClick={() => open("coverage")} />
+          <ActionButton label="Coverage" icon={<Route className="w-3.5 h-3.5" />} onClick={() => void open("coverage")} />
         </div>
       </div>
 

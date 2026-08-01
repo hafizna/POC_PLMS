@@ -269,6 +269,10 @@ export type UnifiedNetwork = {
   // against the legacy linear Relay/Corridor types). This is the future
   // typed home for Z1/Z2/Z3 reach and timer settings on this graph.
   relaySettings?: RelaySetting[];
+  // Canonical/provenance-bearing imported setting rows. Raw vendor-specific
+  // payloads remain in their importer registry; this collection exposes the
+  // normalized values that lifecycle/search consumers can use.
+  settingRecords?: SettingRecord[];
 };
 
 const KNOWN_FUNCTION_TOKENS: Record<string, ProtectionFunctionId> = {

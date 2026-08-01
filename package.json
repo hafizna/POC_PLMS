@@ -34,7 +34,9 @@
     "test:graph-builder-voltage-suffix": "tsx scripts/test-graph-builder-voltage-suffix.ts",
     "test:relay-catalog-builder": "tsx scripts/test-relay-catalog-builder.ts",
     "test:rio-xrio-import": "tsx scripts/test-rio-xrio-import.ts",
-    "test:hel-pht-tap-import": "tsx scripts/test-hel-pht-tap-import.ts"
+    "test:hel-pht-tap-import": "tsx scripts/test-hel-pht-tap-import.ts",
+    "test:study-network": "tsx scripts/test-study-network.ts",
+    "test:topology-remediation": "tsx scripts/test-topology-remediation.ts"
   },
   "dependencies": {
     "d3": "^7.9.0",

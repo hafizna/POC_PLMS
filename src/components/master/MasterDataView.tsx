@@ -10,17 +10,14 @@ import {
 import { ULTG_INVENTORY_NODES } from "../../domain/seed-network-registry";
 import { normalizeStationName } from "../../domain/normalization";
 import {
-  getEffectiveNetworkGraph,
   INVENTORY_MASTER_CASE_ID,
-  mergeMasterRelationsIntoCase,
   networkLinesFromGraph,
   networkNodesFromGraph,
   relayAssetsFromGraph,
 } from "../../domain/network-graph";
-import { buildUnifiedNetwork } from "../../domain/unified";
-import { NETWORK_CASES } from "../../domain/seed-network-registry";
 import { useProsetStore } from "../../store/useProsetStore";
 import { ctRatioText, parseCtRatio, parseVtRatio, vtRatioText } from "../../domain/instrument-transformers";
+import { getConfirmedMasterNetwork } from "../../domain/study-network";
 
 type MasterTab = "substations" | "relations" | "relays" | "functions";
 
@@ -30,49 +27,24 @@ export function MasterDataView() {
   const ctVtOverrides = useProsetStore((s) => s.ctVtOverrides);
   const setTab = useProsetStore((s) => s.setTab);
 
-  // Build effective master view across all cases
-  const inventoryCase =
-    NETWORK_CASES.find((c) => c.id === INVENTORY_MASTER_CASE_ID) ?? NETWORK_CASES[0];
-  const corridorCase =
-    NETWORK_CASES.find((c) => c.id === "case_dks_dm_pik_mkb") ?? inventoryCase;
-
-  const masterFallback = useMemo(() => buildUnifiedNetwork(inventoryCase), [inventoryCase]);
-  const corridorFallback = useMemo(() => buildUnifiedNetwork(corridorCase), [corridorCase]);
-
-  const masterNetworkGraph = useMemo(
-    () =>
-      getEffectiveNetworkGraph(
-        INVENTORY_MASTER_CASE_ID,
-        networkGraphOverrides[INVENTORY_MASTER_CASE_ID],
-        masterFallback
-      ),
-    [masterFallback, networkGraphOverrides]
+  const effectiveNetworkGraph = useMemo(
+    () => getConfirmedMasterNetwork(networkGraphOverrides[INVENTORY_MASTER_CASE_ID]),
+    [networkGraphOverrides]
   );
-
-  const corridorNetworkGraph = useMemo(
-    () =>
-      mergeMasterRelationsIntoCase(
-        getEffectiveNetworkGraph(corridorCase.id, networkGraphOverrides[corridorCase.id], corridorFallback),
-        masterNetworkGraph
-      ),
-    [corridorCase.id, corridorFallback, masterNetworkGraph, networkGraphOverrides]
-  );
-
-  const effectiveNetworkGraph = corridorNetworkGraph ?? masterNetworkGraph;
 
   const nodes = useMemo(
-    () => (effectiveNetworkGraph ? networkNodesFromGraph(effectiveNetworkGraph) : []),
+    () => networkNodesFromGraph(effectiveNetworkGraph),
     [effectiveNetworkGraph]
   );
   const lines = useMemo(
-    () => (effectiveNetworkGraph ? networkLinesFromGraph(effectiveNetworkGraph) : []),
+    () => networkLinesFromGraph(effectiveNetworkGraph),
     [effectiveNetworkGraph]
   );
   const relays = useMemo(
-    () => (effectiveNetworkGraph ? relayAssetsFromGraph(effectiveNetworkGraph) : []),
+    () => relayAssetsFromGraph(effectiveNetworkGraph),
     [effectiveNetworkGraph]
   );
-  const protectionFunctions = effectiveNetworkGraph?.protectionFunctions ?? [];
+  const protectionFunctions = effectiveNetworkGraph.protectionFunctions;
 
   // Seed inventory plus any substation confirmed via the graph builder (Inbox)
   // that isn't in the seed yet — otherwise a newly-confirmed GI (e.g. from

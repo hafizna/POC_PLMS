@@ -8,16 +8,12 @@ import {
   Route,
   Zap,
 } from "lucide-react";
-import { NETWORK_CASES, ULTG_INVENTORY_NODES } from "../../domain/seed-network-registry";
-import {
-  getEffectiveNetworkGraph,
-  INVENTORY_MASTER_CASE_ID,
-  mergeMasterRelationsIntoCase,
-} from "../../domain/network-graph";
-import { buildUnifiedNetwork } from "../../domain/unified";
+import { ULTG_INVENTORY_NODES } from "../../domain/seed-network-registry";
+import { INVENTORY_MASTER_CASE_ID } from "../../domain/network-graph";
 import { useProsetStore, type Study, type Tab } from "../../store/useProsetStore";
 import { normalizeStationName } from "../../domain/normalization";
 import { StudyWizard } from "../study/StudyWizard";
+import { getConfirmedMasterNetwork } from "../../domain/study-network";
 
 export function HomeView() {
   const studies = useProsetStore((s) => s.studies);
@@ -30,25 +26,13 @@ export function HomeView() {
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   // Master data summary — merge corridor + inventory for totals
-  const inventoryCase = NETWORK_CASES.find((c) => c.id === INVENTORY_MASTER_CASE_ID) ?? NETWORK_CASES[0];
-  const corridorCase = NETWORK_CASES.find((c) => c.id === "case_dks_dm_pik_mkb") ?? inventoryCase;
-  const masterFallback = useMemo(() => buildUnifiedNetwork(inventoryCase), [inventoryCase]);
-  const corridorFallback = useMemo(() => buildUnifiedNetwork(corridorCase), [corridorCase]);
   const masterNetworkGraph = useMemo(
-    () => getEffectiveNetworkGraph(INVENTORY_MASTER_CASE_ID, networkGraphOverrides[INVENTORY_MASTER_CASE_ID], masterFallback),
-    [masterFallback, networkGraphOverrides]
+    () => getConfirmedMasterNetwork(networkGraphOverrides[INVENTORY_MASTER_CASE_ID]),
+    [networkGraphOverrides]
   );
-  const corridorNetworkGraph = useMemo(
-    () => mergeMasterRelationsIntoCase(
-      getEffectiveNetworkGraph(corridorCase.id, networkGraphOverrides[corridorCase.id], corridorFallback),
-      masterNetworkGraph
-    ),
-    [corridorCase.id, corridorFallback, masterNetworkGraph, networkGraphOverrides]
-  );
-  const effectiveNmm = corridorNetworkGraph ?? masterNetworkGraph;
-  const totalRelations = effectiveNmm?.lineRelations.length ?? 0;
-  const totalIEDs = effectiveNmm?.relayIeds.length ?? 0;
-  const allInventoryGIs = ULTG_INVENTORY_NODES.length;
+  const totalRelations = masterNetworkGraph.lineRelations.length;
+  const totalIEDs = masterNetworkGraph.relayIeds.length;
+  const allInventoryGIs = masterNetworkGraph.substations.length;
 
   const openStudy = (studyId: string) => {
     setActiveStudy(studyId);
@@ -86,7 +70,7 @@ export function HomeView() {
 
         <div className="relative mt-6 grid grid-cols-3 gap-4">
           <HeroTile label="GI di Master" value={allInventoryGIs} sub={`${totalIEDs} relay IED terdaftar`} />
-          <HeroTile label="Line Relations" value={totalRelations} sub="corridor edges" />
+          <HeroTile label="Line Relations" value={totalRelations} sub="confirmed master edges" />
           <HeroTile label="Active Studies" value={studies.filter((s) => s.status === "active").length} sub="sedang berjalan" />
         </div>
       </section>

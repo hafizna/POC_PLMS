@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
 import {
   HEL_PHT_TAP_REGISTRY,
+  buildHelPhtTapArtifacts,
   mapHelPhtTapCandidatesToLines,
   promoteMatchedHelPhtTapCandidates,
 } from "../src/domain/hel-pht-tap-import";
+import { getFullAnchoredNetwork } from "../src/domain/graph-builder";
 import type { NetworkLine, NetworkNode } from "../src/domain/seed-network-registry";
 
 // Registry-shape check: extract-hel-pht-tap.mjs must have run at least once
@@ -133,6 +135,17 @@ assert.equal(promoted[0].source, "hel-pht-tap-import");
 assert.equal(promoted[0].model, "MICOM P545");
 assert.equal(promoted[0].raw.id, pht01.id);
 assert.equal((promoted[0].raw as typeof pht01).distance.z1PhReachOhm, 0.263);
+
+const fullNetwork = getFullAnchoredNetwork();
+const artifacts = buildHelPhtTapArtifacts(fullNetwork);
+assert.ok(artifacts.settingRecords.length > 0, "matched HEL rows must populate SettingRecord artifacts");
+assert.ok(artifacts.relaySettings.length > 0, "matched bay/relay rows must populate typed RelaySetting artifacts");
+const functionIds = new Set(fullNetwork.protectionFunctions.map((item) => item.id));
+assert.equal(
+  artifacts.settingRecords.filter((item) => !functionIds.has(item.protectionFunctionId)).length,
+  0,
+  "HEL SettingRecord artifacts must not carry invented/dangling protectionFunctionId values"
+);
 
 console.log(
   `HEL_PHT_TAP import regression passed: 184 records across all 13 penghantar relay models extracted (7 distinct column layouts), ` +

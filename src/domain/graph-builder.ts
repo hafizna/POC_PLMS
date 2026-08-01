@@ -18,6 +18,7 @@ import type { RegistryConfidence } from "./seed-network-registry";
 import { normalizeStationName, normalizeSubstationIdentity, tokensSubsetOf } from "./normalization";
 import { buildRelayIedsFromCatalog } from "./relay-catalog-builder";
 import { buildRelaySettingsFromOverlays } from "./relay-setting-builder";
+import { buildHelPhtTapArtifacts } from "./hel-pht-tap-import";
 import sldSourceIndex from "./generated/sld-source-index.json";
 import crosscheckRegistry from "./generated/crosscheck-workbook-registry.json";
 import lcdDistRegistry from "./generated/lcd-dist-registry.json";
@@ -712,18 +713,187 @@ export function overlaySettingDocs(anchor: AnchorResult): OverlayRecord[] {
 
 export type GraphBuildGroup = {
   station: UnifiedSubstation;
+  /** Extra endpoint nodes needed by a corroborated candidate relation. */
+  supportingSubstations: UnifiedSubstation[];
   bays: Bay[];
   lineRelations: AnchorLineRelation[];
   overlays: OverlayRecord[];
   /** True when this station had no digsilentLineDb match at all. */
   needsManualTopology: boolean;
   confidence: RegistryConfidence;
+  indicators: GraphConfidenceIndicators;
 };
+
+export type TopologyAnchorStatus =
+  | "source_anchored"
+  | "corroborated_candidate"
+  | "missing"
+  | "identity_conflict";
+
+export type GraphConfidenceIndicators = {
+  topology: TopologyAnchorStatus;
+  topologyReason: string;
+  electricalCoveragePercent: number;
+  settingOverlayCoveragePercent: number;
+  evidenceSourceCount: number;
+  reciprocalEvidence: boolean;
+  freshness: "historical_2019_2021" | "unknown";
+};
+
+type CorroboratedTopologyRule = {
+  localIdentity: string;
+  remoteNames: string[];
+  reciprocalEvidence: boolean;
+  decisionRef: string;
+};
+
+// Explicit engineering confirmations received 2026-08-01. These do not
+// become source-anchored/high-confidence topology: they create reviewable
+// candidate relations with no fabricated electrical values. The engineer
+// still has to confirm the group in Graph Builder. Muarakarang is excluded
+// deliberately because GI/GIS/GISTET identity is still unresolved.
+const CORROBORATED_TOPOLOGY_RULES: CorroboratedTopologyRule[] = [
+  {
+    localIdentity: "gi dadap",
+    remoteNames: ["LONTAR", "TELUK NAGA"],
+    reciprocalEvidence: false,
+    decisionRef: "engineer-confirmation-2026-08-01",
+  },
+  {
+    localIdentity: "gis ulujami",
+    remoteNames: ["NEW SENAYAN"],
+    reciprocalEvidence: true,
+    decisionRef: "engineer-confirmation-2026-08-01",
+  },
+];
+
+const IDENTITY_CONFLICTS = new Set(["gi muarakarang baru"]);
 
 export type GraphBuildResult = {
   groups: GraphBuildGroup[];
   unresolvedStations: ScopedStation[];
 };
+
+function buildCorroboratedCandidate(
+  scoped: ScopedStation,
+  station: UnifiedSubstation,
+  overlays: OverlayRecord[],
+  knownSubstations: UnifiedSubstation[]
+): { supportingSubstations: UnifiedSubstation[]; bays: Bay[]; relations: AnchorLineRelation[]; reciprocalEvidence: boolean } | null {
+  const rule = CORROBORATED_TOPOLOGY_RULES.find(
+    (item) => item.localIdentity === scoped.identityKey
+  );
+  if (!rule) return null;
+
+  const supportingSubstations: UnifiedSubstation[] = [];
+  const bays: Bay[] = [];
+  const relations: AnchorLineRelation[] = [];
+  for (const remoteName of rule.remoteNames) {
+    const remoteKey = normalizeStationName(remoteName);
+    const remote =
+      knownSubstations.find((item) => item.normalizedName === remoteKey) ??
+      ({
+        id: `sub_candidate_${remoteKey.replace(/\s+/g, "_")}`,
+        name: `GI ${remoteName}`,
+        shortCode: buildShortCode(remoteName),
+        voltageKv: 150,
+        kind: "GI",
+        normalizedName: remoteKey,
+      } satisfies UnifiedSubstation);
+    if (!knownSubstations.some((item) => item.id === remote.id)) {
+      supportingSubstations.push(remote);
+    }
+
+    const matchingRows = overlays.filter(
+      (item) =>
+        normalizeStationName(item.substationRaw) === scoped.fuzzyKey &&
+        tokensSubsetOf(remoteKey, normalizeStationName(item.bayRaw))
+    );
+    const circuits = [...new Set(matchingRows.map((item) => item.circuit))].sort();
+    for (const circuit of circuits) {
+      const localBay: Bay = {
+        id: `bay_candidate_${station.id}_${remote.id}_${circuit}`,
+        substationId: station.id,
+        rawName: `PHT 150kV ${remoteName}#${circuit}`,
+        normalizedName: remoteKey,
+        remoteEndpointHint: remoteKey,
+        circuit,
+        kind: "line",
+      };
+      const remoteBay: Bay = {
+        id: `bay_candidate_${remote.id}_${station.id}_${circuit}`,
+        substationId: remote.id,
+        rawName: `PHT 150kV ${station.name.toUpperCase()}#${circuit}`,
+        normalizedName: station.normalizedName,
+        remoteEndpointHint: station.normalizedName,
+        circuit,
+        kind: "line",
+      };
+      bays.push(localBay, remoteBay);
+      relations.push({
+        id: `candidate_line_${station.id}_${remote.id}_${circuit}`,
+        fromBayId: localBay.id,
+        toBayId: remoteBay.id,
+        fromSubstationId: station.id,
+        toSubstationId: remote.id,
+        circuit,
+        voltageKv: 150,
+        protectionFunctionIds: ["LCD", "DIST", "OCR", "GFR"],
+        sourceIds: [
+          rule.decisionRef,
+          ...new Set(matchingRows.map((item) => item.sourceKind)),
+        ],
+        confidence: "medium",
+        status: "imported",
+        digsilentName: `CORROBORATED CANDIDATE ${station.shortCode}-${remote.shortCode} #${circuit}`,
+        outOfService: false,
+      });
+    }
+  }
+  return { supportingSubstations, bays, relations, reciprocalEvidence: rule.reciprocalEvidence };
+}
+
+function buildIndicators(input: {
+  topology: TopologyAnchorStatus;
+  relations: AnchorLineRelation[];
+  overlays: OverlayRecord[];
+  reciprocalEvidence?: boolean;
+}): GraphConfidenceIndicators {
+  const electricalFields: Array<keyof LineRelation> = [
+    "physicalLengthKm",
+    "currentRatingKa",
+    "r1Ohm",
+    "x1Ohm",
+    "r0Ohm",
+    "x0Ohm",
+  ];
+  const electricalTotal = input.relations.length * electricalFields.length;
+  const electricalPresent = input.relations.reduce(
+    (sum, relation) =>
+      sum + electricalFields.filter((field) => relation[field] !== undefined && relation[field] !== null).length,
+    0
+  );
+  const matched = input.overlays.filter((item) => item.matchStatus === "matched").length;
+  const topologyReason: Record<TopologyAnchorStatus, string> = {
+    source_anchored: "Topology eksplisit dari DIgSILENT line database historis.",
+    corroborated_candidate: "LCD/DIST dan OCR konsisten; relasi dikonfirmasi engineer tetapi menunggu topology resmi.",
+    missing: "Belum ada anchor topology atau kandidat yang dikonfirmasi.",
+    identity_conflict: "GI/GIS/GISTET belum dapat dipisahkan aman; tunggu topology resmi atau TAP baru.",
+  };
+  return {
+    topology: input.topology,
+    topologyReason: topologyReason[input.topology],
+    electricalCoveragePercent: electricalTotal
+      ? Math.round((electricalPresent / electricalTotal) * 100)
+      : 0,
+    settingOverlayCoveragePercent: input.overlays.length
+      ? Math.round((matched / input.overlays.length) * 100)
+      : 100,
+    evidenceSourceCount: new Set(input.overlays.map((item) => item.sourceKind)).size,
+    reciprocalEvidence: Boolean(input.reciprocalEvidence),
+    freshness: input.topology === "source_anchored" ? "historical_2019_2021" : "unknown",
+  };
+}
 
 /**
  * Runs the full pipeline (scope -> anchor -> overlay) and groups the result
@@ -753,11 +923,17 @@ export function buildGraphForUltg(
 
     return {
       station,
+      supportingSubstations: [],
       bays,
       lineRelations,
       overlays: stationOverlays,
       needsManualTopology,
       confidence: needsManualTopology ? "low" : "high",
+      indicators: buildIndicators({
+        topology: needsManualTopology ? "missing" : "source_anchored",
+        relations: lineRelations,
+        overlays: stationOverlays,
+      }),
     };
   });
 
@@ -767,20 +943,42 @@ export function buildGraphForUltg(
   for (const unresolved of anchor.unresolvedStations) {
     if (groups.some((g) => g.station.name === unresolved.rawName)) continue;
     const displayName = DISPLAY_NAME_OVERRIDE[unresolved.identityKey] ?? unresolved.rawName;
+    const station: UnifiedSubstation = {
+      id: `sub_unresolved_${unresolved.identityKey.replace(/\s+/g, "_")}`,
+      name: displayName,
+      shortCode: buildShortCode(displayName),
+      voltageKv: 150,
+      kind: unresolved.kind,
+      normalizedName: unresolved.fuzzyKey,
+    };
+    const stationOverlays = overlays.filter(
+      (o) => normalizeStationName(o.substationRaw) === unresolved.fuzzyKey
+    );
+    const candidate = buildCorroboratedCandidate(
+      unresolved,
+      station,
+      stationOverlays,
+      anchor.substations
+    );
+    const topology: TopologyAnchorStatus = IDENTITY_CONFLICTS.has(unresolved.identityKey)
+      ? "identity_conflict"
+      : candidate
+        ? "corroborated_candidate"
+        : "missing";
     groups.push({
-      station: {
-        id: `sub_unresolved_${unresolved.identityKey.replace(/\s+/g, "_")}`,
-        name: displayName,
-        shortCode: buildShortCode(displayName),
-        voltageKv: 150,
-        kind: unresolved.kind,
-        normalizedName: unresolved.fuzzyKey,
-      },
-      bays: [],
-      lineRelations: [],
-      overlays: overlays.filter((o) => normalizeStationName(o.substationRaw) === unresolved.fuzzyKey),
+      station,
+      supportingSubstations: candidate?.supportingSubstations ?? [],
+      bays: candidate?.bays ?? [],
+      lineRelations: candidate?.relations ?? [],
+      overlays: stationOverlays,
       needsManualTopology: true,
-      confidence: "low",
+      confidence: candidate ? "medium" : "low",
+      indicators: buildIndicators({
+        topology,
+        relations: candidate?.relations ?? [],
+        overlays: stationOverlays,
+        reciprocalEvidence: candidate?.reciprocalEvidence,
+      }),
     });
   }
 
@@ -798,7 +996,10 @@ export function buildGraphForUltg(
  * DKSBI-CENGKARENG relation even though DKSBI itself is included).
  */
 export function buildCaseFromGraphGroups(caseId: string, groups: GraphBuildGroup[]): UnifiedNetwork {
-  const substationIds = new Set(groups.map((g) => g.station.id));
+  const substations = groups
+    .flatMap((group) => [group.station, ...group.supportingSubstations])
+    .filter((item, index, all) => all.findIndex((other) => other.id === item.id) === index);
+  const substationIds = new Set(substations.map((item) => item.id));
   const lineRelations = groups
     .flatMap((g) => g.lineRelations)
     .filter((r, index, all) => all.findIndex((other) => other.id === r.id) === index)
@@ -814,7 +1015,7 @@ export function buildCaseFromGraphGroups(caseId: string, groups: GraphBuildGroup
 
   const network: UnifiedNetwork = {
     caseId,
-    substations: groups.map((g) => g.station),
+    substations,
     busbars: [],
     bays,
     terminals: [],
@@ -826,13 +1027,42 @@ export function buildCaseFromGraphGroups(caseId: string, groups: GraphBuildGroup
   // matches (see relay-catalog-builder.ts) — this is the first real source
   // of relay identity for this pipeline; previously always empty.
   const { relayIeds } = buildRelayIedsFromCatalog(network);
-  const networkWithRelays: UnifiedNetwork = { ...network, relayIeds };
+  const protectionFunctions = relayIeds.flatMap((ied) => {
+    const seen = new Set<ProtectionFunctionId>();
+    return ied.functionGroup
+      .split(/[\s+/,]/)
+      .flatMap((token) => {
+        const fn = classifyProtectionFunction(token.trim().toLowerCase());
+        if (!fn || seen.has(fn)) return [];
+        seen.add(fn);
+        return [{
+          id: `${ied.id}_${fn.toLowerCase()}`,
+          relayIedId: ied.id,
+          function: fn,
+        }];
+      });
+  });
+  const networkWithRelays: UnifiedNetwork = {
+    ...network,
+    relayIeds,
+    protectionFunctions,
+  };
   // Populate relaySettings (Z1/Z2/Z3) from the same LCD/DIST overlay records
   // already resolved per-group by overlaySettingDocs() — see
   // relay-setting-builder.ts's buildRelaySettingsFromOverlays.
   const overlays = groups.flatMap((g) => g.overlays);
-  const relaySettings = buildRelaySettingsFromOverlays(networkWithRelays, overlays);
-  return { ...networkWithRelays, relaySettings };
+  const legacyRelaySettings = buildRelaySettingsFromOverlays(networkWithRelays, overlays);
+  const helArtifacts = buildHelPhtTapArtifacts(networkWithRelays);
+  const helRelayIds = new Set(helArtifacts.relaySettings.map((item) => item.relayIedId));
+  const relaySettings = [
+    ...helArtifacts.relaySettings,
+    ...legacyRelaySettings.filter((item) => !helRelayIds.has(item.relayIedId)),
+  ];
+  return {
+    ...networkWithRelays,
+    relaySettings,
+    settingRecords: helArtifacts.settingRecords,
+  };
 }
 
 // Same id as network-graph.ts's INVENTORY_MASTER_CASE_ID (kept as a literal
@@ -860,7 +1090,13 @@ let fullGraphCache: UnifiedNetwork | null = null;
 export function getFullAnchoredNetwork(): UnifiedNetwork {
   if (!fullGraphCache) {
     const { groups } = buildGraphForUltg();
-    fullGraphCache = buildCaseFromGraphGroups(FULL_GRAPH_CASE_ID, groups);
+    // The live graph only contains anchored evidence. Corroborated candidates
+    // (Dadap/Ulujami) stay in the Graph Builder until explicitly confirmed;
+    // identity conflicts such as Muarakarang are never promoted implicitly.
+    fullGraphCache = buildCaseFromGraphGroups(
+      FULL_GRAPH_CASE_ID,
+      groups.filter((group) => group.indicators.topology === "source_anchored")
+    );
   }
   return fullGraphCache;
 }

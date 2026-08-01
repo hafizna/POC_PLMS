@@ -1,10 +1,8 @@
 import { useMemo } from "react";
 import { Calculator, GitCompareArrows, Route } from "lucide-react";
-import { NETWORK_CASES, RegistryConfidence } from "../../domain/seed-network-registry";
+import { RegistryConfidence } from "../../domain/seed-network-registry";
 import {
-  getEffectiveNetworkGraph,
   INVENTORY_MASTER_CASE_ID,
-  mergeMasterRelationsIntoCase,
   networkLinesFromGraph,
   networkNodesFromGraph,
   relayAssetsFromGraph,
@@ -15,10 +13,11 @@ import {
 } from "../../domain/lcd-dist-import";
 import { findComparisonBayIdForLine } from "../../domain/seed-comparison";
 import { buildRelationStatuses } from "../../domain/relation-status";
-import { buildUnifiedNetwork, LifecycleStatus } from "../../domain/unified";
+import { LifecycleStatus } from "../../domain/unified";
 import { useProsetStore } from "../../store/useProsetStore";
 import { LineDetailPanel } from "./LineDetailPanel";
 import { ctRatioText, getEffectiveCtVt, vtRatioText } from "../../domain/instrument-transformers";
+import { getConfirmedMasterNetwork } from "../../domain/study-network";
 
 const confidenceClass: Record<RegistryConfidence, string> = {
   high: "bg-emerald-50 text-emerald-700 border-emerald-200",
@@ -69,41 +68,28 @@ function dedupePromotions<
 }
 
 export function LineRegistryView() {
-  const activeCaseId = useProsetStore((s) => s.activeNetworkCaseId);
   const activeLineId = useProsetStore((s) => s.activeNetworkLineId);
   const setTab = useProsetStore((s) => s.setTab);
   const selectLine = useProsetStore((s) => s.selectLine);
+  const ensureStudyForLine = useProsetStore((s) => s.ensureStudyForLine);
   const decisions = useProsetStore((s) => s.candidateDecisions);
   const ctVtOverrides = useProsetStore((s) => s.ctVtOverrides);
-  const activeCase =
-    NETWORK_CASES.find((item) => item.id === activeCaseId) ?? NETWORK_CASES[0];
-  const inventoryCase =
-    NETWORK_CASES.find((item) => item.id === INVENTORY_MASTER_CASE_ID) ?? activeCase;
-  const networkGraphOverride = useProsetStore((s) => s.networkGraphOverrides[activeCase.id]);
   const masterNetworkGraphOverride = useProsetStore((s) => s.networkGraphOverrides[INVENTORY_MASTER_CASE_ID]);
-  const fallbackNetworkGraph = useMemo(() => buildUnifiedNetwork(activeCase), [activeCase]);
-  const masterFallbackNetworkGraph = useMemo(() => buildUnifiedNetwork(inventoryCase), [inventoryCase]);
-  const masterNetworkGraph = getEffectiveNetworkGraph(
-    INVENTORY_MASTER_CASE_ID,
-    masterNetworkGraphOverride,
-    masterFallbackNetworkGraph
+  const effectiveNetworkGraph = useMemo(
+    () => getConfirmedMasterNetwork(masterNetworkGraphOverride),
+    [masterNetworkGraphOverride]
   );
-  const baseNetworkGraph = getEffectiveNetworkGraph(activeCase.id, networkGraphOverride, fallbackNetworkGraph);
-  const effectiveNetworkGraph = mergeMasterRelationsIntoCase(baseNetworkGraph, masterNetworkGraph);
-  const localRelationCount = baseNetworkGraph?.lineRelations.length ?? 0;
-  const bridgedRelationCount =
-    effectiveNetworkGraph?.lineRelations.filter((relation) => relation.sourceIds.includes("master-inventory")).length ?? 0;
   const nodes = useMemo(
-    () => (effectiveNetworkGraph ? networkNodesFromGraph(effectiveNetworkGraph) : activeCase.nodes),
-    [activeCase.nodes, effectiveNetworkGraph]
+    () => networkNodesFromGraph(effectiveNetworkGraph),
+    [effectiveNetworkGraph]
   );
   const lines = useMemo(
-    () => (effectiveNetworkGraph ? networkLinesFromGraph(effectiveNetworkGraph) : activeCase.lines),
-    [activeCase.lines, effectiveNetworkGraph]
+    () => networkLinesFromGraph(effectiveNetworkGraph),
+    [effectiveNetworkGraph]
   );
   const relays = useMemo(
-    () => (effectiveNetworkGraph ? relayAssetsFromGraph(effectiveNetworkGraph) : activeCase.relays),
-    [activeCase.relays, effectiveNetworkGraph]
+    () => relayAssetsFromGraph(effectiveNetworkGraph),
+    [effectiveNetworkGraph]
   );
 
   // Reuse promoted import data for "import-backed" badge.
@@ -115,31 +101,31 @@ export function LineRegistryView() {
   const promotedByLine = new Map(promotedLines.map((line) => [line.matchedLineId, line]));
   const pdfTapPromotionsAll = useProsetStore((s) => s.pdfTapPromotions);
   const pdfTapPromotionsForCase = useMemo(
-    () => pdfTapPromotionsAll.filter((p) => p.caseId === activeCase.id),
-    [pdfTapPromotionsAll, activeCase.id]
+    () => pdfTapPromotionsAll.filter((p) => p.caseId === INVENTORY_MASTER_CASE_ID),
+    [pdfTapPromotionsAll]
   );
   const calculationSnapshotsAll = useProsetStore((s) => s.calculationSnapshots);
   const calculationSnapshotsForCase = useMemo(
-    () => calculationSnapshotsAll.filter((snapshot) => snapshot.caseId === activeCase.id),
-    [calculationSnapshotsAll, activeCase.id]
+    () => calculationSnapshotsAll.filter((snapshot) => snapshot.caseId === INVENTORY_MASTER_CASE_ID),
+    [calculationSnapshotsAll]
   );
   const relationStatuses = useMemo(
     () => buildRelationStatuses(nodes, lines, decisions, pdfTapPromotionsForCase, calculationSnapshotsForCase),
     [nodes, lines, decisions, pdfTapPromotionsForCase, calculationSnapshotsForCase]
   );
 
-  const openCalculation = (lineId: string) => {
-    selectLine(lineId);
+  const openCalculation = async (lineId: string) => {
+    if (!await ensureStudyForLine(lineId)) return;
     setTab("calculation");
   };
-  const openCoverage = (lineId: string) => {
-    selectLine(lineId);
+  const openCoverage = async (lineId: string) => {
+    if (!await ensureStudyForLine(lineId)) return;
     setTab("coverage");
   };
-  const openComparison = (lineId: string) => {
+  const openComparison = async (lineId: string) => {
     const comparisonBayId = findComparisonBayIdForLine(lineId);
     if (!comparisonBayId) return;
-    selectLine(lineId);
+    await selectLine(lineId);
     setTab("comparison");
   };
 
@@ -159,12 +145,10 @@ export function LineRegistryView() {
         </div>
         <div className="mt-3 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 flex items-center justify-between gap-3 flex-wrap">
           <div className="text-xs text-slate-600">
-            Active registry scope: <span className="font-semibold text-slate-800">{localRelationCount}</span> local relation
-            {localRelationCount === 1 ? "" : "s"} plus <span className="font-semibold text-blue-700">{bridgedRelationCount}</span> bridged relation
-            {bridgedRelationCount === 1 ? "" : "s"} from ULTG Inventory master.
+            Source: <span className="font-semibold text-slate-800">confirmed master graph</span>. Memilih relasi tidak mengaktifkan corridor demo; Calculate/Coverage membuat atau memakai Study untuk relasi itu.
           </div>
           <span className="text-[10px] px-2 py-1 rounded border border-blue-200 bg-blue-50 text-blue-700">
-            master-aware view
+            {lines.length} confirmed relations
           </span>
         </div>
       </section>
@@ -222,7 +206,7 @@ export function LineRegistryView() {
                 return (
                   <tr
                     key={line.id}
-                    onClick={() => selectLine(line.id)}
+                    onClick={() => void selectLine(line.id)}
                     className={`border-b border-slate-100 last:border-b-0 cursor-pointer transition-colors ${
                       isActive ? "bg-blue-50" : "hover:bg-slate-50"
                     }`}
@@ -313,9 +297,9 @@ export function LineRegistryView() {
                     </td>
                     <td className="px-4 py-3 align-top">
                       <div className="flex flex-col gap-1.5 min-w-28">
-                        <ActionButton label="Calculate" icon={<Calculator className="w-3.5 h-3.5" />} onClick={() => openCalculation(line.id)} />
-                        <ActionButton label="Coverage" icon={<Route className="w-3.5 h-3.5" />} onClick={() => openCoverage(line.id)} />
-                        <ActionButton label="Compare" icon={<GitCompareArrows className="w-3.5 h-3.5" />} onClick={() => openComparison(line.id)} disabled={!compareBay} />
+                        <ActionButton label="Calculate" icon={<Calculator className="w-3.5 h-3.5" />} onClick={() => void openCalculation(line.id)} />
+                        <ActionButton label="Coverage" icon={<Route className="w-3.5 h-3.5" />} onClick={() => void openCoverage(line.id)} />
+                        <ActionButton label="Compare" icon={<GitCompareArrows className="w-3.5 h-3.5" />} onClick={() => void openComparison(line.id)} disabled={!compareBay} />
                       </div>
                     </td>
                   </tr>
@@ -338,8 +322,9 @@ export function LineRegistryView() {
         return (
           <LineDetailPanel
             line={activeLine}
-            activeCase={activeCase}
-            networkGraph={effectiveNetworkGraph ?? undefined}
+            nodes={nodes}
+            scopeTitle="Confirmed Master Graph"
+            networkGraph={effectiveNetworkGraph}
             status={relationStatuses.get(activeLine.id)}
           />
         );

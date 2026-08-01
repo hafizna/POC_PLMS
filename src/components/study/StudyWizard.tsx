@@ -1,13 +1,8 @@
 import { useMemo, useState } from "react";
 import { AlertCircle, ArrowRight, CheckCircle2, FileSpreadsheet, Search, X } from "lucide-react";
 import { useProsetStore } from "../../store/useProsetStore";
-import {
-  getEffectiveNetworkGraph,
-  INVENTORY_MASTER_CASE_ID,
-  mergeMasterRelationsIntoCase,
-} from "../../domain/network-graph";
-import { buildUnifiedNetwork } from "../../domain/unified";
-import { NETWORK_CASES } from "../../domain/seed-network-registry";
+import { INVENTORY_MASTER_CASE_ID } from "../../domain/network-graph";
+import { getConfirmedMasterNetwork } from "../../domain/study-network";
 import { CROSSCHECK_WORKBOOK_REGISTRY } from "../../domain/crosscheck-workbook-registry";
 
 type WizardStep = 1 | 2 | 3;
@@ -26,32 +21,12 @@ export function StudyWizard({ onClose }: { onClose: () => void }) {
   const createStudy = useProsetStore((s) => s.createStudy);
   const networkGraphOverrides = useProsetStore((s) => s.networkGraphOverrides);
 
-  const inventoryCase =
-    NETWORK_CASES.find((item) => item.id === INVENTORY_MASTER_CASE_ID) ?? NETWORK_CASES[0];
-  const corridorCase =
-    NETWORK_CASES.find((item) => item.id === "case_dks_dm_pik_mkb") ?? inventoryCase;
-  const corridorFallbackNetworkGraph = useMemo(() => buildUnifiedNetwork(corridorCase), [corridorCase]);
-  const masterFallbackNetworkGraph = useMemo(() => buildUnifiedNetwork(inventoryCase), [inventoryCase]);
-  const masterNetworkGraph = useMemo(
-    () =>
-      getEffectiveNetworkGraph(
-        INVENTORY_MASTER_CASE_ID,
-        networkGraphOverrides[INVENTORY_MASTER_CASE_ID],
-        masterFallbackNetworkGraph
-    ),
-    [masterFallbackNetworkGraph, networkGraphOverrides]
-  );
   const workingNetworkGraph = useMemo(
     () =>
-      mergeMasterRelationsIntoCase(
-        getEffectiveNetworkGraph(
-          corridorCase.id,
-          networkGraphOverrides[corridorCase.id],
-          corridorFallbackNetworkGraph
-        ),
-        masterNetworkGraph
+      getConfirmedMasterNetwork(
+        networkGraphOverrides[INVENTORY_MASTER_CASE_ID]
       ),
-    [corridorCase.id, corridorFallbackNetworkGraph, masterNetworkGraph, networkGraphOverrides]
+    [networkGraphOverrides]
   );
 
   const candidateBays = useMemo(() => {

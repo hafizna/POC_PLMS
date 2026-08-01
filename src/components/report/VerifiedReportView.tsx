@@ -1,10 +1,7 @@
 import { useMemo } from "react";
 import { FileCheck2, Printer, TriangleAlert } from "lucide-react";
-import { NETWORK_CASES } from "../../domain/seed-network-registry";
 import {
-  getEffectiveNetworkGraph,
   INVENTORY_MASTER_CASE_ID,
-  mergeMasterRelationsIntoCase,
   networkLinesFromGraph,
   networkNodesFromGraph,
   relayAssetsFromGraph,
@@ -17,53 +14,44 @@ import { findComparisonBayIdForLine } from "../../domain/seed-comparison";
 import { summarizeBay } from "../../lib/mismatch-classifier";
 import { calculateDistanceSetting, DEFAULT_DISTANCE_INPUT } from "../../lib/distance-calculation";
 import { runGraphCoordinationChecks } from "../../lib/graph-coordination";
-import { buildUnifiedNetwork } from "../../domain/unified";
 import { useProsetStore } from "../../store/useProsetStore";
 import { ctRatioText, getEffectiveCtVt, vtRatioText } from "../../domain/instrument-transformers";
+import { deriveStudyNetwork, getConfirmedMasterNetwork } from "../../domain/study-network";
 
 export function VerifiedReportView() {
-  const activeCaseId = useProsetStore((s) => s.activeNetworkCaseId);
   const activeLineId = useProsetStore((s) => s.activeNetworkLineId);
   const networkGraphOverrides = useProsetStore((s) => s.networkGraphOverrides);
   const ctVtOverrides = useProsetStore((s) => s.ctVtOverrides);
   const comparisonBays = useProsetStore((s) => s.comparisonBays);
+  const openedFromCaseId = useProsetStore((s) => s.openedFromCaseId);
+  const verificationRuns = useProsetStore((s) => s.verificationRuns);
+  const activeStudy = useProsetStore((s) => s.studies.find((study) => study.id === s.activeStudyId));
+  const caseVerificationRuns = verificationRuns.filter(
+    (run) => run.caseId === openedFromCaseId
+  );
 
-  const activeCase =
-    NETWORK_CASES.find((item) => item.id === activeCaseId) ?? NETWORK_CASES[0];
-  const inventoryCase =
-    NETWORK_CASES.find((item) => item.id === INVENTORY_MASTER_CASE_ID) ?? activeCase;
-  const fallbackNetworkGraph = useMemo(() => buildUnifiedNetwork(activeCase), [activeCase]);
-  const masterFallbackNetworkGraph = useMemo(() => buildUnifiedNetwork(inventoryCase), [inventoryCase]);
   const masterNetworkGraph = useMemo(
-    () =>
-      getEffectiveNetworkGraph(
-        INVENTORY_MASTER_CASE_ID,
-        networkGraphOverrides[INVENTORY_MASTER_CASE_ID],
-        masterFallbackNetworkGraph
-      ),
-    [masterFallbackNetworkGraph, networkGraphOverrides]
+    () => getConfirmedMasterNetwork(networkGraphOverrides[INVENTORY_MASTER_CASE_ID]),
+    [networkGraphOverrides]
   );
-  const networkGraph = useMemo(
-    () =>
-      mergeMasterRelationsIntoCase(
-        getEffectiveNetworkGraph(activeCase.id, networkGraphOverrides[activeCase.id], fallbackNetworkGraph),
-        masterNetworkGraph
-      ),
-    [activeCase.id, fallbackNetworkGraph, masterNetworkGraph, networkGraphOverrides]
+  const studyResolution = useMemo(
+    () => deriveStudyNetwork(masterNetworkGraph, activeStudy),
+    [activeStudy, masterNetworkGraph]
   );
+  const networkGraph = studyResolution.network;
   const nodes = useMemo(
-    () => (networkGraph ? networkNodesFromGraph(networkGraph) : activeCase.nodes),
-    [activeCase.nodes, networkGraph]
+    () => (networkGraph ? networkNodesFromGraph(networkGraph) : []),
+    [networkGraph]
   );
   const lines = useMemo(
-    () => (networkGraph ? networkLinesFromGraph(networkGraph) : activeCase.lines),
-    [activeCase.lines, networkGraph]
+    () => (networkGraph ? networkLinesFromGraph(networkGraph) : []),
+    [networkGraph]
   );
   const relays = useMemo(
-    () => (networkGraph ? relayAssetsFromGraph(networkGraph) : activeCase.relays),
-    [activeCase.relays, networkGraph]
+    () => (networkGraph ? relayAssetsFromGraph(networkGraph) : []),
+    [networkGraph]
   );
-  const activeLine = lines.find((line) => line.id === activeLineId) ?? lines[0];
+  const activeLine = lines.find((line) => line.id === activeLineId);
   const from = activeLine ? nodes.find((node) => node.id === activeLine.fromNodeId) : undefined;
   const to = activeLine ? nodes.find((node) => node.id === activeLine.toNodeId) : undefined;
   const promoted = activeLine
@@ -110,16 +98,47 @@ export function VerifiedReportView() {
   const issueCount = diagnostics.filter((item) => item.severity === "error" || item.severity === "warning").length;
   const hasRelaySettings = Boolean(networkGraph?.relaySettings?.length);
 
-  if (!activeLine) {
+  if (!studyResolution.ready || !activeLine) {
     return (
-      <section className="bg-white border border-dashed border-slate-300 rounded-lg p-8 text-center text-sm text-slate-500">
-        Pilih line dari Setting Register dulu untuk membuat verified report.
+      <section className="rounded-lg border border-amber-200 bg-amber-50 p-8 text-center text-sm text-amber-900">
+        <div className="font-semibold">Verified report membutuhkan Study berbasis bay/line.</div>
+        <div className="mt-2 text-xs text-amber-800">
+          {studyResolution.blockers.join(" ") || "Pilih line dari Setting Register terlebih dahulu."}
+        </div>
       </section>
     );
   }
 
   return (
     <div className="space-y-4">
+      {openedFromCaseId && (
+        <section className="rounded-lg border border-emerald-200 bg-emerald-50 p-4">
+          <div className="text-xs font-semibold uppercase tracking-wider text-emerald-800">
+            Saved O1 Verification Runs
+          </div>
+          {caseVerificationRuns.length === 0 ? (
+            <p className="mt-2 text-xs text-emerald-800">
+              Belum ada Verification Run tersimpan untuk case ini.
+            </p>
+          ) : (
+            <div className="mt-3 space-y-2">
+              {caseVerificationRuns.map((run) => (
+                <div key={run.id} className="grid gap-2 rounded-md border border-emerald-200 bg-white p-3 text-xs sm:grid-cols-[1fr_auto_auto_auto] sm:items-center">
+                  <div>
+                    <div className="font-semibold text-slate-900">{run.sourceFileName}</div>
+                    <div className="mt-0.5 text-[10px] text-slate-500">
+                      {run.evidenceAuthority} · {run.acquisitionManifest?.deviceIdentity ?? "document evidence"} · {new Date(run.createdAt).toLocaleString("id-ID")}
+                    </div>
+                  </div>
+                  <span className="font-mono text-slate-600">coverage {run.report.coveragePercent.toFixed(0)}%</span>
+                  <span className="font-mono text-slate-600">{Object.keys(run.dispositions ?? {}).length} disposition</span>
+                  <span className={`w-fit rounded border px-2 py-1 font-bold ${run.report.decision === "PASS" ? "border-emerald-200 bg-emerald-50 text-emerald-700" : run.report.decision === "FAIL" ? "border-red-200 bg-red-50 text-red-700" : "border-amber-200 bg-amber-50 text-amber-700"}`}>{run.report.decision}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
       <section className="bg-white border border-slate-200 rounded-lg p-4 print:border-0">
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div className="flex items-start gap-3">
@@ -147,7 +166,7 @@ export function VerifiedReportView() {
       <section className="bg-white border border-slate-200 rounded-lg p-4">
         <h3 className="text-xs uppercase tracking-wider font-semibold text-slate-600 mb-3">Study Context</h3>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <ReportTile label="Study case" value={activeCase.title} />
+          <ReportTile label="Study" value={activeStudy?.name ?? "-"} />
           <ReportTile label="Subject line" value={`${from?.shortCode ?? activeLine.fromNodeId} - ${to?.shortCode ?? activeLine.toNodeId} ${activeLine.circuit}`} />
           <ReportTile label="Relay assets" value={String(relays.length)} />
           <ReportTile label="Lifecycle basis" value={promoted ? "import-backed" : "seed/manual"} />

@@ -1,5 +1,9 @@
 import assert from "node:assert/strict";
-import { parseMicomCourierSet } from "../src/domain/vendor-import";
+import {
+  adaptRioXrioResult,
+  parseMicomCourierSet,
+  vendorImportToVerificationText,
+} from "../src/domain/vendor-import";
 
 const encoder = new TextEncoder();
 
@@ -135,6 +139,26 @@ const blinders = result.parameters.find(
 assert.equal(blinders?.value, "Enabled");
 assert.equal(blinders?.canonicalKey, "distance.load_blinder.enabled");
 
+const rio = adaptRioXrioResult(
+  {
+    kind: "xrio",
+    zones: [{
+      label: "Zone 1",
+      shapeSource: "named-fields",
+      xReachOhm: 4.2,
+      rfppOhmPerLoop: 8.5,
+      timeDelayPpS: 0,
+    }],
+    earthComp: { k0: 0.7, angleDeg: 15, source: "fixture" },
+  },
+  "readback-7SL87.xrio",
+  "SIPROTEC 7SL87"
+);
+assert.equal(rio.adapterId, "rio-xrio-v1");
+assert.equal(rio.vendor, "Siemens / SIPROTEC");
+assert.equal(rio.parameters.find((item) => item.rawName === "Z1 Ph. Reach")?.value, 4.2);
+assert.match(vendorImportToVerificationText(rio), /t?Z1 Ph\. (?:Reach|Delay)=/);
+
 console.log(
-  `Vendor import tests passed (${result.coverage.decodedRecords} Courier records decoded).`
+  `Vendor import tests passed (${result.coverage.decodedRecords} Courier records decoded + RIO/XRIO canonical handoff).`
 );

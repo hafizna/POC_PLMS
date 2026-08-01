@@ -1,5 +1,10 @@
 import assert from "node:assert/strict";
-import { buildAnchorTopology, resolveUltgScope } from "../src/domain/graph-builder";
+import {
+  buildAnchorTopology,
+  buildGraphForUltg,
+  getFullAnchoredNetwork,
+  resolveUltgScope,
+} from "../src/domain/graph-builder";
 
 // Reported issue: Durikosambi-Kembangan should have 3 relations (2x150kV +
 // 1x500kV) but the graph builder was silently dropping the 500kV path,
@@ -84,6 +89,25 @@ const gandul500 = anchor.substations.find(
 assert.ok(
   gandul500,
   "expected Gandul's 500kV section (GANDUL7, touched by GNDUL-KMBGN lines) to resolve at 500kV"
+);
+
+const { groups } = buildGraphForUltg();
+const dadap = groups.find((group) => group.station.normalizedName === "dadap");
+const ulujami = groups.find((group) => group.station.normalizedName === "ulujami");
+const muarakarang = groups.find((group) =>
+  group.station.id === "sub_unresolved_gi_muarakarang_baru"
+);
+assert.equal(dadap?.indicators.topology, "corroborated_candidate");
+assert.equal(ulujami?.indicators.topology, "corroborated_candidate");
+assert.equal(muarakarang?.indicators.topology, "identity_conflict");
+assert.ok(dadap?.lineRelations.length, "Dadap confirmation candidate must retain its inferred relations");
+assert.ok(ulujami?.indicators.reciprocalEvidence, "Ulujami must retain reciprocal corroboration");
+assert.equal(
+  getFullAnchoredNetwork().lineRelations.some((relation) =>
+    relation.sourceIds.some((sourceId) => sourceId.startsWith("engineer-confirmation"))
+  ),
+  false,
+  "corroborated candidates must not enter the live graph before Graph Builder confirmation"
 );
 
 console.log(

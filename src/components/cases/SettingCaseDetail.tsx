@@ -29,6 +29,12 @@ import { ImpactReadinessPanel } from "./ImpactReadinessPanel";
 import { StudyBindingPanel } from "./StudyBindingPanel";
 import { assessCrosscheckEvidence } from "../../domain/case-flow-hardening";
 import { buildGraphForUltg } from "../../domain/graph-builder";
+import { INVENTORY_MASTER_CASE_ID } from "../../domain/network-graph";
+import { getConfirmedMasterNetwork } from "../../domain/study-network";
+import {
+  buildScopedTopologyCandidates,
+  topologyDecisionKey,
+} from "../../domain/topology-remediation";
 
 // Which existing workspace(s) support the work of each stage. The case is
 // the workflow container; the tools stay where they are and are opened
@@ -36,8 +42,22 @@ import { buildGraphForUltg } from "../../domain/graph-builder";
 // direct "Existing Tools" links were removed once every implemented P2
 // stage had a home here, so a tool never floats free of its case).
 const STAGE_TOOL: Partial<Record<SettingCaseStage, { tab: Tab; label: string }[]>> = {
-  scoping: [{ tab: "network-model", label: "Working Network" }],
+  scoping: [
+    { tab: "network-model", label: "Working Network" },
+    { tab: "inbox", label: "Topology Remediation" },
+  ],
+  document_audit: [
+    { tab: "reference-setting", label: "Issued Reference" },
+    { tab: "vendor-import", label: "TAP Intake" },
+    { tab: "comparison", label: "Actual Verification" },
+  ],
+  actual_readback_intake: [
+    { tab: "reference-setting", label: "Issued Reference" },
+    { tab: "vendor-import", label: "Vendor Readback Intake" },
+    { tab: "comparison", label: "Actual Verification" },
+  ],
   data_change_preparation: [
+    { tab: "inbox", label: "Topology Remediation" },
     { tab: "network-graph-editor", label: "Network Builder" },
   ],
   study_preparation: [
@@ -46,6 +66,10 @@ const STAGE_TOOL: Partial<Record<SettingCaseStage, { tab: Tab; label: string }[]
   ],
   calculation: [{ tab: "calculation", label: "Calculation Workbook" }],
   coordination: [{ tab: "coverage", label: "Coordination / Coverage" }],
+  verification: [
+    { tab: "comparison", label: "Actual Verification" },
+    { tab: "verified-report", label: "Verified Report" },
+  ],
 };
 
 export function SettingCaseDetail({
@@ -64,6 +88,11 @@ export function SettingCaseDetail({
   const linkToCase = useProsetStore((s) => s.linkToSettingCase);
   const unlinkFromCase = useProsetStore((s) => s.unlinkFromSettingCase);
   const sourceIntakeRecords = useProsetStore((s) => s.sourceIntakeRecords);
+  const vendorImportDraft = useProsetStore((s) => s.vendorImportHandoffDraft);
+  const masterNetworkOverride = useProsetStore(
+    (state) => state.networkGraphOverrides[INVENTORY_MASTER_CASE_ID]
+  );
+  const graphBuildDecisions = useProsetStore((state) => state.graphBuildDecisions);
 
   const [advanceNote, setAdvanceNote] = useState("");
   const [attachSource, setAttachSource] = useState("");
@@ -119,7 +148,50 @@ export function SettingCaseDetail({
     studyPackageReady: latestStudyPackage?.status === "compatible",
     crosscheckEvidenceBlockers: crosscheckEvidence.blockers,
     crosscheckEvidenceWarnings: crosscheckEvidence.warnings,
+    crosscheckIntakeReady:
+      settingCase.flowProfile.crosscheckMode === "issued_tap_document_audit"
+        ? vendorImportDraft?.caseId === settingCase.id &&
+          vendorImportDraft.adapterId === "tap-pdf-profile-v1"
+        : vendorImportDraft?.caseId === settingCase.id &&
+          vendorImportDraft.evidenceAuthority === "actual_readback" &&
+          Boolean(vendorImportDraft.acquisitionManifest),
+    verificationRunCount: settingCase.links.verificationRunIds?.length ?? 0,
   });
+  const topologyGraph = useMemo(() => buildGraphForUltg(), []);
+  const confirmedMaster = useMemo(
+    () => getConfirmedMasterNetwork(masterNetworkOverride),
+    [masterNetworkOverride]
+  );
+  const topologyCandidates = useMemo(
+    () => buildScopedTopologyCandidates(topologyGraph.groups, {
+      id: settingCase.id,
+      subjectLineId: settingCase.protectedScope.subjectLineId,
+      subjectBayId: settingCase.protectedScope.subjectBayId,
+      substationIds: settingCase.protectedScope.substationIds,
+    }),
+    [settingCase.id, settingCase.protectedScope, topologyGraph.groups]
+  );
+  const pendingTopologyCount = topologyCandidates.filter((candidate) => {
+    const decisionKey = topologyDecisionKey(settingCase.id, candidate.relation.id);
+    return (
+      !confirmedMaster.lineRelations.some((relation) => relation.id === candidate.relation.id) &&
+      !graphBuildDecisions[decisionKey]
+    );
+  }).length;
+  const rejectedTopologyCount = topologyCandidates.filter(
+    (candidate) =>
+      graphBuildDecisions[topologyDecisionKey(settingCase.id, candidate.relation.id)]?.status === "rejected"
+  ).length;
+  const subjectLineReady = settingCase.protectedScope.subjectLineId
+    ? confirmedMaster.lineRelations.some(
+        (relation) => relation.id === settingCase.protectedScope.subjectLineId
+      )
+    : settingCase.protectedScope.substationIds.length > 0 &&
+      settingCase.protectedScope.substationIds.every((substationId) =>
+        confirmedMaster.substations.some((station) => station.id === substationId)
+      );
+  const topologyReady =
+    subjectLineReady && pendingTopologyCount === 0 && rejectedTopologyCount === 0;
 
   const stageTools = terminal
     ? undefined
@@ -136,8 +208,7 @@ export function SettingCaseDetail({
       // activeNetworkCaseId/activeNetworkLineId completely untouched,
       // showing whatever context was previously active (often the stale
       // demo case) instead of the GI this case is actually about.
-      const { groups } = buildGraphForUltg();
-      const group = groups.find((g) =>
+      const group = topologyGraph.groups.find((g) =>
         settingCase.protectedScope.substationIds.includes(g.station.id)
       );
       const relation = group?.lineRelations[0];
@@ -230,6 +301,37 @@ export function SettingCaseDetail({
           )}
         </div>
       </div>
+
+      <section className={`mb-5 rounded-lg border p-4 ${topologyReady ? "border-emerald-200 bg-emerald-50" : "border-amber-200 bg-amber-50"}`}>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <div className={`font-mono text-[10px] font-semibold uppercase tracking-wider ${topologyReady ? "text-emerald-700" : "text-amber-700"}`}>
+              Topology readiness
+            </div>
+            <div className={`mt-1 text-sm font-semibold ${topologyReady ? "text-emerald-950" : "text-amber-950"}`}>
+              {topologyReady ? "Scope topology tersedia" : "Scope topology perlu remediation"}
+            </div>
+            <p className={`mt-1 text-xs ${topologyReady ? "text-emerald-800" : "text-amber-800"}`}>
+              {topologyReady
+                ? topologyCandidates.length > 0
+                  ? `${topologyCandidates.length} relation card sesuai scope case dan sudah tersedia pada confirmed master.`
+                  : "Subject relation tersedia pada confirmed master; tidak memerlukan candidate card."
+                : pendingTopologyCount > 0
+                  ? `${pendingTopologyCount} kandidat relation menunggu keputusan engineer${rejectedTopologyCount > 0 ? `; ${rejectedTopologyCount} ditolak` : ""}.`
+                  : rejectedTopologyCount > 0
+                    ? `${rejectedTopologyCount} kandidat relation ditolak. Perbarui evidence endpoint/circuit sebelum diajukan kembali.`
+                    : "Subject/endpoint case belum ditemukan pada source topology. Tambahkan evidence endpoint dan circuit; jangan gunakan relasi tebakan."}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => openTool("inbox")}
+            className={`inline-flex items-center gap-1.5 rounded-md border bg-white px-3 py-1.5 text-xs font-semibold ${topologyReady ? "border-emerald-300 text-emerald-800 hover:bg-emerald-100" : "border-amber-300 text-amber-800 hover:bg-amber-100"}`}
+          >
+            <ExternalLink className="h-3.5 w-3.5" /> {topologyReady ? "Lihat relation cards" : "Buka Topology Remediation"}
+          </button>
+        </div>
+      </section>
 
       {/* stage chain */}
       <p className="mb-2 font-mono text-[11px] font-semibold uppercase tracking-[0.09em] text-ink-2">

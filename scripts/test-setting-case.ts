@@ -739,6 +739,51 @@ assert.equal(
   ]).ready,
   true
 );
+assert.equal(isStageImplemented("document_audit"), true);
+assert.equal(isStageImplemented("actual_readback_intake"), true);
+assert.equal(isStageImplemented("verification"), true);
+const intakeGate = stageGate(
+  { ...crosscheckCase, stage: "actual_readback_intake" },
+  {
+    evidenceCount: 1,
+    hasScenario: false,
+    calculationCount: 0,
+    coordinationCheckCount: 0,
+    changeSetCount: 0,
+    persona: "Engineer",
+    hasBaseline: true,
+    proposedRevisionReady: false,
+    impactAssessmentReady: false,
+    studyBindingReady: false,
+    studyPackageReady: false,
+    crosscheckEvidenceBlockers: [],
+    crosscheckEvidenceWarnings: [],
+    crosscheckIntakeReady: false,
+    verificationRunCount: 0,
+  }
+);
+assert.equal(intakeGate.blockers.length, 1);
+const verificationGate = stageGate(
+  { ...crosscheckCase, stage: "verification" },
+  {
+    evidenceCount: 1,
+    hasScenario: false,
+    calculationCount: 0,
+    coordinationCheckCount: 0,
+    changeSetCount: 0,
+    persona: "Engineer",
+    hasBaseline: true,
+    proposedRevisionReady: false,
+    impactAssessmentReady: false,
+    studyBindingReady: false,
+    studyPackageReady: false,
+    crosscheckEvidenceBlockers: [],
+    crosscheckEvidenceWarnings: [],
+    crosscheckIntakeReady: true,
+    verificationRunCount: 1,
+  }
+);
+assert.deepEqual(verificationGate.blockers, []);
 
 const emergencyCase = createSettingCaseObject(
   {

@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   AlertCircle,
   AlertTriangle,
@@ -44,10 +44,16 @@ export function ActualVerificationView() {
   const importedDraft = useProsetStore(
     (state) => state.vendorImportHandoffDraft
   );
+  const openedFromCaseId = useProsetStore((state) => state.openedFromCaseId);
+  const saveVerificationRun = useProsetStore((state) => state.saveVerificationRun);
+  const caseImportedDraft =
+    !openedFromCaseId || importedDraft?.caseId === openedFromCaseId
+      ? importedDraft
+      : null;
   const setTab = useProsetStore((state) => state.setTab);
   const [sourceKind, setSourceKind] =
     useState<VerificationSourceKind>(
-      importedDraft ? "vendor-import" : "manual"
+      caseImportedDraft ? "vendor-import" : "manual"
     );
   const [currentBasis, setCurrentBasis] = useState<ValueBasis>("secondary");
   const [impedanceBasis, setImpedanceBasis] =
@@ -58,14 +64,20 @@ export function ActualVerificationView() {
     "database" | "calculated"
   >(reference?.databaseBaseline ? "database" : "calculated");
   const [editorText, setEditorText] = useState(
-    importedDraft?.normalizedText ?? ""
+    caseImportedDraft?.normalizedText ?? ""
   );
   const [parsedText, setParsedText] = useState(
-    importedDraft?.normalizedText ?? ""
+    caseImportedDraft?.normalizedText ?? ""
   );
   const [fileName, setFileName] = useState(
-    importedDraft?.sourceFileName ?? ""
+    caseImportedDraft?.sourceFileName ?? ""
   );
+  const [savedRunId, setSavedRunId] = useState("");
+  const [dispositions, setDispositions] = useState<Record<string, {
+    action: "accept_as_found" | "reset_required" | "reference_correction" | "investigation";
+    note?: string;
+    decidedAt: string;
+  }>>({});
   const [manualParameters, setManualParameters] = useState<
     NormalizedActualParameter[]
   >([]);
@@ -119,6 +131,13 @@ export function ActualVerificationView() {
     currentBasis,
     impedanceBasis,
   ]);
+  const discrepancyRows = report?.rows.filter(
+    (row) => row.status === "mismatch" || row.status === "missing-actual"
+  ) ?? [];
+  const unresolvedDispositionCount = discrepancyRows.filter(
+    (row) => !dispositions[row.id]
+  ).length;
+  useEffect(() => setSavedRunId(""), [report, dispositions]);
 
   const definitions = useMemo(
     () =>
@@ -203,6 +222,8 @@ export function ActualVerificationView() {
 
   const parseEditor = () => {
     setManualParameters([]);
+    setDispositions({});
+    setSavedRunId("");
     setParsedText(editorText);
     setActiveGroup("ALL");
   };
@@ -217,6 +238,8 @@ export function ActualVerificationView() {
     setFileName("demo-actual-setting.csv");
     setSourceKind("csv");
     setManualParameters([]);
+    setDispositions({});
+    setSavedRunId("");
     setActiveGroup("ALL");
   };
 
@@ -226,6 +249,8 @@ export function ActualVerificationView() {
     setBusyLabel("");
     setPdfSummary(null);
     setPdfIdentity(null);
+    setDispositions({});
+    setSavedRunId("");
     try {
       if (file.type === "application/pdf" || /\.pdf$/i.test(file.name)) {
         setSourceKind("tap-pdf");
@@ -323,6 +348,7 @@ export function ActualVerificationView() {
       impedanceBasis,
       report,
       unmapped: remainingUnmapped,
+      dispositions,
     };
     const blob = new Blob([JSON.stringify(payload, null, 2)], {
       type: "application/json",
@@ -333,6 +359,29 @@ export function ActualVerificationView() {
     anchor.download = `plms-verification-${reference.kind}-${Date.now()}.json`;
     anchor.click();
     URL.revokeObjectURL(url);
+  };
+
+  const saveReportToCase = () => {
+    if (!report || !openedFromCaseId || unresolvedDispositionCount > 0) return;
+    const id = saveVerificationRun({
+      caseId: openedFromCaseId,
+      sourceFileName: fileName || "manual-input",
+      sourceKind,
+      adapterId: caseImportedDraft?.adapterId,
+      evidenceAuthority:
+        sourceKind === "tap-pdf" || caseImportedDraft?.adapterId === "tap-pdf-profile-v1"
+          ? "issued_document"
+          : caseImportedDraft?.evidenceAuthority ?? "derived_candidate",
+      acquisitionChecksumSha256:
+        caseImportedDraft?.acquisitionManifest?.checksumSha256,
+      acquisitionManifest: caseImportedDraft?.acquisitionManifest,
+      referenceContext: reference.contextLabel,
+      toleranceProfile: profile,
+      report,
+      unmappedCount: remainingUnmapped.length,
+      dispositions,
+    });
+    setSavedRunId(id);
   };
 
   return (
@@ -793,14 +842,28 @@ export function ActualVerificationView() {
                       : "Engineering calculation vs normalized actual document"
                   }
                   right={
-                    <button
-                      type="button"
-                      onClick={exportReport}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-2.5 py-1.5 text-[11px] font-semibold text-slate-600 hover:bg-slate-50"
-                    >
-                      <Download className="h-3.5 w-3.5" />
-                      Export evidence
-                    </button>
+                    <div className="flex flex-wrap gap-2">
+                      {openedFromCaseId && (
+                        <button
+                          type="button"
+                          onClick={saveReportToCase}
+                          disabled={unresolvedDispositionCount > 0 || Boolean(savedRunId)}
+                          title={unresolvedDispositionCount > 0 ? `${unresolvedDispositionCount} discrepancy belum didisposisi` : undefined}
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-2.5 py-1.5 text-[11px] font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                          {savedRunId ? "Saved to case" : "Save verification run"}
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={exportReport}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-2.5 py-1.5 text-[11px] font-semibold text-slate-600 hover:bg-slate-50"
+                      >
+                        <Download className="h-3.5 w-3.5" />
+                        Export evidence
+                      </button>
+                    </div>
                   }
                 >
                   <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
@@ -853,6 +916,7 @@ export function ActualVerificationView() {
                           <th className="px-3 py-2 font-semibold">Delta</th>
                           <th className="px-3 py-2 font-semibold">Tolerance</th>
                           <th className="px-3 py-2 font-semibold">Status</th>
+                          <th className="px-3 py-2 font-semibold">Disposition</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -899,6 +963,55 @@ export function ActualVerificationView() {
                             </td>
                             <td className="px-3 py-2">
                               <StatusBadge status={row.status} />
+                            </td>
+                            <td className="px-3 py-2">
+                              {row.status === "mismatch" || row.status === "missing-actual" ? (
+                                <div className="min-w-44 space-y-1">
+                                  <select
+                                    value={dispositions[row.id]?.action ?? ""}
+                                    onChange={(event) => {
+                                      const action = event.target.value as
+                                        | "accept_as_found"
+                                        | "reset_required"
+                                        | "reference_correction"
+                                        | "investigation";
+                                      setDispositions((current) => ({
+                                        ...current,
+                                        [row.id]: {
+                                          action,
+                                          note: current[row.id]?.note,
+                                          decidedAt: new Date().toISOString(),
+                                        },
+                                      }));
+                                      setSavedRunId("");
+                                    }}
+                                    className="w-full rounded border border-slate-300 bg-white px-2 py-1 text-[10px]"
+                                  >
+                                    <option value="" disabled>Pilih tindakan…</option>
+                                    <option value="reset_required">Reset required</option>
+                                    <option value="accept_as_found">Accept as found</option>
+                                    <option value="reference_correction">Correct reference</option>
+                                    <option value="investigation">Investigate</option>
+                                  </select>
+                                  {dispositions[row.id] && (
+                                    <input
+                                      value={dispositions[row.id].note ?? ""}
+                                      onChange={(event) => {
+                                        const note = event.target.value;
+                                        setDispositions((current) => ({
+                                          ...current,
+                                          [row.id]: { ...current[row.id], note },
+                                        }));
+                                        setSavedRunId("");
+                                      }}
+                                      placeholder="Catatan (opsional)"
+                                      className="w-full rounded border border-slate-300 px-2 py-1 text-[10px]"
+                                    />
+                                  )}
+                                </div>
+                              ) : (
+                                <span className="text-[10px] text-slate-400">Tidak perlu</span>
+                              )}
                             </td>
                           </tr>
                         ))}

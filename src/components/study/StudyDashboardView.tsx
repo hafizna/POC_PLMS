@@ -1,14 +1,11 @@
 import { useMemo, useState } from "react";
 import { AlertTriangle, Calculator, CheckCircle2, ClipboardList, Database, FileSearch, FileText, GitCompareArrows, Inbox, Network, Plus, Route, Search, Settings2 } from "lucide-react";
-import { NETWORK_CASES, ULTG_INVENTORY_NODES } from "../../domain/seed-network-registry";
+import { ULTG_INVENTORY_NODES } from "../../domain/seed-network-registry";
 import {
-  getEffectiveNetworkGraph,
   INVENTORY_MASTER_CASE_ID,
-  mergeMasterRelationsIntoCase,
   networkLinesFromGraph,
   networkNodesFromGraph,
 } from "../../domain/network-graph";
-import { buildUnifiedNetwork } from "../../domain/unified";
 import { useProsetStore } from "../../store/useProsetStore";
 import { normalizeStationName } from "../../domain/normalization";
 import { findComparisonBayIdForLine } from "../../domain/seed-comparison";
@@ -29,6 +26,11 @@ import {
   type SourceSnapshot,
   type StudyScenario,
 } from "../../domain/engineering-data";
+import {
+  deriveStudyNetwork,
+  getConfirmedMasterNetwork,
+  suggestedStudyScope,
+} from "../../domain/study-network";
 
 type BayStatus =
   | "perlu mapping"
@@ -60,7 +62,6 @@ export function StudyDashboardView() {
   const [search, setSearch] = useState("");
   const [isWizardOpen, setIsWizardOpen] = useState(false);
 
-  const activeCaseId = useProsetStore((s) => s.activeNetworkCaseId);
   const networkGraphOverrides = useProsetStore((s) => s.networkGraphOverrides);
   const ctVtOverrides = useProsetStore((s) => s.ctVtOverrides);
   const setTab = useProsetStore((s) => s.setTab);
@@ -68,6 +69,7 @@ export function StudyDashboardView() {
   const studies = useProsetStore((s) => s.studies);
   const activeStudyId = useProsetStore((s) => s.activeStudyId);
   const setActiveStudy = useProsetStore((s) => s.setActiveStudy);
+  const reviseStudyScope = useProsetStore((s) => s.reviseStudyScope);
   const sourceSnapshots = useProsetStore((s) => s.sourceSnapshots);
   const studyScenarios = useProsetStore((s) => s.studyScenarios);
   const setStudyScenario = useProsetStore((s) => s.setStudyScenario);
@@ -82,40 +84,31 @@ export function StudyDashboardView() {
       ),
     [activeStudy?.scenarioId, sourceSnapshots, studyScenarios]
   );
-  const activeCase =
-    NETWORK_CASES.find((item) => item.id === activeCaseId) ?? NETWORK_CASES[0];
-  const inventoryCase =
-    NETWORK_CASES.find((item) => item.id === INVENTORY_MASTER_CASE_ID) ?? activeCase;
-  
-  const fallbackNetworkGraph = useMemo(() => buildUnifiedNetwork(activeCase), [activeCase]);
-  const masterFallbackNetworkGraph = useMemo(() => buildUnifiedNetwork(inventoryCase), [inventoryCase]);
-  
   const masterNetworkGraph = useMemo(
-    () =>
-      getEffectiveNetworkGraph(
-        INVENTORY_MASTER_CASE_ID,
-        networkGraphOverrides[INVENTORY_MASTER_CASE_ID],
-        masterFallbackNetworkGraph
-      ),
-    [masterFallbackNetworkGraph, networkGraphOverrides]
+    () => getConfirmedMasterNetwork(networkGraphOverrides[INVENTORY_MASTER_CASE_ID]),
+    [networkGraphOverrides]
   );
-  
-  const networkGraph = useMemo(
-    () =>
-      mergeMasterRelationsIntoCase(
-        getEffectiveNetworkGraph(activeCase.id, networkGraphOverrides[activeCase.id], fallbackNetworkGraph),
-        masterNetworkGraph
-      ),
-    [activeCase.id, fallbackNetworkGraph, masterNetworkGraph, networkGraphOverrides]
+  const studyResolution = useMemo(
+    () => deriveStudyNetwork(masterNetworkGraph, activeStudy),
+    [activeStudy, masterNetworkGraph]
   );
+  const networkGraph = studyResolution.network;
 
   const derivedNodes = useMemo(
-    () => (networkGraph ? networkNodesFromGraph(networkGraph) : activeCase.nodes),
-    [activeCase.nodes, networkGraph]
+    () => (networkGraph ? networkNodesFromGraph(networkGraph) : []),
+    [networkGraph]
   );
   const derivedLines = useMemo(
-    () => (networkGraph ? networkLinesFromGraph(networkGraph) : activeCase.lines),
-    [activeCase.lines, networkGraph]
+    () => (networkGraph ? networkLinesFromGraph(networkGraph) : []),
+    [networkGraph]
+  );
+  const currentSuggestedScope = useMemo(() => {
+    if (!activeStudy?.subjectLineId) return activeStudy?.substationIds ?? [];
+    return suggestedStudyScope(masterNetworkGraph, activeStudy.subjectLineId);
+  }, [activeStudy, masterNetworkGraph]);
+  const scopeChangeAvailable = Boolean(
+    activeStudy &&
+      [...activeStudy.substationIds].sort().join("|") !== currentSuggestedScope.join("|")
   );
 
   const lineReadiness = useMemo(() => {
@@ -249,8 +242,8 @@ export function StudyDashboardView() {
   const driftCount = rows.filter((row) => row.hasDrift).length;
   const coverageReadyCount = rows.filter((row) => row.isCoverageReady).length;
 
-  const startStudy = (lineId: string | undefined, targetTab: "network-model" | "calculation" | "comparison" | "coverage" | "verified-report") => {
-    if (lineId) selectLine(lineId);
+  const startStudy = async (lineId: string | undefined, targetTab: "network-model" | "calculation" | "comparison" | "coverage" | "verified-report") => {
+    if (lineId) await selectLine(lineId);
     setTab(targetTab);
   };
 
@@ -293,7 +286,15 @@ export function StudyDashboardView() {
             <div className="relative">
               <select
                 value={activeStudyId ?? ""}
-                onChange={(e) => setActiveStudy(e.target.value)}
+                onChange={(event) => {
+                  const study = studies.find((item) => item.id === event.target.value);
+                  if (!study) {
+                    setActiveStudy(null);
+                    return;
+                  }
+                  setActiveStudy(study.id);
+                  if (study.subjectLineId) void selectLine(study.subjectLineId);
+                }}
                 className="appearance-none pl-3 pr-8 py-2 text-sm font-medium border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white shadow-sm"
               >
                 {studies.length === 0 && <option value="">No Active Studies</option>}
@@ -334,6 +335,40 @@ export function StudyDashboardView() {
               <Plus className="w-4 h-4" />
               Start Study Wizard
             </button>
+          </div>
+        )}
+        {activeStudy && scopeChangeAvailable && (
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
+            <div className="flex items-start gap-2 text-xs text-amber-900">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+              <div>
+                <div className="font-semibold">Network scope has changed</div>
+                <div className="mt-0.5 text-amber-800">
+                  Study tetap memakai frozen scope revision {activeStudy.scopeRevision ?? 1}. Graph saat ini menyarankan {currentSuggestedScope.length} GI; revisi dibuat eksplisit agar hasil lama tidak berubah diam-diam.
+                </div>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() =>
+                reviseStudyScope(
+                  activeStudy.id,
+                  currentSuggestedScope,
+                  "Graph topology changed; engineer accepted refreshed one-hop scope."
+                )
+              }
+              className="rounded border border-amber-300 bg-white px-3 py-1.5 text-xs font-semibold text-amber-800 hover:bg-amber-100"
+            >
+              Revise Study Scope
+            </button>
+          </div>
+        )}
+        {activeStudy && !studyResolution.ready && (
+          <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-800">
+            <div className="font-semibold">Study belum dapat dijalankan</div>
+            <ul className="mt-1 space-y-1">
+              {studyResolution.blockers.map((message) => <li key={message}>- {message}</li>)}
+            </ul>
           </div>
         )}
       </section>
@@ -457,31 +492,31 @@ export function StudyDashboardView() {
                             label="Network" 
                             icon={<Network className="w-3.5 h-3.5" />} 
                             disabled={!row.relationId} 
-                            onClick={() => startStudy(row.relationId, "network-model")} 
+                            onClick={() => void startStudy(row.relationId, "network-model")}
                           />
                           <ActionPill 
                             label="Calculate" 
                             icon={<Calculator className="w-3.5 h-3.5" />} 
                             disabled={!row.relationId || row.status === "perlu mapping"} 
-                            onClick={() => startStudy(row.relationId, "calculation")} 
+                            onClick={() => void startStudy(row.relationId, "calculation")}
                           />
                           <ActionPill 
                             label="Compare" 
                             icon={<GitCompareArrows className="w-3.5 h-3.5" />} 
                             disabled={!row.relationId || !row.hasComparison} 
-                            onClick={() => startStudy(row.relationId, "comparison")} 
+                            onClick={() => void startStudy(row.relationId, "comparison")}
                           />
                           <ActionPill 
                             label="Coverage" 
                             icon={<Route className="w-3.5 h-3.5" />} 
                             disabled={!row.relationId || !row.isCoverageReady} 
-                            onClick={() => startStudy(row.relationId, "coverage")} 
+                            onClick={() => void startStudy(row.relationId, "coverage")}
                           />
                           <ActionPill 
                             label="Report" 
                             icon={<FileText className="w-3.5 h-3.5" />} 
                             disabled={!row.relationId} 
-                            onClick={() => startStudy(row.relationId, "verified-report")} 
+                            onClick={() => void startStudy(row.relationId, "verified-report")}
                           />
                         </div>
                       </td>

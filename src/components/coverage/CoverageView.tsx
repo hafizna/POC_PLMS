@@ -1,118 +1,68 @@
 import { useMemo, useState } from "react";
 import { Save } from "lucide-react";
 import { useProsetStore } from "../../store/useProsetStore";
-import { CorridorDiagram } from "./CorridorDiagram";
-import { ZoneParameterPanel } from "./ZoneParameterPanel";
 import { DiagnosticsPanel } from "./DiagnosticsPanel";
-import { BranchSelector } from "./BranchSelector";
-import { RXPlaneModal } from "./RXPlaneModal";
 import { runGraphCoordinationChecks, summarizeGraphDiagnostics } from "../../lib/graph-coordination";
-import { NETWORK_CASES } from "../../domain/seed-network-registry";
 import {
-  getEffectiveNetworkGraph,
   INVENTORY_MASTER_CASE_ID,
-  mergeMasterRelationsIntoCase,
+  networkLinesFromGraph,
+  networkNodesFromGraph,
 } from "../../domain/network-graph";
-import { buildUnifiedNetwork } from "../../domain/unified";
-import { getFullAnchoredNetwork } from "../../domain/graph-builder";
+import { deriveStudyNetwork, getConfirmedMasterNetwork } from "../../domain/study-network";
 
 export function CoverageView() {
-  const corridors = useProsetStore((s) => s.corridors);
-  const activeCorridorId = useProsetStore((s) => s.activeCorridorId);
-  const activeCaseId = useProsetStore((s) => s.activeNetworkCaseId);
-  const activeLineId = useProsetStore((s) => s.activeNetworkLineId);
-  const networkGraphOverrides = useProsetStore((s) => s.networkGraphOverrides);
-  const addCoordinationCheck = useProsetStore((s) => s.addCoordinationCheck);
-  const linkToSettingCase = useProsetStore((s) => s.linkToSettingCase);
-  // Same detection CalculationView uses one stage earlier
-  // (BUSINESS_PROCESS_BLUEPRINT.md §8's CalculationRun -> §9's
-  // CoordinationCheck): a case whose protected scope points at the line
-  // currently open here is the case a saved check should link back to.
-  const linkedSettingCase = useProsetStore((s) =>
-    s.settingCases.find(
-      (item) => item.protectedScope.subjectLineId === s.activeNetworkLineId
+  const activeLineId = useProsetStore((state) => state.activeNetworkLineId);
+  const activeStudy = useProsetStore((state) =>
+    state.studies.find((study) => study.id === state.activeStudyId)
+  );
+  const networkGraphOverride = useProsetStore(
+    (state) => state.networkGraphOverrides[INVENTORY_MASTER_CASE_ID]
+  );
+  const ensureStudyForLine = useProsetStore((state) => state.ensureStudyForLine);
+  const addCoordinationCheck = useProsetStore((state) => state.addCoordinationCheck);
+  const linkToSettingCase = useProsetStore((state) => state.linkToSettingCase);
+  const linkedSettingCase = useProsetStore((state) =>
+    state.settingCases.find(
+      (item) => item.protectedScope.subjectLineId === state.activeNetworkLineId
     )
   );
   const [savedCheckId, setSavedCheckId] = useState<string | null>(null);
 
-  const activeCorridor =
-    corridors.find((c) => c.id === activeCorridorId) ?? corridors[0];
-  const activeCase = NETWORK_CASES.find((item) =>
-    item.lines.some((line) => line.id === activeLineId)
-  ) ?? NETWORK_CASES.find((item) => item.id === activeCaseId) ?? NETWORK_CASES[0];
-  // The active line may live outside every hand-picked NETWORK_CASES subset
-  // (e.g. Angke-Ancol, only reachable via the live buildGraphForUltg graph —
-  // see getFullAnchoredNetwork's doc comment and selectLine's fallback in
-  // useProsetStore.ts). Detect that case so the banner/diagnostics below use
-  // the real bay/line instead of silently falling back to activeCase's
-  // unrelated first line.
-  const isLineOutsideNetworkCases = Boolean(
-    activeLineId && !activeCase.lines.some((line) => line.id === activeLineId)
+  const masterNetwork = useMemo(
+    () => getConfirmedMasterNetwork(networkGraphOverride),
+    [networkGraphOverride]
   );
-  const fullNetwork = useMemo(
-    () => (isLineOutsideNetworkCases ? getFullAnchoredNetwork() : undefined),
-    [isLineOutsideNetworkCases]
+  const studyResolution = useMemo(
+    () => deriveStudyNetwork(masterNetwork, activeStudy),
+    [activeStudy, masterNetwork]
   );
-  const fullLine = fullNetwork?.lineRelations.find((r) => r.id === activeLineId);
-  const activeLine = fullLine
-    ? undefined
-    : activeCase?.lines.find((line) => line.id === activeLineId);
-  const fromNode = activeLine
-    ? activeCase?.nodes.find((node) => node.id === activeLine.fromNodeId)
-    : null;
-  const toNode = activeLine
-    ? activeCase?.nodes.find((node) => node.id === activeLine.toNodeId)
-    : null;
-  const fullLineFromBay = fullLine
-    ? fullNetwork?.bays.find((b) => b.id === fullLine.fromBayId)
-    : undefined;
-  const fullLineToBay = fullLine
-    ? fullNetwork?.bays.find((b) => b.id === fullLine.toBayId)
-    : undefined;
-
-  // Coordination diagnostics now run against the same UnifiedNetwork graph
-  // CalculationView/VerifiedReportView use (graph-coordination.ts, lapis 2),
-  // not the legacy Topology/Corridor model — CorridorDiagram below still
-  // reads the legacy model for its d3 visualization, which is a separate,
-  // not-yet-migrated piece (see IMPLEMENTATION_NOTES.md).
-  const inventoryCase =
-    NETWORK_CASES.find((item) => item.id === INVENTORY_MASTER_CASE_ID) ?? activeCase;
-  const fallbackNetworkGraph = useMemo(() => buildUnifiedNetwork(activeCase), [activeCase]);
-  const masterFallbackNetworkGraph = useMemo(
-    () => buildUnifiedNetwork(inventoryCase),
-    [inventoryCase]
+  const networkGraph = studyResolution.network;
+  const nodes = useMemo(
+    () => (networkGraph ? networkNodesFromGraph(networkGraph) : []),
+    [networkGraph]
   );
-  const masterNetworkGraph = useMemo(
-    () =>
-      getEffectiveNetworkGraph(
-        INVENTORY_MASTER_CASE_ID,
-        networkGraphOverrides[INVENTORY_MASTER_CASE_ID],
-        masterFallbackNetworkGraph
-      ),
-    [networkGraphOverrides, masterFallbackNetworkGraph]
+  const lines = useMemo(
+    () => (networkGraph ? networkLinesFromGraph(networkGraph) : []),
+    [networkGraph]
   );
-  const caseNetworkGraph = useMemo(
-    () =>
-      mergeMasterRelationsIntoCase(
-        getEffectiveNetworkGraph(activeCase.id, networkGraphOverrides[activeCase.id], fallbackNetworkGraph),
-        masterNetworkGraph
-      ),
-    [activeCase.id, networkGraphOverrides, fallbackNetworkGraph, masterNetworkGraph]
-  );
-  const networkGraph = fullLine ? fullNetwork : caseNetworkGraph;
+  const masterNodes = useMemo(() => networkNodesFromGraph(masterNetwork), [masterNetwork]);
+  const masterLines = useMemo(() => networkLinesFromGraph(masterNetwork), [masterNetwork]);
+  const activeLine = lines.find((line) => line.id === activeLineId);
   const diagnostics = useMemo(
     () => (networkGraph ? runGraphCoordinationChecks(networkGraph) : []),
     [networkGraph]
   );
+  const diagnosticsSummary = useMemo(
+    () => summarizeGraphDiagnostics(diagnostics),
+    [diagnostics]
+  );
   const hasRelaySettings = Boolean(networkGraph?.relaySettings?.length);
-  const diagnosticsSummary = useMemo(() => summarizeGraphDiagnostics(diagnostics), [diagnostics]);
-  const activeLineIdForSave = fullLine?.id ?? activeLine?.id;
 
   const handleSaveCoordinationCheck = () => {
-    if (!activeLineIdForSave) return;
+    if (!activeLine) return;
     const checkId = addCoordinationCheck({
-      caseId: linkedSettingCase?.id ?? activeCase.id,
-      lineId: activeLineIdForSave,
+      caseId: linkedSettingCase?.id ?? INVENTORY_MASTER_CASE_ID,
+      lineId: activeLine.id,
       diagnostics,
       errorCount: diagnosticsSummary.error,
       warningCount: diagnosticsSummary.warning,
@@ -124,110 +74,107 @@ export function CoverageView() {
     setSavedCheckId(checkId);
   };
 
+  if (!studyResolution.ready || !activeLine) {
+    return (
+      <section className="rounded-lg border border-amber-200 bg-amber-50 p-5">
+        <h2 className="text-sm font-semibold text-amber-950">Coverage membutuhkan Study berbasis bay/line</h2>
+        <p className="mt-1 text-xs text-amber-800">
+          Pilih relasi confirmed master. Bila topologinya belum tersedia atau belum terkonfirmasi, lengkapi melalui Graph Builder terlebih dahulu.
+        </p>
+        {studyResolution.blockers.length > 0 && (
+          <ul className="mt-3 space-y-1 text-xs text-red-800">
+            {studyResolution.blockers.map((message) => <li key={message}>- {message}</li>)}
+          </ul>
+        )}
+        <select
+          value=""
+          onChange={(event) => {
+            if (event.target.value) void ensureStudyForLine(event.target.value);
+          }}
+          className="mt-4 w-full max-w-xl rounded border border-amber-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+        >
+          <option value="" disabled>Pilih bay/line untuk coverage...</option>
+          {masterLines.map((line) => {
+            const from = masterNodes.find((node) => node.id === line.fromNodeId);
+            const to = masterNodes.find((node) => node.id === line.toNodeId);
+            return (
+              <option key={line.id} value={line.id}>
+                {from?.shortCode ?? line.fromNodeId} - {to?.shortCode ?? line.toNodeId} {line.circuit}
+              </option>
+            );
+          })}
+        </select>
+      </section>
+    );
+  }
+
+  const fromNode = nodes.find((node) => node.id === activeLine.fromNodeId);
+  const toNode = nodes.find((node) => node.id === activeLine.toNodeId);
+
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_430px] gap-6">
-      <div className="space-y-4">
-        {activeLine && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 text-xs text-blue-900 flex items-center justify-between gap-3 flex-wrap">
-            <div>
-              Context from Line Registry:{" "}
-              <span className="font-semibold">
-                {fromNode?.shortCode} - {toNode?.shortCode} {activeLine.circuit}
-              </span>
-              <span className="text-blue-700">
-                {" "}
-                | {activeLine.relayMain} | Xline{" "}
-                {activeLine.lineXOhm?.toFixed(3) ?? "?"} ohm
-              </span>
-            </div>
-            <span className="text-blue-700">
-              Topology derived from network graph via seed-corridor adapter.
-            </span>
-          </div>
-        )}
-        {fullLine && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 text-xs text-blue-900 flex items-center justify-between gap-3 flex-wrap">
-            <div>
-              Context from Line Registry:{" "}
-              <span className="font-semibold">
-                {fullLineFromBay?.rawName ?? fullLine.fromBayId} -{" "}
-                {fullLineToBay?.rawName ?? fullLine.toBayId}
-              </span>
-              <span className="text-blue-700">
-                {" "}
-                | Xline {fullLine.x1Ohm?.toFixed(3) ?? fullLine.lineXOhm?.toFixed(3) ?? "?"} ohm
-              </span>
-            </div>
-            <span className="text-blue-700">
-              Topology dari buildGraphForUltg() (anchor DIgSILENT langsung) —
-              bay ini di luar case demo bawaan.
-            </span>
-          </div>
-        )}
-        <div className="bg-white border border-slate-200 rounded-lg p-4">
-          <div className="flex items-start justify-between mb-3">
-            <div>
-              <h2 className="text-sm font-semibold text-slate-900">
-                Active Corridor
-              </h2>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Multi-bay distance protection coordination view. Click any relay
-                in the diagram to drill into its R-X plane.
-              </p>
-              <p className="text-[11px] text-amber-700 mt-1">
-                Diagram visual ini masih pakai model legacy (Topology/Corridor,
-                1D linear) — belum graph-aware. Diagnostics di bawah sudah
-                berjalan di atas UnifiedNetwork/RelaySetting (graph-coordination.ts).
-              </p>
-            </div>
-            <BranchSelector />
-          </div>
-          <CorridorDiagram corridor={activeCorridor} />
+    <div className="space-y-4">
+      <section className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-xs text-blue-900">
+        <div className="font-semibold">
+          Study: {activeStudy?.name} · {fromNode?.shortCode ?? activeLine.fromNodeId} - {toNode?.shortCode ?? activeLine.toNodeId} {activeLine.circuit}
         </div>
-        {hasRelaySettings ? (
-          <>
-            <DiagnosticsPanel diagnostics={diagnostics} />
-            <div className="bg-white border border-slate-200 rounded-lg p-4">
-              <div className="flex items-center justify-between gap-3 flex-wrap">
-                <div className="text-xs text-slate-600">
-                  {diagnosticsSummary.error} error, {diagnosticsSummary.warning} warning —
-                  simpan sebagai Coordination Check (BUSINESS_PROCESS_BLUEPRINT.md §9)
-                  untuk melengkapi evidence case.
-                  {linkedSettingCase && (
-                    <span className="ml-2 rounded-full bg-blue-50 border border-blue-200 px-2 py-0.5 text-blue-700">
-                      Case: {linkedSettingCase.title}
-                    </span>
-                  )}
+        <div className="mt-1 text-blue-700">
+          Coverage dan coordination check memakai {lines.length} relasi pada frozen Study scope; tidak memakai corridor demo.
+        </div>
+      </section>
+
+      <section className="rounded-lg border border-slate-200 bg-white p-4">
+        <h2 className="text-sm font-semibold text-slate-900">Study Network</h2>
+        <p className="mt-0.5 text-xs text-slate-500">
+          Subject line dan relasi satu-hop yang terkonfirmasi di master graph.
+        </p>
+        <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-2">
+          {lines.map((line) => {
+            const from = nodes.find((node) => node.id === line.fromNodeId);
+            const to = nodes.find((node) => node.id === line.toNodeId);
+            return (
+              <div key={line.id} className={`rounded-md border p-3 ${line.id === activeLine.id ? "border-blue-300 bg-blue-50" : "border-slate-200 bg-slate-50"}`}>
+                <div className="text-xs font-semibold text-slate-800">
+                  {from?.shortCode ?? line.fromNodeId} - {to?.shortCode ?? line.toNodeId} {line.circuit}
                 </div>
-                <button
-                  type="button"
-                  onClick={handleSaveCoordinationCheck}
-                  disabled={!activeLineIdForSave}
-                  className="inline-flex items-center gap-1.5 rounded-md bg-slate-900 px-3 py-1.5 text-xs font-medium text-white disabled:cursor-not-allowed disabled:bg-slate-300"
-                >
-                  <Save className="h-3.5 w-3.5" />
-                  Save Coordination Check
-                </button>
+                <div className="mt-1 text-[11px] text-slate-500">
+                  Xline {line.lineXOhm?.toFixed(3) ?? "?"} ohm · confidence {line.confidence}
+                </div>
               </div>
-              {savedCheckId && (
-                <p className="mt-2 text-xs text-emerald-700">
-                  Tersimpan{linkedSettingCase ? ` & ter-link ke case "${linkedSettingCase.title}"` : ""}.
-                </p>
-              )}
+            );
+          })}
+        </div>
+      </section>
+
+      {hasRelaySettings ? (
+        <>
+          <DiagnosticsPanel diagnostics={diagnostics} />
+          <section className="rounded-lg border border-slate-200 bg-white p-4">
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <div className="text-xs text-slate-600">
+                {diagnosticsSummary.error} error, {diagnosticsSummary.warning} warning
+                {linkedSettingCase && (
+                  <span className="ml-2 rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-blue-700">
+                    Case: {linkedSettingCase.title}
+                  </span>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={handleSaveCoordinationCheck}
+                className="inline-flex items-center gap-1.5 rounded-md bg-slate-900 px-3 py-1.5 text-xs font-medium text-white"
+              >
+                <Save className="h-3.5 w-3.5" />
+                Save Coordination Check
+              </button>
             </div>
-          </>
-        ) : (
-          <div className="bg-white border border-amber-200 rounded-lg p-4 text-xs text-amber-800">
-            Belum ada RelaySetting (Z1/Z2/Z3) untuk network ini — graph builder
-            belum mengisi relay identity/zone data untuk case ini, jadi
-            coordination diagnostics belum bisa dihitung.
-          </div>
-        )}
-      </div>
-      <div className="space-y-4">
-        <ZoneParameterPanel />
-      </div>
-      <RXPlaneModal />
+            {savedCheckId && <p className="mt-2 text-xs text-emerald-700">Coordination Check tersimpan.</p>}
+          </section>
+        </>
+      ) : (
+        <section className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-xs text-amber-800">
+          Study graph sudah tersedia, tetapi RelaySetting Z1/Z2/Z3 belum lengkap. Update setting relay agar diagnostics coverage dapat dihitung.
+        </section>
+      )}
     </div>
   );
 }

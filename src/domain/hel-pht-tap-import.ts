@@ -22,7 +22,8 @@
 import helPhtTapRegistry from "./generated/hel-pht-tap-registry.json";
 import type { NetworkLine, NetworkNode } from "./seed-network-registry";
 import { matchAnySide } from "./matcher";
-import type { LifecycleStatus } from "./unified";
+import { normalizeStationName } from "./normalization";
+import type { LifecycleStatus, RelaySetting, SettingRecord, UnifiedNetwork } from "./unified";
 
 export type HelPhtTapRegistry = typeof helPhtTapRegistry;
 export type HelPhtTapRecord = HelPhtTapRegistry["records"][number];
@@ -79,7 +80,8 @@ export function findHelPhtTapRecordsByBay(pattern: RegExp): HelPhtTapRecord[] {
 export function mapHelPhtTapCandidatesToLines(
   records: HelPhtTapRecord[],
   nodes: NetworkNode[],
-  lines: NetworkLine[]
+  lines: NetworkLine[],
+  overrides: Record<string, string> = {}
 ): HelPhtTapLineCandidate[] {
   return records.map((record) => {
     // HEL_PHT_TAP carries no circuit column (unlike DIST/OCR_PHT) — the
@@ -92,6 +94,8 @@ export function mapHelPhtTapCandidatesToLines(
       lines
     );
 
+    const overrideLineId = overrides[record.id];
+    const overrideAccepted = overrideLineId && match.candidateLineIds.includes(overrideLineId);
     return {
       id: `candidate_${record.id}`,
       recordId: record.id,
@@ -99,10 +103,10 @@ export function mapHelPhtTapCandidatesToLines(
       substation: record.substation,
       remoteBay: record.remoteBay,
       model: record.model,
-      matchStatus: match.status,
-      matchedLineId: match.matchedLineId,
+      matchStatus: overrideAccepted ? "matched" : match.status,
+      matchedLineId: overrideAccepted ? overrideLineId : match.matchedLineId,
       candidateLineIds: match.candidateLineIds,
-      reason: match.reason,
+      reason: overrideAccepted ? "Engineer-selected line mapping." : match.reason,
       lifecycleStatus: "imported",
       remoteStationHint: match.remoteStationHint,
       localStationHint: match.localStationHint,
@@ -113,9 +117,10 @@ export function mapHelPhtTapCandidatesToLines(
 export function promoteMatchedHelPhtTapCandidates(
   records: HelPhtTapRecord[],
   nodes: NetworkNode[],
-  lines: NetworkLine[]
+  lines: NetworkLine[],
+  overrides: Record<string, string> = {}
 ): PromotedHelPhtTapBay[] {
-  return mapHelPhtTapCandidatesToLines(records, nodes, lines)
+  return mapHelPhtTapCandidatesToLines(records, nodes, lines, overrides)
     .filter((candidate) => candidate.matchStatus === "matched" && candidate.matchedLineId)
     .map((candidate) => {
       const record = records.find((item) => item.id === candidate.recordId)!;
@@ -133,4 +138,153 @@ export function promoteMatchedHelPhtTapCandidates(
         confidence: "reviewed_candidate",
       };
     });
+}
+
+export function buildHelPhtTapArtifacts(
+  network: UnifiedNetwork,
+  overrides: Record<string, string> = {}
+): { settingRecords: SettingRecord[]; relaySettings: RelaySetting[] } {
+  const nodes: NetworkNode[] = network.substations.map((station) => ({
+    id: station.id,
+    name: station.name,
+    shortCode: station.shortCode,
+    type: station.kind,
+    voltageKv: station.voltageKv,
+    sourceIds: [],
+  }));
+  const lines: NetworkLine[] = network.lineRelations.map((relation) => {
+    const fromBay = network.bays.find((bay) => bay.id === relation.fromBayId);
+    const toBay = network.bays.find((bay) => bay.id === relation.toBayId);
+    return {
+      id: relation.id,
+      fromNodeId: relation.fromSubstationId,
+      toNodeId: relation.toSubstationId,
+      fromBay: fromBay?.rawName ?? relation.fromBayId,
+      toBay: toBay?.rawName ?? relation.toBayId,
+      circuit: relation.circuit,
+      protectionFunctions: relation.protectionFunctionIds,
+      sourceIds: relation.sourceIds,
+      confidence: relation.confidence,
+      completeness: 100,
+      lineXOhm: relation.lineXOhm,
+      physicalLengthKm: relation.physicalLengthKm,
+      r1Ohm: relation.r1Ohm,
+      x1Ohm: relation.x1Ohm,
+      r0Ohm: relation.r0Ohm,
+      x0Ohm: relation.x0Ohm,
+      currentRatingKa: relation.currentRatingKa,
+    };
+  });
+  const promoted = promoteMatchedHelPhtTapCandidates(
+    HEL_PHT_TAP_REGISTRY.records,
+    nodes,
+    lines,
+    overrides
+  );
+  const settingRecords: SettingRecord[] = [];
+  const relaySettings: RelaySetting[] = [];
+
+  for (const item of promoted) {
+    const relation = network.lineRelations.find((line) => line.id === item.matchedLineId);
+    if (!relation) continue;
+    const local = network.substations.find(
+      (station) => normalizeStationName(station.name) === normalizeStationName(item.substation)
+    );
+    const bayId = local?.id === relation.toSubstationId ? relation.toBayId : relation.fromBayId;
+    const relay = network.relayIeds.find(
+      (ied) => ied.bayId === bayId && normalizeStationName(ied.model) === normalizeStationName(item.model)
+    ) ?? network.relayIeds.find((ied) => ied.bayId === bayId);
+    if (!relay) continue;
+    const functionId = network.protectionFunctions.find(
+      (fn) => fn.relayIedId === relay.id && fn.function === "DIST"
+    )?.id;
+    // A SettingRecord must never point at an invented/dangling protection
+    // function. The mapped HEL row remains visible as a candidate until the
+    // relay catalog supplies a concrete DIST function for this bay.
+    if (!functionId) continue;
+    settingRecords.push({
+      id: `setting_${item.raw.id}`,
+      protectionFunctionId: functionId,
+      source: "hel-pht-tap-import",
+      sourceRef: `HEL_PHT_TAP row ${item.sourceRow}`,
+      values: flattenSettingValues(item.raw),
+      confidence: "medium",
+      status: "imported",
+    });
+    const setting = relaySettingFromHel(item.raw, relay.id, relation.fromBayId === bayId ? "forward" : "reverse");
+    if (setting) relaySettings.push(setting);
+  }
+  return { settingRecords, relaySettings };
+}
+
+function flattenSettingValues(record: HelPhtTapRecord): Record<string, number | string | null> {
+  const output: Record<string, number | string | null> = {};
+  const walk = (value: unknown, path: string) => {
+    if (value === null || typeof value === "number" || typeof value === "string") {
+      if (path) output[path] = value;
+      return;
+    }
+    if (!value || typeof value !== "object" || Array.isArray(value)) return;
+    for (const [key, child] of Object.entries(value)) {
+      if (["id", "sourceRow", "bayId", "substation", "remoteBay", "model"].includes(key)) continue;
+      walk(child, path ? `${path}.${key}` : key);
+    }
+  };
+  walk(record, "");
+  return output;
+}
+
+function relaySettingFromHel(
+  record: HelPhtTapRecord,
+  relayIedId: string,
+  direction: "forward" | "reverse"
+): RelaySetting | null {
+  const raw = record as unknown as Record<string, any>;
+  const distance = raw.distance ?? raw.distSetting ?? raw.phaseDistance;
+  const zones = [1, 2, 3].map((zone) => {
+    const reach = firstNumber(
+      distance?.[`z${zone}PhReachOhm`], distance?.[`z${zone}Ohm`],
+      distance?.[`z${zone}XReachOhm`], distance?.[`z${zone}ReachOhm`],
+      distance?.[`z${zone}pZSetOhm`], raw[`zone${zone}`]?.[`x${zone}ppOhm`]
+    );
+    if (reach === null) return null;
+    const resistance = firstNumber(
+      distance?.[`r${zone}PhResistiveOhm`], distance?.[`r${zone}phOhm`],
+      distance?.[`z${zone}RphphOhm`], raw[`zone${zone}`]?.[`r${zone}ppOhm`]
+    ) ?? reach * 0.15;
+    const delay = firstNumber(
+      distance?.[`tZ${zone}PhDelayS`], distance?.[`tZ${zone}S`],
+      distance?.[`z${zone}OperateDelayS`], distance?.[`z${zone}DelayS`],
+      distance?.[`z${zone}pTOpS`], raw[`zone${zone}`]?.tppS
+    ) ?? (zone === 1 ? 0 : zone === 2 ? 0.4 : 1.6);
+    return {
+      id: `Z${zone}` as "Z1" | "Z2" | "Z3",
+      xReachOhm: reach,
+      rReachOhm: resistance,
+      rfppOhmPerLoop: resistance,
+      rfpeOhmPerLoop: resistance,
+      timeDelayPpS: delay,
+      timeDelayPeS: delay,
+      operatePp: true,
+      operatePe: true,
+    };
+  });
+  if (zones.some((zone) => zone === null)) return null;
+  return {
+    id: `relset_hel_${record.id}`,
+    relayIedId,
+    direction,
+    zones: zones as RelaySetting["zones"],
+    loadEncroachment: { enabled: false, rLdFwOhmPerPhase: 0, rLdRvOhmPerPhase: 0, argLdDeg: 0 },
+    characteristicAngleDeg: firstNumber(distance?.characteristicAngleDeg, raw.lineAngleDeg) ?? 0,
+    source: "hel-pht-tap-import",
+    sourceRef: `HEL_PHT_TAP row ${record.sourceRow}`,
+    confidence: "medium",
+    status: "imported",
+  };
+}
+
+function firstNumber(...values: unknown[]): number | null {
+  const value = values.find((item) => typeof item === "number" && Number.isFinite(item));
+  return typeof value === "number" ? value : null;
 }

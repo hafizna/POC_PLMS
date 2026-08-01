@@ -78,6 +78,38 @@ export type VerificationReport = {
   decision: "PASS" | "REVIEW" | "FAIL";
 };
 
+export type VerificationRunRecord = {
+  id: string;
+  caseId: string;
+  createdAt: string;
+  createdBy: string;
+  sourceFileName: string;
+  sourceKind: VerificationSourceKind;
+  adapterId?: string;
+  evidenceAuthority: "actual_readback" | "issued_document" | "derived_candidate";
+  acquisitionChecksumSha256?: string;
+  acquisitionManifest?: {
+    deviceIdentity: string;
+    activeGroup: string;
+    toolName: string;
+    toolVersion: string;
+    readAt: string;
+    checksumSha256: string;
+  };
+  referenceContext: string;
+  toleranceProfile: ToleranceProfile;
+  report: VerificationReport;
+  unmappedCount: number;
+  dispositions: Record<
+    string,
+    {
+      action: "accept_as_found" | "reset_required" | "reference_correction" | "investigation";
+      note?: string;
+      decidedAt: string;
+    }
+  >;
+};
+
 type ParseOptions = {
   referenceKind: ReferenceKind;
   currentBasis: ValueBasis;

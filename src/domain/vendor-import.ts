@@ -1,6 +1,9 @@
+import type { RioImportResult } from "./rio-xrio-import";
+
 export type VendorImportAdapterId =
   | "micom-courier-v1"
-  | "tap-pdf-profile-v1";
+  | "tap-pdf-profile-v1"
+  | "rio-xrio-v1";
 
 export type VendorImportValue = number | string;
 
@@ -47,13 +50,33 @@ export type TapExtractedField = {
 };
 
 export type VendorImportHandoffDraft = {
+  caseId?: string;
   sourceFileName: string;
   adapterId: VendorImportAdapterId;
+  sourceFormat: string;
+  vendor: string;
+  model?: string;
   normalizedText: string;
   importedAt: string;
+  evidenceAuthority: "actual_readback" | "derived_candidate";
+  acquisitionManifest?: {
+    deviceIdentity: string;
+    activeGroup: string;
+    toolName: string;
+    toolVersion: string;
+    readAt: string;
+    checksumSha256: string;
+  };
 };
 
 export const VENDOR_IMPORT_ADAPTERS = [
+  {
+    id: "rio-xrio-v1" as const,
+    label: "RIO / XRIO distance",
+    vendor: "Siemens, MiCOM, ABB, GE",
+    coverage: "Distance zones, timer, K0, CT/VT dari export tervalidasi",
+    status: "available" as const,
+  },
   {
     id: "micom-courier-v1" as const,
     label: "MiCOM Courier .set",
@@ -83,6 +106,88 @@ export const VENDOR_IMPORT_ADAPTERS = [
     status: "planned" as const,
   },
 ] as const;
+
+export function adaptRioXrioResult(
+  parsed: RioImportResult,
+  sourceFileName: string,
+  rawText = ""
+): VendorImportResult {
+  const model = rawText.match(/\b(P(?:44[2345]|54[345])\w*|7S(?:A|L|J|T)\d+\w*|RED\d+|REL\d+|D60)\b/i)?.[1];
+  const vendor = /SIPROTEC|DIGSI|7S(?:A|L|J|T)/i.test(rawText)
+    ? "Siemens / SIPROTEC"
+    : /MiCOM|P(?:44[2345]|54[345])/i.test(rawText)
+      ? "MiCOM / Schneider"
+      : /ABB|RED\d+|REL\d+|ZMFPDIS/i.test(rawText)
+        ? "ABB / Hitachi Energy"
+        : /(?:GENERAL ELECTRIC|\bGE\b|D60)/i.test(rawText)
+          ? "GE Vernova"
+          : "Vendor belum terdeteksi";
+  const parameters: VendorImportParameter[] = [];
+  const push = (
+    rawName: string,
+    canonicalKey: string,
+    value: number | undefined,
+    unit?: string
+  ) => {
+    if (value === undefined || !Number.isFinite(value)) return;
+    parameters.push({
+      rawName,
+      canonicalKey,
+      functionGroup: "Distance",
+      value,
+      unit,
+      rawValue: String(value),
+      decodeStatus: "decoded",
+      confidence: "high",
+    });
+  };
+  parsed.zones.forEach((zone, index) => {
+    const zoneNumber = Number(zone.label.match(/\d+/)?.[0]) || index + 1;
+    push(`Z${zoneNumber} Ph. Reach`, `distance.zone${zoneNumber}.phase_reach`, zone.xReachOhm, "ohm");
+    push(`Z${zoneNumber} Ph. Resistance`, `distance.zone${zoneNumber}.phase_resistance`, zone.rfppOhmPerLoop ?? zone.rReachOhm, "ohm");
+    push(`Z${zoneNumber} Gnd. Resistance`, `distance.zone${zoneNumber}.ground_resistance`, zone.rfpeOhmPerLoop ?? zone.rReachOhm, "ohm");
+    push(`tZ${zoneNumber} Ph. Delay`, `distance.zone${zoneNumber}.phase_delay`, zone.timeDelayPpS, "s");
+    push(`tZ${zoneNumber} Gnd. Delay`, `distance.zone${zoneNumber}.ground_delay`, zone.timeDelayPeS, "s");
+    push(`Z${zoneNumber} Ph. Angle`, `distance.zone${zoneNumber}.phase_angle`, zone.lineAngleDeg, "deg");
+  });
+  if (parsed.earthComp) {
+    push("K0 magnitude", "distance.k0.magnitude", parsed.earthComp.k0);
+    push("K0 angle", "distance.k0.angle", parsed.earthComp.angleDeg, "deg");
+    const radians = (parsed.earthComp.angleDeg * Math.PI) / 180;
+    push("K0 real", "distance.k0.real", parsed.earthComp.k0 * Math.cos(radians));
+    push("K0 imag", "distance.k0.imag", parsed.earthComp.k0 * Math.sin(radians));
+  }
+  if (parsed.ctRatio !== undefined) {
+    push("CT ratio", "instrument_transformer.ct_ratio", parsed.ctRatio);
+  }
+  if (parsed.vtRatio !== undefined) {
+    push("VT ratio", "instrument_transformer.vt_ratio", parsed.vtRatio);
+  }
+  const diagnostics: VendorImportDiagnostic[] = [{
+    level: "info",
+    message: `${parsed.zones.length} distance zone dibaca dari ${parsed.kind.toUpperCase()}.`,
+  }];
+  if (parsed.zones.length === 0) diagnostics.push({
+    level: "warning",
+    message: "Struktur file dikenali, tetapi tidak ada distance zone yang dapat dipromosikan.",
+  });
+  return buildResult({
+    adapterId: "rio-xrio-v1",
+    sourceFileName,
+    sourceFormat: parsed.kind === "xrio" ? "XRIO XML" : "RIO plaintext",
+    vendor,
+    family: model ?? "Distance protection",
+    model,
+    metadata: {
+      zoneCount: String(parsed.zones.length),
+      ...(parsed.ctRatio !== undefined ? { ctRatio: String(parsed.ctRatio) } : {}),
+      ...(parsed.vtRatio !== undefined ? { vtRatio: String(parsed.vtRatio) } : {}),
+    },
+    parameters,
+    diagnostics,
+    totalRecords: parameters.length,
+  });
+}
 
 const HEADER_KEYS = [
   "APP",
@@ -358,7 +463,7 @@ export function adaptTapPdfFields(
 
 export function vendorImportToVerificationText(result: VendorImportResult) {
   const transferable = result.parameters.filter((parameter) =>
-    /^(Z[1-3] (?:Ph\. Reach|Ph\. Delay)|tZ[1-3] Ph\. Delay|Ip>? (?:Pickup|Time Dial)|IEp>? (?:Pickup|Time Dial))$/i.test(
+    /^(Z[1-3] (?:Ph\. Reach|Ph\. Delay)|tZ[1-3] Ph\. Delay|K0 (?:real|imag)|Ip>? (?:Pickup|Time Dial)|IEp>? (?:Pickup|Time Dial))$/i.test(
       parameter.rawName
     )
   );

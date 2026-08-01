@@ -201,6 +201,7 @@ export type SettingCaseLinks = {
   // reproducible coordination run (coverage/selectivity/gap diagnostics),
   // same evidentiary role as calculationSnapshotIds one stage earlier.
   coordinationCheckIds: string[];
+  verificationRunIds?: string[];
 };
 
 export type SettingCase = {
@@ -372,11 +373,15 @@ export const EXECUTABLE_SETTING_CASE_STAGES: ReadonlySet<SettingCaseStage> = new
   "draft",
   "scoping",
   "baseline_frozen",
+  "document_audit",
+  "actual_readback_intake",
   "data_change_preparation",
   "impact_and_readiness",
   "study_preparation",
   "calculation",
   "coordination",
+  "verification",
+  "closed",
 ]);
 
 export function isStageImplemented(stage: SettingCaseStage): boolean {
@@ -397,6 +402,8 @@ export type StageGateContext = {
   studyPackageReady: boolean;
   crosscheckEvidenceBlockers: readonly string[];
   crosscheckEvidenceWarnings: readonly string[];
+  crosscheckIntakeReady: boolean;
+  verificationRunCount: number;
 };
 
 export type StageGateResult = {
@@ -442,6 +449,18 @@ export function stageGate(settingCase: SettingCase, ctx: StageGateContext): Stag
         blockers.push("Snapshot baseline immutable belum tersedia.");
       }
       break;
+    case "document_audit":
+      if (!ctx.crosscheckIntakeReady) {
+        blockers.push("TAP issued belum dinormalisasi dan dikirim ke crosscheck untuk case ini.");
+      }
+      break;
+    case "actual_readback_intake":
+      if (!ctx.crosscheckIntakeReady) {
+        blockers.push(
+          "Actual readback belum memiliki native/derived file dari sesi yang sama beserta acquisition manifest lengkap."
+        );
+      }
+      break;
     case "data_change_preparation":
       if (!ctx.proposedRevisionReady) {
         blockers.push("Proposed Data Revision belum lengkap dan siap untuk impact analysis.");
@@ -471,6 +490,11 @@ export function stageGate(settingCase: SettingCase, ctx: StageGateContext): Stag
         blockers.push(
           "Belum ada Coordination Check (coverage/selectivity/gap) yang tersimpan dan ter-link ke case ini."
         );
+      }
+      break;
+    case "verification":
+      if (ctx.verificationRunCount === 0) {
+        blockers.push("Verification report belum disimpan dan ditautkan ke case ini.");
       }
       break;
     default:
@@ -542,6 +566,7 @@ export function createSettingCaseObject(
       calculationSnapshotIds: input.links?.calculationSnapshotIds ?? [],
       engineeringChangeSetIds: input.links?.engineeringChangeSetIds ?? [],
       coordinationCheckIds: input.links?.coordinationCheckIds ?? [],
+      verificationRunIds: input.links?.verificationRunIds ?? [],
     },
     stage: "draft",
     stageHistory: [{ stage: "draft", at: now, actor }],

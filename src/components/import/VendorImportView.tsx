@@ -18,11 +18,13 @@ import { extractPdfText, extractTapFields, type OcrProgress } from "../../lib/oc
 import {
   VENDOR_IMPORT_ADAPTERS,
   adaptTapPdfFields,
+  adaptRioXrioResult,
   parseMicomCourierSet,
   vendorImportToVerificationText,
   type VendorImportParameter,
   type VendorImportResult,
 } from "../../domain/vendor-import";
+import { parseRioOrXrio } from "../../domain/rio-xrio-import";
 import { useProsetStore } from "../../store/useProsetStore";
 import {
   RELAY_CATALOG,
@@ -51,6 +53,12 @@ export function VendorImportView() {
   const [selectedModelKey, setSelectedModelKey] = useState(
     `${RELAY_CATALOG.modelCatalog[0]?.brand}|${RELAY_CATALOG.modelCatalog[0]?.model}`
   );
+  const [fileChecksum, setFileChecksum] = useState("");
+  const [deviceIdentity, setDeviceIdentity] = useState("");
+  const [activeSettingGroup, setActiveSettingGroup] = useState("");
+  const [toolName, setToolName] = useState("");
+  const [toolVersion, setToolVersion] = useState("");
+  const [readAt, setReadAt] = useState("");
 
   const groups = useMemo(
     () =>
@@ -106,14 +114,23 @@ export function VendorImportView() {
     setBusyLabel("Mendeteksi format…");
     setGroup("ALL");
     setFilter("all");
+    setFileChecksum("");
     try {
       let imported: VendorImportResult;
+      const bytes = new Uint8Array(await file.arrayBuffer());
+      setFileChecksum(await sha256Hex(bytes));
       if (/\.set$/i.test(file.name)) {
         setBusyLabel("Mendekode MiCOM Courier record…");
         imported = parseMicomCourierSet(
-          new Uint8Array(await file.arrayBuffer()),
+          bytes,
           file.name
         );
+      } else if (/\.(?:rio|xrio|xml)$/i.test(file.name)) {
+        setBusyLabel("Membaca distance zones RIO/XRIOâ€¦");
+        const text = new TextDecoder().decode(bytes);
+        const parsed = parseRioOrXrio(text);
+        if (!parsed) throw new Error("Struktur RIO/XRIO tidak dikenali oleh adapter.");
+        imported = adaptRioXrioResult(parsed, file.name, text);
       } else if (file.type === "application/pdf" || /\.pdf$/i.test(file.name)) {
         setBusyLabel("Mengekstrak TAP PDF…");
         const extracted = await extractPdfText(
@@ -130,7 +147,7 @@ export function VendorImportView() {
         imported.metadata.pageCount = String(extracted.pageCount);
       } else {
         throw new Error(
-          "MVP 1C saat ini menerima MiCOM Courier .set atau TAP PDF."
+          "Format yang diterima: MiCOM .set, .rio, .xrio/.xml, atau TAP PDF."
         );
       }
       setResult(imported);
@@ -151,10 +168,38 @@ export function VendorImportView() {
 
   const handoff = () => {
     if (!result) return;
+    const manifestComplete = [
+      deviceIdentity,
+      activeSettingGroup,
+      toolName,
+      toolVersion,
+      readAt,
+      fileChecksum,
+    ].every((value) => value.trim());
+    const isTapDocument = result.adapterId === "tap-pdf-profile-v1";
     stageForVerification({
       sourceFileName: result.sourceFileName,
       adapterId: result.adapterId,
+      sourceFormat: result.sourceFormat,
+      vendor: result.vendor,
+      model: result.model,
       normalizedText: vendorImportToVerificationText(result),
+      evidenceAuthority:
+        manifestComplete && !isTapDocument
+          ? "actual_readback"
+          : "derived_candidate",
+      ...(manifestComplete && !isTapDocument
+        ? {
+            acquisitionManifest: {
+              deviceIdentity: deviceIdentity.trim(),
+              activeGroup: activeSettingGroup.trim(),
+              toolName: toolName.trim(),
+              toolVersion: toolVersion.trim(),
+              readAt: new Date(readAt).toISOString(),
+              checksumSha256: fileChecksum,
+            },
+          }
+        : {}),
     });
   };
 
@@ -281,15 +326,15 @@ export function VendorImportView() {
                 <Upload className="h-7 w-7 text-blue-600" />
               )}
               <span className="mt-3 text-sm font-semibold text-slate-800">
-                {busyLabel || "Pilih .set atau TAP .pdf"}
+                {busyLabel || "Pilih .set, .rio/.xrio/.xml, atau TAP .pdf"}
               </span>
               <span className="mt-1 max-w-xs text-[10px] leading-4 text-slate-500">
-                .set ditangani adapter vendor. PDF melewati text extraction/OCR
-                dan document profile.
+                File relay ditangani adapter vendor. PDF melewati text
+                extraction/OCR dan document profile.
               </span>
               <input
                 type="file"
-                accept=".set,.pdf,application/pdf"
+                accept=".set,.rio,.xrio,.xml,.pdf,application/pdf"
                 disabled={Boolean(busyLabel)}
                 className="hidden"
                 onChange={(event) => {
@@ -303,6 +348,33 @@ export function VendorImportView() {
               <div className="mt-3 flex gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-[11px] text-red-700">
                 <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                 {error}
+              </div>
+            )}
+            {result && result.adapterId !== "tap-pdf-profile-v1" && (
+              <div className="mt-4 space-y-3 rounded-xl border border-blue-200 bg-blue-50 p-3">
+                <div>
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-blue-800">
+                    Acquisition manifest
+                  </div>
+                  <p className="mt-1 text-[10px] leading-4 text-blue-700">
+                    Lengkapi semua field agar file berwenang sebagai actual readback.
+                    Tanpa manifest, hasil tetap masuk sebagai derived candidate.
+                  </p>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <ManifestInput label="Device / relay identity" value={deviceIdentity} onChange={setDeviceIdentity} />
+                  <ManifestInput label="Active setting group" value={activeSettingGroup} onChange={setActiveSettingGroup} />
+                  <ManifestInput label="Official vendor tool" value={toolName} onChange={setToolName} />
+                  <ManifestInput label="Tool version" value={toolVersion} onChange={setToolVersion} />
+                  <label className="text-[10px] text-slate-600">
+                    Read from IED at
+                    <input type="datetime-local" value={readAt} onChange={(event) => setReadAt(event.target.value)} className="mt-1 w-full rounded-lg border border-blue-200 bg-white px-2 py-1.5 text-xs" />
+                  </label>
+                  <div className="text-[10px] text-slate-600">
+                    SHA-256
+                    <div className="mt-1 truncate rounded-lg border border-blue-200 bg-white px-2 py-2 font-mono text-[9px]" title={fileChecksum}>{fileChecksum || "calculatingâ€¦"}</div>
+                  </div>
+                </div>
               </div>
             )}
           </Panel>
@@ -967,6 +1039,37 @@ function Select({
       <ChevronDown className="pointer-events-none absolute right-2.5 top-2.5 h-3.5 w-3.5 text-slate-400" />
     </label>
   );
+}
+
+function ManifestInput({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label className="text-[10px] text-slate-600">
+      {label}
+      <input
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="mt-1 w-full rounded-lg border border-blue-200 bg-white px-2 py-1.5 text-xs"
+      />
+    </label>
+  );
+}
+
+async function sha256Hex(bytes: Uint8Array) {
+  const digest = await crypto.subtle.digest(
+    "SHA-256",
+    bytes.slice().buffer as ArrayBuffer
+  );
+  return Array.from(new Uint8Array(digest))
+    .map((value) => value.toString(16).padStart(2, "0"))
+    .join("");
 }
 
 function progressLabel(progress: OcrProgress) {

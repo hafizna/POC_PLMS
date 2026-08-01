@@ -137,6 +137,8 @@ export function getEffectiveNetworkGraph(
     protectionFunctions,
     transformers: upsertById(base.transformers ?? [], ov.transformers ?? []),
     remoteBusBranches: upsertById(base.remoteBusBranches ?? [], ov.remoteBusBranches ?? []),
+    relaySettings: base.relaySettings,
+    settingRecords: base.settingRecords,
   };
 }
 

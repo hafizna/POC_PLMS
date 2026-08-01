@@ -16,6 +16,8 @@ import { buildUnifiedNetwork } from "../../domain/unified";
 import type { UnifiedNetwork } from "../../domain/unified";
 import {
   getEffectiveNetworkGraph,
+  INVENTORY_MASTER_CASE_ID,
+  mergeMasterRelationsIntoCase,
   networkLinesFromGraph,
   networkNodesFromGraph,
 } from "../../domain/network-graph";
@@ -54,17 +56,29 @@ export function SourceIndexView() {
   const studyScenarios = useProsetStore((s) => s.studyScenarios);
   const activeCase =
     NETWORK_CASES.find((item) => item.id === activeCaseId) ?? NETWORK_CASES[0];
+  const inventoryCase =
+    NETWORK_CASES.find((item) => item.id === INVENTORY_MASTER_CASE_ID) ?? activeCase;
   const sources = REGISTRY_SOURCES.filter((s) => activeCase.sourceIds.includes(s.id));
-  const sldStationRows = useMemo(() => getCaseSldStationRows(activeCase.nodes), [activeCase]);
-  const pdfSources = useMemo(() => filterPdfSourcesForNodes(activeCase.nodes), [activeCase]);
   const stagedSources = sourceIntakeRecords.filter((record) => record.caseId === activeCase.id);
 
   // Build available line list from effective network graph (includes user-added
   // relations) so promote picker offers all current lines, not just seed.
   const effectiveNetworkGraph = useMemo(() => {
     const fallbackNetworkGraph = buildUnifiedNetwork(activeCase);
-    return getEffectiveNetworkGraph(activeCase.id, networkGraphOverrides[activeCase.id], fallbackNetworkGraph);
-  }, [activeCase, networkGraphOverrides]);
+    const base = getEffectiveNetworkGraph(activeCase.id, networkGraphOverrides[activeCase.id], fallbackNetworkGraph);
+    const master = getEffectiveNetworkGraph(
+      INVENTORY_MASTER_CASE_ID,
+      networkGraphOverrides[INVENTORY_MASTER_CASE_ID],
+      buildUnifiedNetwork(inventoryCase)
+    );
+    return mergeMasterRelationsIntoCase(base, master);
+  }, [activeCase, inventoryCase, networkGraphOverrides]);
+  const effectiveNodes = useMemo(
+    () => (effectiveNetworkGraph ? networkNodesFromGraph(effectiveNetworkGraph) : activeCase.nodes),
+    [activeCase.nodes, effectiveNetworkGraph]
+  );
+  const sldStationRows = useMemo(() => getCaseSldStationRows(effectiveNodes), [effectiveNodes]);
+  const pdfSources = useMemo(() => filterPdfSourcesForNodes(effectiveNodes), [effectiveNodes]);
   const availableLines = useMemo(() => {
     if (!effectiveNetworkGraph) return [];
     const nodes = networkNodesFromGraph(effectiveNetworkGraph);

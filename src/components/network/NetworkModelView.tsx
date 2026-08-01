@@ -1,8 +1,6 @@
 import { useMemo, useState } from "react";
 import {
-  AlertTriangle,
   CheckCircle2,
-  CircleHelp,
   Database,
   FileSearch,
   GitBranch,
@@ -14,10 +12,8 @@ import {
   XCircle,
 } from "lucide-react";
 import {
-  NETWORK_CASES,
   REGISTRY_SOURCES,
   RegistryConfidence,
-  NetworkCase,
 } from "../../domain/seed-network-registry";
 import { SLD_SOURCE_INDEX } from "../../domain/sld-source-index";
 import {
@@ -27,9 +23,7 @@ import {
   type PdfSourceRecord,
 } from "../../domain/pdf-source-registry";
 import {
-  getEffectiveNetworkGraph,
   INVENTORY_MASTER_CASE_ID,
-  mergeMasterRelationsIntoCase,
   networkLinesFromGraph,
   networkNodesFromGraph,
   relayAssetsFromGraph,
@@ -38,7 +32,10 @@ import { useProsetStore } from "../../store/useProsetStore";
 import type { NetworkNode } from "../../domain/seed-network-registry";
 import { looseTokenMatch, normalizeStationName } from "../../domain/normalization";
 import type { Bay, LifecycleStatus, LineRelation, UnifiedNetwork, UnifiedSubstation } from "../../domain/unified";
-import { buildUnifiedNetwork } from "../../domain/unified";
+import {
+  deriveStudyNetwork,
+  getConfirmedMasterNetwork,
+} from "../../domain/study-network";
 
 type EndpointFilter = "actionable" | "existing" | "expansion" | "ignored";
 
@@ -49,64 +46,46 @@ const confidenceClass: Record<RegistryConfidence, string> = {
   missing: "bg-red-50 text-red-700 border-red-200",
 };
 
-const gapClass = {
-  blocker: "bg-red-50 text-red-800 border-red-200",
-  warning: "bg-amber-50 text-amber-800 border-amber-200",
-  info: "bg-blue-50 text-blue-800 border-blue-200",
-};
-
-const gapIcon = { blocker: AlertTriangle, warning: AlertTriangle, info: CircleHelp };
-const STUDY_CASE_IDS = new Set(["case_dks_dm_pik_mkb"]);
-
-function isStudyCase(item: NetworkCase) {
-  return STUDY_CASE_IDS.has(item.id);
-}
-
 export function NetworkModelView() {
   const [endpointFilter, setEndpointFilter] = useState<EndpointFilter>("actionable");
   const [selectedSldStation, setSelectedSldStation] = useState<string | null>(null);
-  const activeCaseId = useProsetStore((s) => s.activeNetworkCaseId);
-  const setActiveCase = useProsetStore((s) => s.setActiveNetworkCase);
+  const studies = useProsetStore((s) => s.studies);
+  const activeStudyId = useProsetStore((s) => s.activeStudyId);
+  const setActiveStudy = useProsetStore((s) => s.setActiveStudy);
+  const selectLine = useProsetStore((s) => s.selectLine);
   const setTab = useProsetStore((s) => s.setTab);
   const decisions = useProsetStore((s) => s.candidateDecisions);
   const decideCandidate = useProsetStore((s) => s.decideCandidate);
   const clearCandidateDecision = useProsetStore((s) => s.clearCandidateDecision);
-  const addNetworkGraphRelationBundle = useProsetStore((s) => s.addNetworkGraphRelationBundle);
-  const activeCase =
-    NETWORK_CASES.find((item) => item.id === activeCaseId) ?? NETWORK_CASES[0];
-  const inventoryCase =
-    NETWORK_CASES.find((item) => item.id === INVENTORY_MASTER_CASE_ID) ?? activeCase;
-  const networkGraphOverride = useProsetStore((s) => s.networkGraphOverrides[activeCase.id]);
   const masterNetworkGraphOverride = useProsetStore((s) => s.networkGraphOverrides[INVENTORY_MASTER_CASE_ID]);
-  const fallbackNetworkGraph = useMemo(() => buildUnifiedNetwork(activeCase), [activeCase]);
-  const masterFallbackNetworkGraph = useMemo(() => buildUnifiedNetwork(inventoryCase), [inventoryCase]);
-  const masterNetworkGraph = getEffectiveNetworkGraph(
-    INVENTORY_MASTER_CASE_ID,
-    masterNetworkGraphOverride,
-    masterFallbackNetworkGraph
+  const networkSelectionIssue = useProsetStore((s) => s.networkSelectionIssue);
+  const activeStudy = studies.find((study) => study.id === activeStudyId);
+  const masterNetworkGraph = useMemo(
+    () => getConfirmedMasterNetwork(masterNetworkGraphOverride),
+    [masterNetworkGraphOverride]
   );
-  const baseNetworkGraph = getEffectiveNetworkGraph(activeCase.id, networkGraphOverride, fallbackNetworkGraph);
-  const networkGraph = mergeMasterRelationsIntoCase(baseNetworkGraph, masterNetworkGraph);
-  const localRelationCount = baseNetworkGraph?.lineRelations.length ?? 0;
+  const studyResolution = useMemo(
+    () => deriveStudyNetwork(masterNetworkGraph, activeStudy),
+    [activeStudy, masterNetworkGraph]
+  );
+  const networkGraph = studyResolution.network;
   const masterRelationCount = masterNetworkGraph?.lineRelations.length ?? 0;
-  const bridgedRelationCount =
-    networkGraph?.lineRelations.filter((relation) => relation.sourceIds.includes("master-inventory")).length ?? 0;
   const nodes = useMemo(
-    () => (networkGraph ? networkNodesFromGraph(networkGraph) : activeCase.nodes),
-    [activeCase.nodes, networkGraph]
+    () => (networkGraph ? networkNodesFromGraph(networkGraph) : []),
+    [networkGraph]
   );
   const lines = useMemo(
-    () => (networkGraph ? networkLinesFromGraph(networkGraph) : activeCase.lines),
-    [activeCase.lines, networkGraph]
+    () => (networkGraph ? networkLinesFromGraph(networkGraph) : []),
+    [networkGraph]
   );
   const relays = useMemo(
-    () => (networkGraph ? relayAssetsFromGraph(networkGraph) : activeCase.relays),
-    [activeCase.relays, networkGraph]
+    () => (networkGraph ? relayAssetsFromGraph(networkGraph) : []),
+    [networkGraph]
   );
-  const sources = REGISTRY_SOURCES.filter((s) => activeCase.sourceIds.includes(s.id));
+  const sources = REGISTRY_SOURCES;
   const avgCompleteness = Math.round(
     lines.length === 0
-      ? activeCase.readiness
+      ? 0
       : lines.reduce((sum, line) => sum + line.completeness, 0) / lines.length
   );
   const parsedSources = sources.filter((s) => s.status === "parsed").length;
@@ -139,21 +118,11 @@ export function NetworkModelView() {
   };
 
   const promoteEndpoint = (row: EndpointReviewRow) => {
-    const targetCaseId = INVENTORY_MASTER_CASE_ID;
-    const targetNetworkGraph = masterNetworkGraph ?? networkGraph;
-    const targetLocalSub = findSubstationByName(targetNetworkGraph, row.localStation);
-    const targetRemoteSub = findSubstationByName(targetNetworkGraph, row.remoteStation);
-    if (!targetNetworkGraph || !targetLocalSub || !targetRemoteSub || row.relationExists) return;
-    const { relation, bays } = createRelationFromEndpoint(
-      { ...row, localSub: targetLocalSub, remoteSub: targetRemoteSub },
-      targetNetworkGraph
-    );
-    addNetworkGraphRelationBundle(targetCaseId, {
-      bays,
-      terminals: [],
-      relation,
-    });
-    decideCandidate(row.candidateId, "reviewed", `Promoted SLD endpoint from ${row.sourceFileName}`);
+    // Endpoint extraction remains useful evidence, but Graph Builder is the
+    // sole topology authority. This legacy per-record screen no longer writes
+    // a parallel LineRelation directly into master data.
+    void row;
+    setTab("inbox");
   };
 
   return (
@@ -179,34 +148,63 @@ export function NetworkModelView() {
           <div>
             <h2 className="text-sm font-semibold text-slate-900">Working Network</h2>
             <p className="text-xs text-slate-500 mt-0.5 max-w-3xl">
-              Active study network untuk perhitungan dan coverage setting. Master ULTG Inventory tetap dipakai sebagai source bridge di belakang layar, bukan sebagai working case utama.
+              Network diturunkan dari confirmed master graph sesuai subject line dan scope revision Study aktif. Tidak ada fallback ke demo corridor.
             </p>
           </div>
           <div className="flex flex-col gap-1">
             <span className="text-[10px] uppercase tracking-wider text-slate-500">Active Study</span>
             <select
-              value={activeCase.id}
-              onChange={(event) => setActiveCase(event.target.value)}
+              value={activeStudyId ?? ""}
+              onChange={(event) => {
+                if (!event.target.value) {
+                  setActiveStudy(null);
+                  return;
+                }
+                const study = studies.find((item) => item.id === event.target.value);
+                if (!study) return;
+                setActiveStudy(study.id);
+                if (study.subjectLineId) void selectLine(study.subjectLineId);
+              }}
               className="bg-white text-sm px-3 py-1.5 rounded border border-slate-300 focus:border-blue-500 focus:outline-none"
             >
-              {NETWORK_CASES.filter(isStudyCase).map((item) => (
+              <option value="">Pilih Study untuk bay/line…</option>
+              {studies.map((item) => (
                 <option key={item.id} value={item.id}>
-                  {item.title}
+                  {item.name}
                 </option>
               ))}
             </select>
           </div>
         </div>
         <div className="mt-3 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-900">
-          <span className="font-semibold">Study intent:</span> verified workflow untuk satu koridor/ruas prioritas. ULTG Durikosambi Inventory berfungsi sebagai master/staging source untuk menambah relation yang sudah divalidasi ke study ini.
+          <span className="font-semibold">Study context:</span>{" "}
+          {activeStudy
+            ? `${activeStudy.name} · scope revision ${activeStudy.scopeRevision ?? 1} · subject ${activeStudy.subjectLineId ?? "belum dipilih"}`
+            : "Belum ada Study aktif. Pilih bay/line dari Setting Register atau buat Study baru."}
         </div>
+
+        {(networkSelectionIssue || studyResolution.blockers.length > 0 || studyResolution.warnings.length > 0) && (
+          <div className="mt-3 space-y-2">
+            {networkSelectionIssue && (
+              <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800">
+                {networkSelectionIssue.message}
+              </div>
+            )}
+            {studyResolution.blockers.map((message) => (
+              <div key={message} className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800">{message}</div>
+            ))}
+            {studyResolution.warnings.map((message) => (
+              <div key={message} className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">{message}</div>
+            ))}
+          </div>
+        )}
 
         <div className="mt-4 grid grid-cols-2 lg:grid-cols-4 gap-3">
           <SummaryCard label="Substations" value={String(nodes.length)} sub="GI/GIS nodes" icon={<RadioTower className="w-4 h-4 text-blue-600" />} tone="blue" />
           <SummaryCard
             label="Line Relations"
             value={String(lines.length)}
-            sub={activeCase.scope === "inventory" && lines.length === 0 ? "not extracted yet" : activeCase.scope === "inventory" ? "draft extracted edges" : "corridor edges"}
+            sub={activeStudy ? "derived study scope" : "no active study"}
             icon={<GitBranch className="w-4 h-4 text-emerald-600" />}
             tone="emerald"
           />
@@ -215,15 +213,14 @@ export function NetworkModelView() {
         </div>
         <div className="mt-3 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 flex items-center justify-between gap-3 flex-wrap">
           <div>
-            <div className="text-xs font-semibold text-slate-700">Master inventory bridge</div>
+            <div className="text-xs font-semibold text-slate-700">Derived study scope</div>
             <div className="text-[11px] text-slate-500 mt-0.5">
-              Validated SLD endpoint promotion disimpan di ULTG Inventory master, lalu hanya relation yang relevan difilter ke active study.
+              Confirmed master tetap menjadi authority; Study hanya menyimpan subject, scope revision, dan fingerprint untuk reproducibility.
             </div>
           </div>
           <div className="flex items-center gap-2 text-[10px]">
-            <BridgePill label="local relations" value={localRelationCount} />
             <BridgePill label="master relations" value={masterRelationCount} />
-            <BridgePill label="bridged here" value={bridgedRelationCount} tone="blue" />
+            <BridgePill label="study relations" value={lines.length} tone="blue" />
           </div>
         </div>
       </section>
@@ -232,57 +229,35 @@ export function NetworkModelView() {
         <div className="border-b border-slate-200 px-4 py-2 bg-slate-50 flex items-center justify-between">
           <h3 className="text-xs uppercase tracking-wider font-semibold text-slate-600">Data Readiness</h3>
           <span className="text-[10px] text-slate-500">
-            {activeCase.gaps.length} open item{activeCase.gaps.length === 1 ? "" : "s"}
+            {studyResolution.ready ? "ready for study" : "input required"}
           </span>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-0 divide-y lg:divide-y-0 lg:divide-x divide-slate-100">
-          <GapSummary label="Blocker" count={activeCase.gaps.filter((g) => g.severity === "blocker").length} tone="blocker" />
-          <GapSummary label="Warning" count={activeCase.gaps.filter((g) => g.severity === "warning").length} tone="warning" />
-          <GapSummary label="Info" count={activeCase.gaps.filter((g) => g.severity === "info").length} tone="info" />
+          <ReadinessSummary label="Blocker" count={studyResolution.blockers.length + (networkSelectionIssue ? 1 : 0)} tone="blocker" />
+          <ReadinessSummary label="Warning" count={studyResolution.warnings.length} tone="warning" />
+          <ReadinessSummary label="Relations" count={lines.length} tone="info" />
         </div>
-        <div className="divide-y divide-slate-100">
-          {activeCase.gaps.map((gap) => {
-            const Icon = gapIcon[gap.severity];
-            return (
-              <div key={gap.id} className="px-4 py-3">
-                <div className="flex items-start gap-3">
-                  <div className={`mt-0.5 rounded-md border p-1 ${gapClass[gap.severity]}`}>
-                    <Icon className="w-4 h-4" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <div className="text-sm font-semibold text-slate-900">{gap.title}</div>
-                      <span className="text-[10px] px-2 py-0.5 rounded border border-slate-200 bg-slate-50 text-slate-500">{gap.area}</span>
-                    </div>
-                    <p className="text-xs text-slate-600 mt-1">{gap.detail}</p>
-                    <div className="text-xs text-slate-500 mt-2">
-                      Next: <span className="text-slate-700">{gap.nextAction}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+        <div className="px-4 py-3 text-xs text-slate-600">
+          {studyResolution.ready ? (
+            <span>
+              Scope dapat dihitung dari confirmed master graph. Fingerprint: <span className="font-mono text-slate-700">{studyResolution.fingerprint}</span>
+            </span>
+          ) : (
+            <span>
+              Pilih bay/line dari Setting Register. Jika relasinya belum tersedia, lengkapi atau konfirmasi topologinya melalui Graph Builder terlebih dahulu.
+            </span>
+          )}
         </div>
       </section>
 
       <section className="bg-white border border-slate-200 rounded-lg p-4">
         <h3 className="text-xs uppercase tracking-wider font-semibold text-slate-600 mb-4">
-          {activeCase.scope === "inventory" ? "Inventory Nodes" : "Network Relations"}
+          Study Network Relations
         </h3>
         <div className="overflow-x-auto pb-2">
-          {activeCase.scope === "inventory" ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
-              {nodes.map((node) => (
-                <div key={node.id} className="border border-slate-200 bg-slate-50 rounded-md p-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="text-lg font-semibold text-slate-900">{node.shortCode}</div>
-                    <span className="text-[10px] text-slate-500 border border-slate-200 bg-white rounded px-1.5 py-0.5">{node.type}</span>
-                  </div>
-                  <div className="text-xs text-slate-600 mt-1">{node.name}</div>
-                  <div className="text-[10px] text-slate-400 mt-1">{node.voltageKv} kV | SLD indexed</div>
-                </div>
-              ))}
+          {!networkGraph ? (
+            <div className="rounded-md border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
+              Belum ada graph Study. Pilih bay/line yang akan dianalisis.
             </div>
           ) : (
             <div className="min-w-[920px] space-y-3">
@@ -332,12 +307,15 @@ export function NetworkModelView() {
           )}
         </div>
         <div className="mt-4 rounded-md border border-slate-200 bg-slate-50 p-3">
-          <div className="text-xs font-semibold text-slate-700 mb-2">Case notes</div>
-          <ul className="space-y-1">
-            {activeCase.notes.map((note) => (
-              <li key={note} className="text-xs text-slate-600">- {note}</li>
-            ))}
-          </ul>
+          <div className="text-xs font-semibold text-slate-700 mb-2">Scope provenance</div>
+          <div className="text-xs text-slate-600">
+            {activeStudy
+              ? `${activeStudy.name} · revision ${activeStudy.scopeRevision ?? 1} · subject ${activeStudy.subjectLineId ?? "belum dipilih"}`
+              : "Belum ada Study aktif."}
+          </div>
+          {studyResolution.fingerprint && (
+            <div className="mt-1 text-[10px] font-mono text-slate-500">{studyResolution.fingerprint}</div>
+          )}
         </div>
       </section>
 
@@ -516,7 +494,7 @@ export function NetworkModelView() {
       <section className="bg-white border border-slate-200 rounded-lg overflow-hidden">
         <div className="border-b border-slate-200 px-4 py-2 bg-slate-50 flex items-center justify-between gap-3">
           <div>
-            <h3 className="text-xs uppercase tracking-wider font-semibold text-slate-600">SLD Endpoint Candidates</h3>
+            <h3 className="text-xs uppercase tracking-wider font-semibold text-slate-600">SLD Endpoint Evidence</h3>
             <div className="text-[10px] text-slate-500 mt-0.5">
               Unique GI/GIS-to-GI/GIS skeleton extracted from SLD PDF text layer. Jika relation user-added terhapus, candidate SLD tetap tersedia untuk restore/remap.
             </div>
@@ -526,7 +504,7 @@ export function NetworkModelView() {
           </span>
         </div>
         <div className="px-4 py-2 border-b border-slate-100 bg-white flex items-center gap-2 flex-wrap">
-          <EndpointFilterButton active={endpointFilter === "actionable"} onClick={() => setEndpointFilter("actionable")} label="Ready to promote" count={endpointCounts.actionable} />
+          <EndpointFilterButton active={endpointFilter === "actionable"} onClick={() => setEndpointFilter("actionable")} label="Ready for review" count={endpointCounts.actionable} />
           <EndpointFilterButton active={endpointFilter === "existing"} onClick={() => setEndpointFilter("existing")} label="Already modeled" count={endpointCounts.existing} />
           <EndpointFilterButton active={endpointFilter === "expansion"} onClick={() => setEndpointFilter("expansion")} label="Needs station" count={endpointCounts.expansion} />
           <EndpointFilterButton active={endpointFilter === "ignored"} onClick={() => setEndpointFilter("ignored")} label="Ignored" count={endpointCounts.ignored} />
@@ -590,7 +568,7 @@ export function NetworkModelView() {
                       ) : (
                         <>
                           <SmallEndpointButton
-                            label="Promote to master"
+                            label="Review in Graph Builder"
                             icon={<Plus className="w-3.5 h-3.5" />}
                             onClick={() => promoteEndpoint(row)}
                             disabled={!row.readyToPromote}
@@ -989,7 +967,7 @@ function SldRemodelDrawer({
                       </div>
                     </div>
                     <SmallEndpointButton
-                      label="Promote"
+                      label="Review in Graph Builder"
                       icon={<Plus className="w-3.5 h-3.5" />}
                       onClick={() => onPromoteEndpoint(endpoint)}
                       disabled={!endpoint.readyToPromote}
@@ -1270,14 +1248,19 @@ function formatDate(value: string) {
   return new Date(value).toLocaleDateString("id-ID", { year: "numeric", month: "short", day: "2-digit" });
 }
 
-function GapSummary({ label, count, tone }: { label: string; count: number; tone: "blocker" | "warning" | "info" }) {
+function ReadinessSummary({ label, count, tone }: { label: string; count: number; tone: "blocker" | "warning" | "info" }) {
+  const toneClass = {
+    blocker: "bg-red-50 text-red-800 border-red-200",
+    warning: "bg-amber-50 text-amber-800 border-amber-200",
+    info: "bg-blue-50 text-blue-800 border-blue-200",
+  };
   return (
     <div className="px-4 py-3 flex items-center justify-between">
       <div>
         <div className="text-xs font-semibold text-slate-700">{label}</div>
-        <div className="text-[10px] text-slate-500 mt-0.5">open data issue</div>
+        <div className="text-[10px] text-slate-500 mt-0.5">current study scope</div>
       </div>
-      <span className={`text-sm font-semibold px-2.5 py-1 rounded border ${gapClass[tone]}`}>{count}</span>
+      <span className={`text-sm font-semibold px-2.5 py-1 rounded border ${toneClass[tone]}`}>{count}</span>
     </div>
   );
 }
