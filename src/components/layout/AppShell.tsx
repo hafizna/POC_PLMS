@@ -296,9 +296,13 @@ export function AppShell({ children }: { children: ReactNode }) {
                   {openedFromCase ? openedFromCase.title : openedFromCaseId}
                 </span>{" "}
                 —{" "}
-                {tab === "calculation" || tab === "coverage" || tab === "comparison" || tab === "vendor-import"
-                  ? "hasil yang disimpan di sini otomatis ter-link ke case ini."
-                  : "tool ini belum otomatis menyimpan hasil ke case tersebut."}
+                {tab === "source-index"
+                  ? "dokumen baru yang di-stage otomatis ditautkan sebagai bukti case ini."
+                  : tab === "inbox"
+                    ? "keputusan topology disimpan per case + relation dan tidak berlaku sebagai bulk approval."
+                    : tab === "calculation" || tab === "coverage" || tab === "comparison" || tab === "vendor-import"
+                      ? "hasil yang disimpan di sini otomatis ter-link ke case ini."
+                      : "tool ini belum otomatis menyimpan hasil ke case tersebut."}
               </p>
               <button
                 type="button"

@@ -15,6 +15,16 @@ export type ScopedTopologyCandidate = {
   supportingSubstations: UnifiedSubstation[];
 };
 
+export function collectUniqueGraphEntities(groups: GraphBuildGroup[]) {
+  return {
+    bays: uniqueById(groups.flatMap((group) => group.bays)),
+    lineRelations: uniqueById(groups.flatMap((group) => group.lineRelations)),
+    substations: uniqueById(
+      groups.flatMap((group) => [group.station, ...group.supportingSubstations])
+    ),
+  };
+}
+
 export function topologyDecisionKey(contextId: string, relationId: string) {
   return `topology:${contextId}:${relationId}`;
 }
@@ -36,10 +46,8 @@ export function buildScopedTopologyCandidates(
   context: TopologyReviewScope
 ): ScopedTopologyCandidate[] {
   const scopeIds = new Set(context.substationIds);
-  const allBays = uniqueById(groups.flatMap((group) => group.bays));
-  const allSubstations = uniqueById(
-    groups.flatMap((group) => [group.station, ...group.supportingSubstations])
-  );
+  const { bays: allBays, substations: allSubstations } =
+    collectUniqueGraphEntities(groups);
   const seenRelations = new Set<string>();
   const candidates: ScopedTopologyCandidate[] = [];
 

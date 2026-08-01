@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
 import { AlertTriangle, ArrowLeft, ArrowRight, CheckCircle2, Search, ShieldAlert, X } from "lucide-react";
 import { useProsetStore } from "../../store/useProsetStore";
-import { buildGraphForUltg, type GraphBuildGroup } from "../../domain/graph-builder";
+import { buildGraphForUltg } from "../../domain/graph-builder";
 import { INVENTORY_MASTER_CASE_ID } from "../../domain/network-graph";
+import { collectUniqueGraphEntities } from "../../domain/topology-remediation";
 import { RELAY_CATALOG } from "../../domain/relay-catalog";
 import {
   bayReadinessByRecordId,
@@ -86,10 +87,14 @@ export function SettingCaseWizard({
   const graphResult = useMemo(() => buildGraphForUltg(), []);
   const readinessByRecordId = useMemo(() => bayReadinessByRecordId(), []);
 
-  const allGroups: GraphBuildGroup[] = graphResult.groups;
-  const allBays = useMemo(() => allGroups.flatMap((g) => g.bays), [allGroups]);
-  const allLineRelations = useMemo(() => allGroups.flatMap((g) => g.lineRelations), [allGroups]);
-  const allSubstationsRaw = useMemo(() => allGroups.map((g) => g.station), [allGroups]);
+  const allGroups = graphResult.groups;
+  const uniqueGraphEntities = useMemo(
+    () => collectUniqueGraphEntities(allGroups),
+    [allGroups]
+  );
+  const allBays = uniqueGraphEntities.bays;
+  const allLineRelations = uniqueGraphEntities.lineRelations;
+  const allSubstationsRaw = uniqueGraphEntities.substations;
   const groupByStationId = useMemo(
     () => new Map(allGroups.map((g) => [g.station.id, g])),
     [allGroups]
@@ -133,7 +138,7 @@ export function SettingCaseWizard({
         relationId: relation?.id,
         relationLabel: relation
           ? remoteSub
-            ? `${sub?.shortCode} - ${remoteSub.shortCode}`
+            ? `${sub?.shortCode} - ${remoteSub.shortCode} · sirkit #${relation.circuit}`
             : "GI lawan belum teridentifikasi"
           : "unmapped",
         needsManualTopology: group?.needsManualTopology ?? false,
@@ -655,7 +660,10 @@ export function SettingCaseWizard({
                       <div className="truncate font-medium text-slate-800">
                         {bay.substationCode} · {bay.bayName}
                       </div>
-                      <div className="text-[11px] text-slate-500">{bay.relationLabel}</div>
+                      <div className="text-[11px] text-slate-500">
+                        {bay.relationLabel}
+                        {bay.relationId ? ` · ${bay.relationId}` : ""}
+                      </div>
                     </div>
                     <div className="flex shrink-0 items-center gap-1.5">
                       <BayReadinessBadge

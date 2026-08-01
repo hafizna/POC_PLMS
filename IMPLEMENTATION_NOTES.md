@@ -10,6 +10,19 @@ arsitektur dan roadmap produk, rujuk:
 
 ## Update 2026-08-01 — Active Study mengikuti bay/line, tanpa fallback demo
 
+- Data Quality Queue dari sidebar sekarang berhenti di landing Case/Study cards;
+  HEL mapping, functional drift, dan row registry global hanya dimuat secara
+  visual setelah user memilih drill-down `Registry queues`. Badge topology
+  menyebut eksplisit jumlah yang `perlu keputusan`, bukan angka tanpa konteks.
+- Scoping case menyediakan CTA `Dokumen Sumber`. Source yang di-stage dari
+  konteks tersebut otomatis memakai id Setting Case dan langsung ditautkan ke
+  `sourceIntakeIds`; topology-ready tetapi evidence kosong ditampilkan sebagai
+  dua status berbeda agar gate baseline tidak terlihat kontradiktif.
+- Topology Remediation menutup loop dengan CTA kembali ke Case Gate dan
+  menjelaskan bahwa freeze baseline memang tetap menjadi transaksi Setting
+  Case. Bay picker mengoleksi graph entity unik berdasarkan id (bukan flat-map
+  duplikat dari kedua endpoint group) serta menampilkan `sirkit #N` dan relation
+  id; regression mengunci pemisahan ANGKE–ANCOL #1 dan #2.
 - Data Quality Queue tidak lagi merender bulk-confirm seluruh GI. Topology
   Remediation sekarang dikelompokkan sebagai card per Setting Case/Study,
   kemudian card per kandidat `LineRelation`; approve/reject disimpan dengan

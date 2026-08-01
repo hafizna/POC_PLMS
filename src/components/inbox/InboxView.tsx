@@ -84,12 +84,15 @@ type CandidateRow = {
 export function InboxView() {
   const [showDecided, setShowDecided] = useState(false);
   const [showExpansion, setShowExpansion] = useState(false);
+  const [showRegistryQueues, setShowRegistryQueues] = useState(false);
   const openedFromCaseId = useProsetStore((state) => state.openedFromCaseId);
   const openedFromCase = useProsetStore((state) =>
     state.settingCases.find((item) => item.id === state.openedFromCaseId)
   );
   const activeCaseId = useProsetStore((s) => s.activeNetworkCaseId);
   const setTab = useProsetStore((s) => s.setTab);
+  const setActiveSettingCase = useProsetStore((s) => s.setActiveSettingCase);
+  const clearOpenedFromCase = useProsetStore((s) => s.clearOpenedFromCase);
   const decisions = useProsetStore((s) => s.candidateDecisions);
   const decideCandidate = useProsetStore((s) => s.decideCandidate);
   const clearCandidateDecision = useProsetStore((s) => s.clearCandidateDecision);
@@ -306,6 +309,13 @@ export function InboxView() {
     setTab("line-registry");
   };
 
+  const returnToCaseGate = () => {
+    if (!openedFromCaseId) return;
+    setActiveSettingCase(openedFromCaseId);
+    clearOpenedFromCase();
+    setTab("cases");
+  };
+
   // ── Quick-add handlers for Coverage Expansion / Needs Relation ────────
   // Both create bay+relation; needs_substation also creates the missing
   // remote substation first. Confidence "low" + status "imported" so that
@@ -475,12 +485,106 @@ export function InboxView() {
           </p>
         </section>
         <CaseScopedGraphBuilderSection />
+        <section className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3">
+          <div>
+            <div className="text-xs font-semibold text-emerald-950">
+              Baseline dibekukan dari Setting Case
+            </div>
+            <p className="mt-0.5 text-[11px] text-emerald-800">
+              Topology Remediation hanya menyelesaikan relation. Kembali ke Case Gate,
+              pastikan bukti sumber ter-link, lalu pilih Bekukan baseline.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={returnToCaseGate}
+            className="inline-flex items-center gap-1.5 rounded-md border border-emerald-300 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-100"
+          >
+            Kembali ke Case Gate <ArrowRight className="h-3.5 w-3.5" />
+          </button>
+        </section>
+      </div>
+    );
+  }
+
+  if (!showRegistryQueues) {
+    return (
+      <div className="space-y-4">
+        <section className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-4">
+          <div className="flex items-start gap-3">
+            <div className="rounded-md border border-blue-200 bg-white p-2">
+              <Inbox className="h-5 w-5 text-blue-600" />
+            </div>
+            <div>
+              <div className="font-mono text-[10px] font-semibold uppercase tracking-wider text-blue-700">
+                Case-driven data quality
+              </div>
+              <h2 className="mt-1 text-sm font-semibold text-blue-950">
+                Pilih Case atau Study yang sedang dikerjakan
+              </h2>
+              <p className="mt-1 max-w-3xl text-xs text-blue-800">
+                Halaman awal hanya menampilkan scope kerja. Buka Data Quality Queue dari
+                detail Setting Case untuk workspace yang benar-benar terisolasi ke case itu.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <CaseScopedGraphBuilderSection />
+
+        <section className="rounded-lg border border-slate-200 bg-white p-4">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <div className="font-mono text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                Registry queues · Data Steward
+              </div>
+              <h3 className="mt-1 text-sm font-semibold text-slate-900">
+                Antrean global tetap tersedia sebagai drill-down
+              </h3>
+              <p className="mt-1 max-w-2xl text-xs text-slate-500">
+                Gunakan hanya untuk housekeeping lintas-case: HEL mapping, functional drift,
+                ambiguity, dan coverage expansion. Record global tidak dibuka otomatis.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowRegistryQueues(true)}
+              className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+            >
+              Buka antrean registry global <ArrowRight className="h-3.5 w-3.5" />
+            </button>
+          </div>
+          <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <Tile label="Functional Drift" value={counts.drift} sub="TAP vs actual mismatch" tone="red" />
+            <Tile label="Pending Mapping" value={counts.pendingMapping} sub="Perlu review mapping" tone="amber" />
+            <Tile label="Coverage Expansion" value={counts.expansion} sub="Endpoint di luar graph" tone="blue" />
+            <Tile label="Decided" value={counts.decided} sub="Sudah direview" tone="emerald" />
+          </div>
+        </section>
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
+      <section className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3">
+        <div>
+          <div className="font-mono text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+            Registry queues · global
+          </div>
+          <p className="mt-0.5 text-xs text-slate-600">
+            Mode housekeeping lintas-case. Keputusan topology case tetap dilakukan dari group card case.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowRegistryQueues(false)}
+          className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+        >
+          <ChevronRight className="h-3.5 w-3.5 rotate-180" /> Kembali ke Case/Study cards
+        </button>
+      </section>
+
       {/* Status ringkas / dashboard tile */}
       <section className="bg-white border border-slate-200 rounded-lg p-4">
         <div className="flex items-start justify-between gap-3 flex-wrap">
@@ -536,9 +640,6 @@ export function InboxView() {
         </p>
       </section>
 
-      {/* Graph Builder: per-GI topology confirmation, upstream of the
-          per-record sections below. */}
-      <CaseScopedGraphBuilderSection />
       <HelPhtTapMappingPanel
         candidates={helCandidates}
         lines={effectiveLines}
@@ -1056,7 +1157,7 @@ function PrioritySection({
 }: {
   title: string;
   subtitle: string;
-  count: number;
+  count: number | string;
   tone: "red" | "amber" | "blue";
   icon: React.ReactNode;
   children: React.ReactNode;
@@ -1262,7 +1363,7 @@ function CaseScopedGraphBuilderSection() {
     <PrioritySection
       title="Topology Remediation — approval per Case"
       subtitle="Satu group card mewakili satu Case/Study. Di dalamnya, engineer approve atau reject LineRelation yang dibutuhkan scope itu saja—bukan seluruh GI dan bukan bulk 200 bay."
-      count={pendingCount}
+      count={`${pendingCount} perlu keputusan`}
       tone={pendingCount > 0 ? "amber" : "blue"}
       icon={<Network className="h-4 w-4" />}
     >

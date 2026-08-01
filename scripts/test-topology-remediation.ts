@@ -2,10 +2,34 @@ import assert from "node:assert/strict";
 import { buildGraphForUltg } from "../src/domain/graph-builder";
 import {
   buildScopedTopologyCandidates,
+  collectUniqueGraphEntities,
   topologyDecisionKey,
 } from "../src/domain/topology-remediation";
 
 const { groups } = buildGraphForUltg();
+const entities = collectUniqueGraphEntities(groups);
+assert.equal(
+  new Set(entities.bays.map((bay) => bay.id)).size,
+  entities.bays.length,
+  "case scope picker must receive one option per physical bay id"
+);
+assert.equal(
+  new Set(entities.lineRelations.map((relation) => relation.id)).size,
+  entities.lineRelations.length,
+  "case scope picker must receive one option per relation id"
+);
+
+const angkeAncol = entities.lineRelations
+  .filter((relation) => relation.digsilentName?.startsWith("ANGKE-ANCOL"))
+  .sort((left, right) => left.circuit.localeCompare(right.circuit));
+assert.deepEqual(
+  angkeAncol.map((relation) => relation.circuit),
+  ["1", "2"],
+  "ANGKE-ANCOL circuit #1 and #2 must remain distinct"
+);
+assert.notEqual(angkeAncol[0].fromBayId, angkeAncol[1].fromBayId);
+assert.notEqual(angkeAncol[0].toBayId, angkeAncol[1].toBayId);
+
 const subject = groups.flatMap((group) => group.lineRelations)[0];
 assert.ok(subject, "fixture must expose at least one topology relation");
 
@@ -69,5 +93,5 @@ const missing = buildScopedTopologyCandidates(groups, {
 assert.equal(missing.length, 0, "missing source must not produce a guessed relation card");
 
 console.log(
-  `Topology remediation tests passed: one subject card, ${stationScoped.length} station-scope cards, no guessed relation.`
+  `Topology remediation tests passed: unique bay options, ANGKE-ANCOL #1/#2 separation, one subject card, ${stationScoped.length} station-scope cards, no guessed relation.`
 );

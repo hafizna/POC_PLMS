@@ -43,6 +43,7 @@ import {
 // stage had a home here, so a tool never floats free of its case).
 const STAGE_TOOL: Partial<Record<SettingCaseStage, { tab: Tab; label: string }[]>> = {
   scoping: [
+    { tab: "source-index", label: "Dokumen Sumber" },
     { tab: "network-model", label: "Working Network" },
     { tab: "inbox", label: "Topology Remediation" },
   ],
@@ -331,6 +332,12 @@ export function SettingCaseDetail({
             <ExternalLink className="h-3.5 w-3.5" /> {topologyReady ? "Lihat relation cards" : "Buka Topology Remediation"}
           </button>
         </div>
+        {topologyReady && linkedSources.length === 0 && settingCase.stage === "scoping" && (
+          <div className="mt-3 rounded-md border border-amber-200 bg-white px-3 py-2 text-xs text-amber-800">
+            Topology sudah siap. Baseline belum dapat dibekukan karena bukti sumber masih 0;
+            gunakan tombol <span className="font-semibold">Buka Dokumen Sumber</span> pada gate stage untuk stage dan menautkan evidence.
+          </div>
+        )}
       </section>
 
       {/* stage chain */}
@@ -828,7 +835,14 @@ function AttachPicker({
   attachLabel?: string;
 }) {
   const [selected, setSelected] = useState(value);
-  if (options.length === 0) return null;
+  if (options.length === 0) {
+    return (
+      <div className="rounded-md border border-dashed border-amber-200 bg-amber-50 px-2.5 py-2 text-[11px] text-amber-800">
+        Belum ada dokumen yang dapat ditautkan. Gunakan Buka Dokumen Sumber untuk
+        stage evidence langsung dalam konteks case ini.
+      </div>
+    );
+  }
   return (
     <div className="flex items-center gap-1.5">
       <select

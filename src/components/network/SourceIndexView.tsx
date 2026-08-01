@@ -41,11 +41,17 @@ type SourceIntakeInput = Omit<SourceIntakeRecord, "id" | "stagedAt" | "actor" | 
 
 export function SourceIndexView() {
   const activeCaseId = useProsetStore((s) => s.activeNetworkCaseId);
+  const openedFromCaseId = useProsetStore((s) => s.openedFromCaseId);
+  const openedFromCase = useProsetStore((s) =>
+    s.settingCases.find((item) => item.id === s.openedFromCaseId)
+  );
   const setActiveCase = useProsetStore((s) => s.setActiveNetworkCase);
   const sourceIntakeRecords = useProsetStore((s) => s.sourceIntakeRecords);
   const addSourceIntakeRecord = useProsetStore((s) => s.addSourceIntakeRecord);
   const updateSourceIntakeRecord = useProsetStore((s) => s.updateSourceIntakeRecord);
   const removeSourceIntakeRecord = useProsetStore((s) => s.removeSourceIntakeRecord);
+  const linkToSettingCase = useProsetStore((s) => s.linkToSettingCase);
+  const unlinkFromSettingCase = useProsetStore((s) => s.unlinkFromSettingCase);
   const addPdfTapPromotion = useProsetStore((s) => s.addPdfTapPromotion);
   const removePdfTapPromotion = useProsetStore((s) => s.removePdfTapPromotion);
   const updateCtVtOverride = useProsetStore((s) => s.updateCtVtOverride);
@@ -59,7 +65,21 @@ export function SourceIndexView() {
   const inventoryCase =
     NETWORK_CASES.find((item) => item.id === INVENTORY_MASTER_CASE_ID) ?? activeCase;
   const sources = REGISTRY_SOURCES.filter((s) => activeCase.sourceIds.includes(s.id));
-  const stagedSources = sourceIntakeRecords.filter((record) => record.caseId === activeCase.id);
+  const intakeScopeId = openedFromCaseId ?? activeCase.id;
+  const stagedSources = sourceIntakeRecords.filter((record) => record.caseId === intakeScopeId);
+  const addCaseScopedSource = (record: SourceIntakeInput) => {
+    const recordId = addSourceIntakeRecord({ ...record, caseId: intakeScopeId });
+    if (openedFromCaseId) {
+      linkToSettingCase(openedFromCaseId, { kind: "source", refId: recordId });
+    }
+    return recordId;
+  };
+  const removeCaseScopedSource = (recordId: string) => {
+    if (openedFromCaseId) {
+      unlinkFromSettingCase(openedFromCaseId, { kind: "source", refId: recordId });
+    }
+    removeSourceIntakeRecord(recordId);
+  };
 
   // Build available line list from effective network graph (includes user-added
   // relations) so promote picker offers all current lines, not just seed.
@@ -123,12 +143,27 @@ export function SourceIndexView() {
         </div>
       </section>
 
+      {openedFromCaseId && openedFromCase && (
+        <section className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3">
+          <div className="font-mono text-[10px] font-semibold uppercase tracking-wider text-emerald-700">
+            Case-scoped source intake
+          </div>
+          <div className="mt-1 text-sm font-semibold text-emerald-950">
+            {openedFromCase.title}
+          </div>
+          <p className="mt-1 text-xs text-emerald-800">
+            Dokumen baru yang di-stage di halaman ini otomatis ditautkan sebagai bukti
+            baseline case. Kembali ke case setelah status source tersimpan.
+          </p>
+        </section>
+      )}
+
       <SourceIntakePanel
         caseId={activeCase.id}
         records={stagedSources}
-        onAdd={addSourceIntakeRecord}
+        onAdd={addCaseScopedSource}
         onUpdate={updateSourceIntakeRecord}
-        onRemove={removeSourceIntakeRecord}
+        onRemove={removeCaseScopedSource}
         availableLines={availableLines}
         promotions={pdfTapPromotions.filter((p) => p.caseId === activeCase.id)}
         onPromote={addPdfTapPromotion}
