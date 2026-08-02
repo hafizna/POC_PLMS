@@ -161,15 +161,22 @@ export function assessCrosscheckEvidence(
     "actual_relay_readback_verification";
   if (mode === "issued_tap_document_audit") {
     if (!evidence.some((item) => item.documentType === "tap_setting")) {
-      blockers.push("Document Audit membutuhkan minimal satu PDF TAP issued.");
+      warnings.push(
+        "PDF TAP issued belum dilampirkan. Dokumen dapat diakuisisi setelah baseline freeze pada stage Document Audit."
+      );
     }
   } else {
+    if (!evidence.some((item) => item.documentType === "tap_setting")) {
+      warnings.push(
+        "TAP issued belum dilampirkan. Gunakan issued setting current dari register bila tersedia; bila tidak, expected comparison akan tetap unresolved."
+      );
+    }
     const relayExports = evidence.filter(
       (item) => item.documentType === "relay_export"
     );
     if (relayExports.length === 0) {
-      blockers.push(
-        "Actual Relay Verification membutuhkan native/official relay export."
+      warnings.push(
+        "Native relay readback belum dilampirkan. Ini boleh diakuisisi setelah baseline freeze pada stage Actual Readback Intake."
       );
     } else if (
       !relayExports.some((item) =>

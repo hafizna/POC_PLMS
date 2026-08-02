@@ -53,7 +53,7 @@ export function HomeView() {
               <div>
                 <h1 className="text-xl font-bold tracking-tight">Protection Lifecycle Management</h1>
                 <p className="text-sm text-slate-300 mt-0.5">
-                  Kelola study proteksi, hitung setting, dan validasi coverage penghantar transmisi.
+                  Legacy study browser untuk eksplorasi data dan formula; pekerjaan operasional dimulai dari Setting Case.
                 </p>
               </div>
             </div>
@@ -251,7 +251,7 @@ function StudyCard({
         <div className="flex items-center gap-2 shrink-0">
           <QuickButton
             icon={<Calculator className="w-3.5 h-3.5" />}
-            label="Calculation"
+            label="Formula Lab"
             onClick={() => {
               setActiveStudy(study.id);
               if (study.subjectLineId) selectLine(study.subjectLineId);

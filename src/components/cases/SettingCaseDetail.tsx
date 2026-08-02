@@ -58,6 +58,7 @@ const STAGE_TOOL: Partial<Record<SettingCaseStage, { tab: Tab; label: string }[]
     { tab: "comparison", label: "Actual Verification" },
   ],
   data_change_preparation: [
+    { tab: "source-index", label: "Dokumen Perubahan" },
     { tab: "inbox", label: "Topology Remediation" },
     { tab: "network-graph-editor", label: "Network Builder" },
   ],
@@ -65,7 +66,7 @@ const STAGE_TOOL: Partial<Record<SettingCaseStage, { tab: Tab; label: string }[]
     { tab: "line-registry", label: "Setting Register" },
     { tab: "reference-setting", label: "Reference Setting" },
   ],
-  calculation: [{ tab: "calculation", label: "Calculation Workbook" }],
+  calculation: [{ tab: "calculation", label: "Targeted Recalculation - Distance/LCD" }],
   coordination: [{ tab: "coverage", label: "Coordination / Coverage" }],
   verification: [
     { tab: "comparison", label: "Actual Verification" },
@@ -90,6 +91,13 @@ export function SettingCaseDetail({
   const unlinkFromCase = useProsetStore((s) => s.unlinkFromSettingCase);
   const sourceIntakeRecords = useProsetStore((s) => s.sourceIntakeRecords);
   const vendorImportDraft = useProsetStore((s) => s.vendorImportHandoffDraft);
+  const targetedCalculationRuns = useProsetStore(
+    (s) => s.targetedCalculationRuns
+  );
+  const caseTargetedRuns = targetedCalculationRuns.filter(
+    (run) => run.caseId === settingCase.id
+  );
+  const targetedCalculationRunCount = caseTargetedRuns.length;
   const masterNetworkOverride = useProsetStore(
     (state) => state.networkGraphOverrides[INVENTORY_MASTER_CASE_ID]
   );
@@ -129,6 +137,9 @@ export function SettingCaseDetail({
   const linkedSources = sourceIntakeRecords.filter((item) =>
     settingCase.links.sourceIntakeIds.includes(item.id)
   );
+  const frozenBaselineSourceIds = new Set(
+    settingCase.baseline?.evidence.map((item) => item.sourceIntakeId) ?? []
+  );
   const crosscheckEvidence = assessCrosscheckEvidence(
     settingCase,
     linkedSources
@@ -137,6 +148,7 @@ export function SettingCaseDetail({
     evidenceCount: settingCase.links.sourceIntakeIds.length,
     hasScenario: Boolean(settingCase.links.scenarioId),
     calculationCount: settingCase.links.calculationSnapshotIds.length,
+    targetedCalculationRunCount,
     coordinationCheckCount: settingCase.links.coordinationCheckIds.length,
     changeSetCount: settingCase.links.engineeringChangeSetIds.length,
     persona,
@@ -193,6 +205,33 @@ export function SettingCaseDetail({
       );
   const topologyReady =
     subjectLineReady && pendingTopologyCount === 0 && rejectedTopologyCount === 0;
+  const issuedTapSources = linkedSources.filter(
+    (source) => source.documentType === "tap_setting"
+  );
+  const requiresIssuedBaseline =
+    settingCase.caseType !== "data_correction" &&
+    settingCase.primaryReason !== "new_gi_insertion";
+  const scopedRelayIds = new Set(
+    confirmedMaster.relayIeds
+      .filter((relay) => relay.bayId === settingCase.protectedScope.subjectBayId)
+      .map((relay) => relay.id)
+  );
+  const frozenSettingCandidateCount = (confirmedMaster.relaySettings ?? []).filter(
+    (setting) => scopedRelayIds.has(setting.relayIedId)
+  ).length;
+  const baselinePreflightWarnings = [
+    ...(requiresIssuedBaseline &&
+    issuedTapSources.length === 0 &&
+    frozenSettingCandidateCount === 0
+      ? ["Issued setting/TAP belum tersedia; expected comparison akan unresolved sampai artefak tersebut diakuisisi."]
+      : []),
+    ...(issuedTapSources.length > 1
+      ? ["Lebih dari satu TAP tertaut. Semuanya dibekukan sebagai evidence; tentukan dokumen yang diaudit pada stage intake."]
+      : []),
+    ...(!topologyReady
+      ? ["Confirmed master topology belum lengkap. Freeze masih boleh dicoba terhadap working network case; error scope konkret akan ditampilkan bila subject tidak ditemukan."]
+      : []),
+  ];
 
   const stageTools = terminal
     ? undefined
@@ -334,11 +373,41 @@ export function SettingCaseDetail({
         </div>
         {topologyReady && linkedSources.length === 0 && settingCase.stage === "scoping" && (
           <div className="mt-3 rounded-md border border-amber-200 bg-white px-3 py-2 text-xs text-amber-800">
-            Topology sudah siap. Baseline belum dapat dibekukan karena bukti sumber masih 0;
-            gunakan tombol <span className="font-semibold">Buka Dokumen Sumber</span> pada gate stage untuk stage dan menautkan evidence.
+            Belum ada dokumen tertaut. Baseline current tetap dapat dibekukan; dokumen TAP/readback
+            dapat diakuisisi pada stage audit atau intake berikutnya.
           </div>
         )}
       </section>
+
+      {settingCase.stage === "scoping" && (
+        <section className="mb-5 rounded-lg border border-indigo-200 bg-indigo-50 p-4">
+          <div className="font-mono text-[10px] font-semibold uppercase tracking-wider text-indigo-800">
+            Baseline freeze preflight
+          </div>
+          <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <BaselineMetric label="Issued TAP" value={issuedTapSources.length} />
+            <BaselineMetric label="Subject relay" value={scopedRelayIds.size} />
+            <BaselineMetric label="Setting values" value={frozenSettingCandidateCount} />
+            <BaselineMetric label="Evidence total" value={linkedSources.length} />
+          </div>
+          <p className="mt-2 text-xs leading-5 text-indigo-900">
+            Freeze membuat snapshot case-local yang immutable: topology, technical data,
+            relay identity, CT/VT, issued setting values yang tersedia, dan evidence binding.
+            Actual relay readback bukan syarat freeze dan dapat diakuisisi pada stage intake.
+          </p>
+          {baselinePreflightWarnings.map((item) => (
+            <div key={item} className="mt-2 flex items-start gap-2 text-xs text-amber-800">
+              <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" /> {item}
+            </div>
+          ))}
+          {frozenSettingCandidateCount === 0 && issuedTapSources.length > 0 && (
+            <div className="mt-2 text-xs text-amber-800">
+              TAP evidence dapat dibekukan, tetapi typed issued setting values belum tersedia;
+              before/proposed numeric delta akan tetap blocked atau ditandai unresolved.
+            </div>
+          )}
+        </section>
+      )}
 
       {/* stage chain */}
       <p className="mb-2 font-mono text-[11px] font-semibold uppercase tracking-[0.09em] text-ink-2">
@@ -495,7 +564,7 @@ export function SettingCaseDetail({
               {settingCase.baseline.fingerprint.value}
             </span>
           </div>
-          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-5">
+          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-6">
             <BaselineMetric label="Evidence" value={settingCase.baseline.evidence.length} />
             <BaselineMetric
               label="GI"
@@ -510,6 +579,24 @@ export function SettingCaseDetail({
               label="Relay"
               value={settingCase.baseline.network.relayIeds.length}
             />
+            <BaselineMetric
+              label="Setting"
+              value={settingCase.baseline.network.relaySettings?.length ?? 0}
+            />
+          </div>
+          <div className="mt-3 grid gap-2 text-[11px] text-indigo-900 sm:grid-cols-3">
+            <div className="rounded border border-indigo-200 bg-white px-2.5 py-2">
+              <div className="font-mono text-[9px] uppercase text-indigo-500">Issued revision</div>
+              <div className="mt-1 break-all">{settingCase.baseline.revisionBindings.issuedSettingRevisionId ?? "unresolved"}</div>
+            </div>
+            <div className="rounded border border-indigo-200 bg-white px-2.5 py-2">
+              <div className="font-mono text-[9px] uppercase text-indigo-500">Network revision</div>
+              <div className="mt-1 break-all">{settingCase.baseline.revisionBindings.networkRevisionId ?? "unresolved"}</div>
+            </div>
+            <div className="rounded border border-indigo-200 bg-white px-2.5 py-2">
+              <div className="font-mono text-[9px] uppercase text-indigo-500">Technical revision</div>
+              <div className="mt-1 break-all">{settingCase.baseline.revisionBindings.technicalDataRevisionId ?? "unresolved"}</div>
+            </div>
           </div>
           {settingCase.baseline.issues.length > 0 && (
             <div className="mt-3 space-y-1.5 rounded-md border border-amber-200 bg-amber-50 p-3">
@@ -556,7 +643,7 @@ export function SettingCaseDetail({
                 label={record.fileName}
                 meta={`${record.documentType} · ${record.status}`}
                 onRemove={
-                  settingCase.baseline
+                  frozenBaselineSourceIds.has(record.id)
                     ? undefined
                     : () =>
                         unlinkFromCase(settingCase.id, {
@@ -566,26 +653,37 @@ export function SettingCaseDetail({
                 }
               />
             ))}
-            {!settingCase.baseline && (
-              <AttachPicker
-                value={attachSource}
-                onChange={setAttachSource}
-                options={sourceIntakeRecords
-                  .filter((record) => !settingCase.links.sourceIntakeIds.includes(record.id))
-                  .map((record) => ({ id: record.id, label: record.fileName }))}
-                onAttach={(refId) => {
-                  linkToCase(settingCase.id, { kind: "source", refId });
-                  setAttachSource("");
-                }}
+            <AttachPicker
+              value={attachSource}
+              onChange={setAttachSource}
+              options={sourceIntakeRecords
+                .filter((record) => !settingCase.links.sourceIntakeIds.includes(record.id))
+                .map((record) => ({ id: record.id, label: record.fileName }))}
+              onAttach={(refId) => {
+                linkToCase(settingCase.id, { kind: "source", refId });
+                setAttachSource("");
+              }}
+            />
+          </LinkGroup>
+
+          <LinkGroup
+            title={`Targeted Calculation Run (${caseTargetedRuns.length})`}
+            emptyText="Belum ada immutable calculation run untuk case ini."
+          >
+            {caseTargetedRuns.map((run) => (
+              <LinkRow
+                key={run.id}
+                label={`${run.relayModel} · ${run.executedBlocks.length} block · ${run.outputs.length} output`}
+                meta={`${run.id} · fingerprint ${run.fingerprint.value}`}
               />
-            )}
+            ))}
           </LinkGroup>
 
           <div className="rounded-md border border-dashed border-slate-300 bg-slate-50 px-3 py-3 text-xs text-slate-600">
             Study Scenario hanya ditautkan melalui package compatibility binding.
-            Calculation run kini dapat ditautkan lewat Calculation Workbook
-            (Sprint 5). Coordination, approval, commissioning, dan verification
-            belum dapat dieksekusi.
+            Targeted Recalculation dibuka hanya untuk blok Distance/LCD yang terdampak
+            dan memenuhi data readiness. Approval tetap ditelusuri, sedangkan perubahan
+            menjadi aktif hanya setelah commissioning.
           </div>
         </section>
 

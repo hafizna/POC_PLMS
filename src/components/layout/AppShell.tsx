@@ -39,7 +39,7 @@ const MY_WORK_ITEMS: NavItem[] = [
 ];
 
 const DATA_FOUNDATION_ITEMS: NavItem[] = [
-  { id: "master-data", label: "Data Teknis", icon: <Database className="h-4 w-4" /> },
+  { id: "master-data", label: "Asset & Setting Explorer", icon: <Database className="h-4 w-4" /> },
   { id: "network-model", label: "Working Network", icon: <Network className="h-4 w-4" /> },
   { id: "source-index", label: "Dokumen Sumber", icon: <FileSearch className="h-4 w-4" /> },
   { id: "inbox", label: "Data Quality Queue", icon: <Inbox className="h-4 w-4" /> },
@@ -167,7 +167,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   className="flex w-full items-center gap-2 rounded-lg bg-blue-600 px-2.5 py-2 text-left text-sm font-medium text-white shadow-sm hover:bg-blue-700"
                 >
                   <Calculator className="h-4 w-4 text-blue-100" />
-                  Calculate / Revise Setting
+                  Targeted Recalculation
                 </button>
                 <button
                   type="button"
@@ -175,7 +175,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   className="flex w-full items-center gap-2 rounded-lg border border-blue-300 bg-blue-50 px-2.5 py-2 text-left text-sm font-medium text-blue-800 hover:bg-blue-100"
                 >
                   <GitCompareArrows className="h-4 w-4 text-blue-500" />
-                  Crosscheck Actual Setting
+                  Cek Setting Aktual
                 </button>
               </div>
             </section>
@@ -281,8 +281,8 @@ export function AppShell({ children }: { children: ReactNode }) {
               Case-driven
             </div>
             <p className="mt-1 text-[11px] leading-4 text-slate-500">
-              D1/O1: Calculation, Coordination, dan Crosscheck dibuka melalui
-              case aktif agar evidence dan keputusan tetap terikat konteks.
+              E1/O1: recalculation dan actual crosscheck selalu dibuka melalui
+              case aktif agar baseline, perubahan, evidence, dan keputusan tetap terikat.
             </p>
           </div>
         </aside>
@@ -297,7 +297,9 @@ export function AppShell({ children }: { children: ReactNode }) {
                 </span>{" "}
                 —{" "}
                 {tab === "source-index"
-                  ? "dokumen baru yang di-stage otomatis ditautkan sebagai bukti case ini."
+                  ? openedFromCase?.baseline
+                    ? "dokumen baru ditautkan sebagai evidence perubahan tanpa mengubah frozen baseline."
+                    : "upload dokumen opsional; kembali ke Case untuk membekukan baseline bila tidak ada source baru."
                   : tab === "inbox"
                     ? "keputusan topology disimpan per case + relation dan tidak berlaku sebagai bulk approval."
                     : tab === "calculation" || tab === "coverage" || tab === "comparison" || tab === "vendor-import"
@@ -329,7 +331,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </div>
 
       <footer className="border-t border-slate-200 bg-white px-6 py-3 text-xs text-slate-500">
-        PLMS · Sprint 5: Calculation & Coordination gate dibuka · Review/Approval dan tahap setelahnya masih terkunci.
+        PLMS · E1 pilot: targeted recalculation Distance/LCD · full design from zero dan live Calculation Run masih terkunci.
       </footer>
     </div>
   );

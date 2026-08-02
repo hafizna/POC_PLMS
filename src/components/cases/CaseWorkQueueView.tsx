@@ -88,9 +88,8 @@ export function CaseWorkQueueView() {
         Sprint 4.1 menjalankan <b className="font-semibold text-ink">flow authority,
         evidence mode, activation contract, serta Study Scenario Package</b>. Kondisi
         study diturunkan per case; approval tidak mengaktifkan data sebelum commissioning.
-        Sprint 5 membuka gerbang <b className="font-semibold text-ink">Calculation</b>:
-        case dapat lanjut ke Coordination setelah minimal satu Calculation Run
-        ter-link.
+        E1 memfokuskan gerbang <b className="font-semibold text-ink">Targeted Recalculation</b>:
+        hanya blok Distance/LCD terdampak yang dihitung ulang dari issued baseline.
       </p>
 
       {/* primary actions + KPI */}
@@ -100,7 +99,7 @@ export function CaseWorkQueueView() {
           onClick={() => setLocalWizardType("new_setting")}
           className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-[13px] font-semibold text-white shadow-sm hover:bg-blue-700"
         >
-          <Calculator className="h-4 w-4" /> Calculate / Revise Setting
+          <Calculator className="h-4 w-4" /> Targeted Recalculation
         </button>
         <button
           type="button"
@@ -220,9 +219,10 @@ export function CaseWorkQueueView() {
       </div>
 
       <p className="mt-4 border-t border-line pt-3 text-[12.5px] leading-[1.65] text-ink-2">
-        <b className="text-ink">Boundary Sprint 5.</b> Routing P1–P5 membedakan
+        <b className="text-ink">Boundary E1.</b> Routing P1–P5 membedakan
         document audit/readback, permanent/temporary, serta commissioning activation.
-        Calculation kini case-gated (minimal satu Calculation Run ter-link).
+        Targeted Recalculation bersifat case-gated; live run belum dapat dibuat sampai
+        data readiness dan adapter eksekusi 2B.4 tersedia.
         Coordination, approval execution, issuance, dan verification belum diklaim selesai.
       </p>
 

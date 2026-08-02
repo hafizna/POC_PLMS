@@ -1,6 +1,6 @@
 # PLMS Business Process Blueprint
 
-Status: working blueprint v0.2
+Status: working blueprint v0.3
 Purpose: remap PLMS around the protection-setting lifecycle before further UI or database implementation.
 
 ## 1. Product Boundary
@@ -25,6 +25,18 @@ PLMS still needs a protection-relevant network model. It stores or consumes the 
 - determine which settings are affected by an engineering change.
 
 The internal network graph is therefore a bounded PLMS domain model and working projection, not a replacement for the complete corporate network model.
+
+### 1.1 Current Delivery Focus
+
+The current operational target is **case-scoped targeted recalculation for line protection**, not unrestricted setting design from zero.
+
+- in scope: Distance core, residual compensation, resistive reach, load blinder/power swing, line differential, AR policy review, and remote coordination impact;
+- entry condition: an issued setting baseline plus a declared engineering change;
+- output intent: a proposed revision showing what changed, what was reviewed, and what was carried forward;
+- separate flow: issued TAP audit and actual relay readback verification;
+- deferred until this slice is stable: greenfield/full design from zero, transformer protection, OCR/GFR expansion, multi-vendor conversion, and native vendor-file writing.
+
+This boundary is a sequencing decision, not the final product ceiling. The existing network builder, source index, relay catalog, scenario registry, and crosscheck modules remain relevant only where they supply or verify the case lifecycle above.
 
 ## 2. Core Design Decision
 
@@ -56,9 +68,9 @@ This separates concepts that are currently mixed together:
 - `Source Document`: evidence, not automatically the current truth.
 - `Actual Readback`: the observed setting in the installed relay.
 
-### 2.1 Setting Calculation and Database Revisions
+### 2.1 Targeted Recalculation and Database Revisions
 
-`Calculate New Setting` must not directly overwrite active master or technical data.
+`Targeted Recalculation` must not directly overwrite active master or technical data.
 
 The safe model is:
 
@@ -80,7 +92,7 @@ Active Data Revision
                          selected by Study Scenario
                                       │
                                       v
-                              Calculation Run
+                       Targeted Calculation Run
                                       │
                                       v
                          Proposed Setting Revision(s)
@@ -96,6 +108,21 @@ Every calculation must bind explicitly to:
 - calculation method/rule version;
 - affected asset and endpoint scope;
 - source evidence and engineering assumptions.
+
+The issued Z1/Z2/Z3 or LCD settings are not substituted for missing physical/network inputs. They are baseline values for before/proposed comparison and carry-forward control. Recalculation inputs come from line/section electrical data, CT/VT, relay capability, approved policy, and the required fault/network scenario.
+
+The reason-to-block impact plan is explicit:
+
+| Change reason | Recalculate | Engineering review / coordination | Typical carry-forward |
+|---|---|---|---|
+| Reconductoring | Distance, kZ0, resistive reach, load blinder/PSB, LCD | AR policy, remote coordination | Unaffected scheme/site parameters |
+| CT replacement | Distance secondary conversion, resistive reach, load blinder/PSB, LCD | Remote coordination | kZ0 when line impedance is unchanged |
+| VT/CVT replacement | Distance conversion, resistive reach, load blinder/PSB | LCD, AR, remote coordination | kZ0 when line impedance is unchanged |
+| Relay replacement | All supported Distance/LCD calculated blocks | capability gap, AR, remote coordination | Only semantically compatible parameters |
+| GI cut-in/topology/remote work | Affected Distance blocks; LCD when physical line data changes | local/remote/neighbor scope and coordination | Blocks proven unaffected by impact assessment |
+| Policy revision | none by default | all policy-dependent blocks | formula outputs whose inputs/rules are unchanged |
+
+This matrix proposes calculation scope; it never replaces engineer confirmation of affected endpoints and protection functions.
 
 Activation is a separate controlled transaction:
 
@@ -113,7 +140,7 @@ If a project is cancelled, its proposed revisions are closed without contaminati
 flowchart LR
     A[Trigger / Request] --> B[Create Setting Case]
     B --> C[Resolve asset, bay, circuit, and relay]
-    C --> D[Freeze baseline and source evidence]
+    C --> D[Freeze current data baseline]
     D --> D1{Physical or technical data changes?}
     D1 -- Yes --> D2[Create Proposed Change Set]
     D2 --> D3[Impact analysis, ownership, and proposed revision]
@@ -123,7 +150,7 @@ flowchart LR
     F --> C
     E -- Yes --> G{Case type}
     G -- Crosscheck only --> H[Normalize actual setting]
-    G -- New or revised setting --> I[Select scenario and calculate]
+    G -- New or revised setting --> I[Determine affected blocks and targeted recalculation]
     G -- Relay replacement --> J[Canonical-to-vendor conversion]
     G -- Network change --> K[Impact analysis and study update]
     I --> L[Coordination and engineering checks]
@@ -220,8 +247,8 @@ Stage-gated wizard:
 | 1. Case initiation | reason, project/incident/policy context, urgency, planned date, requester | Setting Change Case ID, initial workflow, required organizations |
 | 2. Change declaration | one or more physical/equipment/policy change items | dynamic required-field checklist |
 | 3. Scope and ownership | protected circuit, local/remote bay, relays, owning UPTs, case lead | endpoint work packages, access assignments, required reviewers |
-| 4. Evidence and baseline | project documents, existing topology, active technical revision, issued setting, actual readback | immutable case baseline and missing-evidence issues |
-| 5. Proposed data revision | new conductor/CT/VT/relay/topology values appropriate to the selected change items | validated proposed Change Set; active database remains unchanged |
+| 4. Current baseline | existing working topology, active technical revision, relay/CT/VT, registered issued setting when available; source upload is optional for the freeze transaction | immutable case baseline plus explicit unresolved-setting warnings; evidence captured by this snapshot is locked, while TAP/readback acquisition is allowed in its following audit/intake stage |
+| 5. Proposed data revision | new conductor/CT/VT/relay/topology values appropriate to the selected change items plus at least one linked change-evidence source | validated proposed Change Set; change evidence may be appended after freeze and does not mutate the baseline or active database |
 | 6. Impact and readiness | system-derived dependency graph plus engineer confirmation | affected settings/functions/endpoints; blockers and study requirements |
 | 7. Study context | approved existing scenario or request/import of a new study | calculation-ready scenario bound to proposed revision |
 | 8. Calculation | template/rule, policy, engineer inputs and documented overrides | reproducible Calculation Runs and proposed endpoint revisions |
@@ -691,7 +718,7 @@ Policy constraints:
 
 | Existing module | Relevance | Decision | Target position |
 |---|---|---|---|
-| Data Teknis / Master Data | Core | Keep and reshape | versioned Asset & Technical Data domain |
+| Data Teknis / Master Data | Core | Reshaped in SSOT-1 | read-only Asset & Setting Explorer over the versioned Asset & Technical Data domain; controlled updates remain case/revision transactions |
 | Dokumen Sumber | Core | Keep and expand | evidence repository, extraction, provenance |
 | Reference Setting | Partially core | Reshape | baseline resolution inside a Setting Case; no single universal “reference” |
 | Actual Verification | Core | Keep and integrate | P1 crosscheck workflow and post-implementation verification |
@@ -758,8 +785,8 @@ The final navigation should follow work, not implementation components.
 
 ```text
 Primary Actions
-├── Calculate / Revise Setting
-└── Crosscheck Actual Setting
+├── Targeted Recalculation
+└── Cek Setting Aktual
 
 My Work
 ├── Assigned Cases
@@ -797,7 +824,7 @@ Governance
 
 Menus must be filtered by role. Users should land on assigned work rather than seeing every technical component.
 
-`Calculate / Revise Setting` is the main entry point for a new Setting Change Case. Calculation, coordination, conversion, and report screens should normally be opened in the context of that case rather than as disconnected global tools.
+`Targeted Recalculation` is the main entry point for a new Setting Change Case. It collects the reason and scope first; the calculation workspace opens only from the case after baseline, proposed change, impact, and scenario gates. Crosscheck uses a separate case route. Formula labs and legacy study screens must be labelled as reference tools and may not create an operational setting revision.
 
 The database menus remain available to Data Stewards and advanced engineering roles for governance and search, but ordinary case users propose required data changes from inside the case wizard. This prevents the user from having to update active master data first and then manually remember which values were used by the calculation.
 
@@ -814,7 +841,9 @@ evidence links. Sprint 2 added:
 - an immutable scoped case baseline containing frozen case context, network,
   bays, line relations, relays, protection functions, evidence metadata, known
   revision bindings, unresolved readiness issues, and a deterministic fingerprint;
-- evidence locking after baseline freeze;
+- baseline-evidence locking after freeze, while post-freeze change evidence
+  remains appendable and is referenced by Proposed Data Revision without
+  rewriting the frozen snapshot;
 - append-only Proposed Data Revision versions with reason-specific fields for
   reconductoring, CT, VT, relay, topology, policy, master correction, or other
   technical work;
@@ -882,25 +911,39 @@ Sprint 4.1 hardens the business flow before calculation:
 - visible future routes include commissioning/activation and restoration, but
   their operational handlers remain outside the Sprint 4.1 executable boundary.
 
-Sprint 5 opens the `calculation` stage (Engineering MVP E1's first slice):
+Sprint 5 originally opened the `calculation` stage as generic plumbing. E1 now narrows that stage to Targeted Recalculation:
 
-- `calculation` was added to `EXECUTABLE_SETTING_CASE_STAGES`; the stage gate
-  requires at least one `CalculationRun` (calculation snapshot) linked to the
-  case before the case can advance to `coordination`.
-- `SettingCaseDetail`'s stage-tool map now opens the Calculation Workbook
+- `calculation` remains fail-closed. Legacy calculation snapshots are reference
+  evidence and do not satisfy E1; only an immutable Targeted Calculation Run
+  created by the live P545 case adapter opens `coordination`.
+- `SettingCaseDetail`'s stage-tool map opens Targeted Recalculation
   in-context: the case's `protectedScope.subjectLineId` is applied as the
   active line before navigating, so the workbook opens already scoped to the
   right line.
-- Saving a calculation snapshot (distance workbook or OCR/GFR workbook) links
-  it back to the originating case via `links.calculationSnapshotIds`, and the
-  Calculation Workbook shows which case it is bound to.
-- This is plumbing, not policy: the calculation engine itself is still the
-  same distance/OCR-GFR POC formulas (MVP 2B.2 formula parity is a separate,
-  unstarted piece of work). What changed is that a Setting Case can now
-  reference a real Calculation Run instead of the stage being an unreachable
-  placeholder.
-- Coordination, review, approval, issuance, field implementation,
-  commissioning, and verification remain outside the executable boundary.
+- the screen presents issued baseline, declared change, readiness, and a
+  reason-driven affected-block plan before any formula evidence;
+- legacy distance/OCR snapshots are not operational live runs. The 2B.4 adapter
+  resolves frozen baseline, proposed revision, compatible scenario, and
+  evidence-backed overrides; unresolved critical inputs block execution;
+- The original Sprint 5 delivery was plumbing, not policy. Engineering slice
+  2B.2 now adds a versioned P545 distance-core rule for the Ciledug–Alam
+  Sutera benchmark: ZL1–ZL4, CT/VT conversion, transformer caps, Z1/Z2/Z3
+  forward, Z3 reverse, and timers. Its delta report matches 16/16 saved XMCD
+  results at `1e-12` absolute tolerance and retains 24 intermediate steps.
+- the 55/55 result remains parity evidence, not an issued recommendation. Live
+  runs are stored as `proposed`, include rule/input/trace provenance and a
+  deterministic content fingerprint, and are not issuance candidates until a
+  later engineering-review/canonical-package transaction;
+- Engineering slice 2B.3 adds the remaining XMCD calculation blocks: residual
+  compensation, resistive reach, load blinder/power swing, and line
+  differential. The auxiliary delta report matches 39/39 saved results at
+  `1e-12` tolerance (maximum delta `7.11e-15`). Autoreclose values are retained
+  as extracted policy evidence because the worksheet contains text values, not
+  an AR calculation expression.
+- Coordination tooling exists as POC evidence, but it is unreachable through
+  the setting-change lifecycle while the calculation gate is locked. Review,
+  approval, issuance, field implementation, commissioning, and verification
+  remain outside the executable setting-change boundary.
 
 ### Foundation F1 — Domain and Governance
 
@@ -948,13 +991,28 @@ are out of scope until they show up in a source sheet. Order chosen for
 the 5 engineering tracks: D1 → O1 → E1 → C1 → N1, since the other tracks
 need real data before they can be tested against representative input.
 
-### Engineering MVP E1 — Calculation and Issuance Pilot
+### Engineering MVP E1 — Targeted Recalculation and Issuance Pilot
 
-- one validated P545 case with Mathcad parity;
+- one validated P545 line-protection case with Mathcad parity;
+- issued baseline plus declared change and affected-block plan;
 - immutable scenario and calculation run;
 - canonical proposed revision;
 - review, approval, issue, and TAP draft;
 - field readback returning to O1.
+
+Current E1 boundary (2026-08-02): the case-driven recalculation planner, input
+contract, and distance/auxiliary formula-parity slices are implemented. The
+native TypeScript rules pass 55/55 saved-result checks and expose block-level
+intermediate traces. Autoreclose is explicitly extracted policy. Live-contract
+execution, immutable Calculation Run creation from resolved inputs, canonical
+proposed revision, engineer sign-off, and issuance remain outside this slice.
+
+**E1 expansion gate:** do not expand the operational calculation UI to trafo,
+OCR/GFR, multi-vendor conversion, or full design from zero until Distance/LCD
+can (1) execute from a ready case contract, (2) preserve units and provenance,
+(3) calculate only affected blocks, (4) show before/proposed deltas and full
+trace, (5) fail closed on incomplete/conflicting input, and (6) pass regression
+on multiple representative change reasons and line configurations.
 
 ### Conversion MVP C1 — Multi-vendor Pilot
 

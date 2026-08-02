@@ -32,7 +32,7 @@ export const PROCESS_CODE: Record<SettingCaseType, string> = {
 
 export const CASE_TYPE_LABEL: Record<SettingCaseType, string> = {
   crosscheck: "Setting Verification / TAP Audit",
-  new_setting: "Setting Baru / Revisi",
+  new_setting: "Recalculation / Revisi Setting",
   relay_replacement: "Penggantian Relay",
   network_change: "Perubahan Jaringan",
   data_correction: "Koreksi Master Data",
@@ -42,7 +42,7 @@ export const CASE_TYPE_DESCRIPTION: Record<SettingCaseType, string> = {
   crosscheck:
     "Audit PDF TAP issued atau verifikasi actual relay readback; kedua evidence authority tidak dicampur.",
   new_setting:
-    "Menghitung dan menerbitkan revisi setting terkendali (baseline beku, skenario studi, calculation run).",
+    "Menghitung ulang block terdampak dari issued baseline dan perubahan terdeklarasi; full design tanpa baseline didefer.",
   relay_replacement:
     "Mempertahankan intent proteksi saat platform relay berubah — konversi via canonical, bukan parameter-ke-parameter.",
   network_change:
@@ -360,8 +360,9 @@ export function nextStageOf(settingCase: SettingCase): SettingCaseStage | null {
 }
 
 // Sprint 4.1 adds requirement-driven Scenario Packages and hardened flow contracts.
-// Sprint 5 (Engineering MVP E1) opens the `calculation` gate: a case can only
-// leave this stage once at least one reproducible Calculation Run is linked.
+// E1 keeps `calculation` visible as a case-scoped planning/formula stage, but
+// legacy calculation snapshots do not satisfy the gate. The gate remains
+// fail-closed until 2B.4 introduces an immutable Targeted Calculation Run.
 // Sprint 5 (cont'd) opens `coordination` (BUSINESS_PROCESS_BLUEPRINT.md §9's
 // "coordinated package, coverage/selectivity/gap results" — CoordinationCheck):
 // a case can only leave this stage once at least one such check is linked.
@@ -392,6 +393,7 @@ export type StageGateContext = {
   evidenceCount: number;
   hasScenario: boolean;
   calculationCount: number;
+  targetedCalculationRunCount: number;
   coordinationCheckCount: number;
   changeSetCount: number;
   persona: string;
@@ -412,8 +414,8 @@ export type StageGateResult = {
 };
 
 // Current gates validate intake/scoping, the frozen baseline, completeness of
-// the latest proposed revision, impact/study readiness, and (Sprint 5) that at
-// least one Calculation Run is linked before leaving the `calculation` stage.
+// the latest proposed revision, and impact/study readiness. Calculation stays
+// fail-closed until the 2B.4 live-run contract exists.
 export function stageGate(settingCase: SettingCase, ctx: StageGateContext): StageGateResult {
   const blockers: string[] = [];
   const warnings: string[] = [];
@@ -436,9 +438,6 @@ export function stageGate(settingCase: SettingCase, ctx: StageGateContext): Stag
       }
       if (!settingCase.owningUnit) {
         blockers.push("Unit pemilik case belum diisi.");
-      }
-      if (ctx.evidenceCount === 0) {
-        blockers.push("Minimal satu dokumen sumber wajib sebelum baseline dibekukan.");
       }
       blockers.push(...validateCaseFlowProfile(settingCase.flowProfile));
       blockers.push(...ctx.crosscheckEvidenceBlockers);
@@ -479,10 +478,15 @@ export function stageGate(settingCase: SettingCase, ctx: StageGateContext): Stag
       }
       break;
     case "calculation":
-      if (ctx.calculationCount === 0) {
+      if (ctx.targetedCalculationRunCount === 0) {
         blockers.push(
-          "Belum ada Calculation Run yang tersimpan dan ter-link ke case ini."
+          "Immutable Targeted Calculation Run belum tersedia untuk case ini."
         );
+        if (ctx.calculationCount > 0) {
+          warnings.push(
+            "Snapshot kalkulasi legacy ditemukan, tetapi tidak memenuhi gate; jalankan P545 live case adapter."
+          );
+        }
       }
       break;
     case "coordination":

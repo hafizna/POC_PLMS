@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  BookOpenCheck,
   Calculator,
   CheckCircle2,
   ClipboardList,
   FileSpreadsheet,
   FileText,
   GitCompareArrows,
-  Save,
+  LockKeyhole,
+  Play,
   TriangleAlert,
 } from "lucide-react";
 import { NumberInput } from "../shared/NumberInput";
@@ -50,7 +50,29 @@ import {
   type P545InputSection,
   type P545InputStatus,
 } from "../../domain/p545-input-contract";
-import { OcrWorkbook } from "./OcrWorkbook";
+import {
+  calculateP545DistanceCore,
+  type ComplexValue,
+  type P545FormulaTrace,
+  type P545ParityRow,
+} from "../../domain/p545-calculation";
+import {
+  calculateP545AuxiliaryBlocks,
+  type P545AuxiliaryBlock,
+  type P545AuxiliaryParityRow,
+  type P545AuxiliaryTrace,
+} from "../../domain/p545-auxiliary-calculation";
+import {
+  buildTargetedRecalculationPlan,
+  type RecalculationAction,
+  type RecalculationStepStatus,
+  type TargetedRecalculationPlan,
+} from "../../domain/targeted-recalculation";
+import {
+  buildP545CaseExecutionContract,
+  type P545CaseInputOverride,
+} from "../../domain/p545-case-execution";
+import type { SettingCase } from "../../domain/setting-case";
 import { deriveStudyNetwork, getConfirmedMasterNetwork } from "../../domain/study-network";
 
 type InputKey = keyof DistanceCalculationInput;
@@ -68,9 +90,9 @@ export function CalculationView() {
   // snapshots are linked back to it (BUSINESS_PROCESS_BLUEPRINT.md §8,
   // `Execute calculation` writes a CalculationRun bound to the case).
   const linkedSettingCase = useProsetStore((s) =>
-    s.settingCases.find(
-      (item) => item.protectedScope.subjectLineId === s.activeNetworkLineId
-    )
+    s.openedFromCaseId
+      ? s.settingCases.find((item) => item.id === s.openedFromCaseId)
+      : undefined
   );
   const [side, setSide] = useState<"from" | "to">("from");
   const [selectedTemplateId, setSelectedTemplateId] = useState("distance-line-150kv");
@@ -79,6 +101,10 @@ export function CalculationView() {
     DEFAULT_DISTANCE_INPUT
   );
   const selectedTemplate = getCalculationTemplate(selectedTemplateId);
+  const targetedPlan = useMemo(
+    () => buildTargetedRecalculationPlan(linkedSettingCase),
+    [linkedSettingCase]
+  );
   const result = useMemo(() => calculateDistanceSetting(input), [input]);
   const masterNetworkGraph = useMemo(
     () => getConfirmedMasterNetwork(networkGraphOverrides[INVENTORY_MASTER_CASE_ID]),
@@ -203,10 +229,12 @@ export function CalculationView() {
   if (!studyResolution.ready || !activeLine) {
     return (
       <div className="space-y-4">
+        <TargetedRecalculationOverview plan={targetedPlan} />
+        <TargetedCaseExecutionPanel settingCase={linkedSettingCase} />
         <section className="rounded-lg border border-amber-200 bg-amber-50 p-5">
-          <h2 className="text-sm font-semibold text-amber-950">Calculation membutuhkan Study berbasis bay/line</h2>
+          <h2 className="text-sm font-semibold text-amber-950">Pilih Study berbasis bay/line untuk formula reference</h2>
           <p className="mt-1 text-xs text-amber-800">
-            Pilih relasi dari confirmed master graph. PLMS akan membuat atau mengaktifkan Study untuk relasi tersebut; tidak ada fallback ke DKS-DM-PIK-MKB.
+            Targeted Recalculation operasional harus dibuka dari Setting Case. Pilihan di bawah hanya menyiapkan line context untuk formula reference; tidak ada fallback ke DKS-DM-PIK-MKB.
           </p>
           {studyResolution.blockers.length > 0 && (
             <ul className="mt-3 space-y-1 text-xs text-red-800">
@@ -238,6 +266,9 @@ export function CalculationView() {
 
   return (
     <div className="space-y-4">
+      <TargetedRecalculationOverview plan={targetedPlan} />
+      <TargetedCaseExecutionPanel settingCase={linkedSettingCase} />
+
       {activeStudy?.sourceBridge?.kind === "legacy_crosscheck_workbook" && (
         <LegacyCrosscheckBenchmarkPanel />
       )}
@@ -246,49 +277,44 @@ export function CalculationView() {
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
             <h2 className="text-sm font-semibold text-slate-900">
-              Calculation Workbook
+              Line Protection Formula Workspace
             </h2>
             <p className="text-xs text-slate-500 mt-0.5 max-w-3xl">
-              Prototype workbook untuk mereplikasi cara kerja template Mathcad:
-              input engineering, formula, intermediate result, final setting,
-              dan warning validasi dalam satu workflow yang bisa diaudit.
+              Evidence dan formula lab untuk Distance + Line Differential.
+              Proposed recalculation hanya boleh dibuat dari baseline issued,
+              declared change, dan scenario yang sudah ready di Setting Case.
             </p>
           </div>
           <div className="flex items-center gap-2">
             <label className="flex flex-col gap-1">
-              <span className="text-[10px] uppercase tracking-wider text-slate-500">Template</span>
+              <span className="text-[10px] uppercase tracking-wider text-slate-500">Current focus</span>
               <select
                 value={selectedTemplateId}
                 onChange={(event) => setSelectedTemplateId(event.target.value)}
                 className="bg-white text-xs px-2 py-1.5 rounded border border-slate-300 focus:border-blue-500 focus:outline-none min-w-56"
               >
-                {CALCULATION_TEMPLATES.map((template) => (
+                {CALCULATION_TEMPLATES.filter(
+                  (template) => template.id === "distance-line-150kv"
+                ).map((template) => (
                   <option key={template.id} value={template.id}>
-                    {template.shortName} - {template.status}
+                    Distance + Differential P545
                   </option>
                 ))}
               </select>
             </label>
-            <TemplateStatusBadge template={selectedTemplate} />
+            <span className="rounded border border-emerald-200 bg-emerald-50 px-2 py-1 text-[10px] font-semibold text-emerald-700">
+              Formula parity 55/55
+            </span>
             {selectedTemplateId === "distance-line-150kv" && (
               <button
                 type="button"
                 onClick={handleSaveCalculationSnapshot}
-                disabled={!activeLine || selectedTemplate.status !== "executable"}
-                className={`inline-flex items-center gap-1.5 rounded border px-3 py-2 text-xs font-medium transition-colors ${activeLine && selectedTemplate.status === "executable"
-                    ? "border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
-                    : "border-slate-200 bg-slate-50 text-slate-300 cursor-not-allowed"
-                  }`}
-                title={
-                  selectedTemplate.status !== "executable"
-                    ? "Template blueprint belum bisa disimpan sebagai draft TAP"
-                    : activeLine
-                      ? "Simpan hasil hitung ke Setting Register"
-                      : "Pilih line dulu"
-                }
+                disabled
+                className="inline-flex cursor-not-allowed items-center gap-1.5 rounded border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-400"
+                title="Snapshot formula-lab legacy tidak memenuhi gate case"
               >
-                <Save className="w-3.5 h-3.5" />
-                Save draft TAP
+                <LockKeyhole className="w-3.5 h-3.5" />
+                Legacy snapshot disabled
               </button>
             )}
           </div>
@@ -394,7 +420,11 @@ export function CalculationView() {
       </div>
 
       {selectedTemplateId === "distance-line-150kv" && (
-        <P545PilotInputContractPanel />
+        <div className="space-y-4">
+          <P545PilotInputContractPanel />
+          <P545DistanceCoreParityPanel />
+          <P545AuxiliaryParityPanel />
+        </div>
       )}
 
       {selectedTemplate.status !== "executable" ? (
@@ -405,21 +435,6 @@ export function CalculationView() {
             <MathcadBridgePanel template={selectedTemplate} />
           </div>
         </div>
-      ) : selectedTemplateId === "ocr-gfr-backup-150kv" ? (
-        <OcrWorkbook
-          lineId={activeLineId || ""}
-          caseId={INVENTORY_MASTER_CASE_ID}
-          onSave={(snapshot) => {
-            const snapshotId = addCalculationSnapshot(snapshot);
-            if (linkedSettingCase) {
-              linkToSettingCase(linkedSettingCase.id, {
-                kind: "calculation",
-                refId: snapshotId,
-              });
-            }
-            return snapshotId;
-          }}
-        />
       ) : (
         <div className="grid grid-cols-1 xl:grid-cols-[380px_1fr] gap-4">
           <div className="space-y-4">
@@ -587,17 +602,528 @@ export function CalculationView() {
   );
 }
 
-function TemplateStatusBadge({ template }: { template: CalculationTemplate }) {
-  const cls: Record<CalculationTemplate["status"], string> = {
-    executable: "text-emerald-700 bg-emerald-50 border-emerald-200",
-    blueprint: "text-blue-700 bg-blue-50 border-blue-200",
-    blocked: "text-amber-700 bg-amber-50 border-amber-200",
+type CaseOverrideDraft = {
+  value: string;
+  reason: string;
+  evidenceRef: string;
+  at: string;
+};
+
+function TargetedCaseExecutionPanel({
+  settingCase,
+}: {
+  settingCase: SettingCase | undefined;
+}) {
+  const persona = useProsetStore((state) => state.currentPersona);
+  const runP545TargetedCalculation = useProsetStore(
+    (state) => state.runP545TargetedCalculation
+  );
+  const allRuns = useProsetStore((state) => state.targetedCalculationRuns);
+  const [drafts, setDrafts] = useState<Record<string, CaseOverrideDraft>>({});
+  const [runErrors, setRunErrors] = useState<string[]>([]);
+  const [lastRunId, setLastRunId] = useState<string | null>(null);
+
+  const baseContract = useMemo(
+    () =>
+      settingCase
+        ? buildP545CaseExecutionContract({ settingCase })
+        : undefined,
+    [settingCase]
+  );
+  const overrides = useMemo<P545CaseInputOverride[]>(() => {
+    if (!baseContract) return [];
+    return Object.entries(drafts).flatMap(([key, draft]) => {
+      if (!draft.value.trim()) return [];
+      const definition = baseContract.inputs.find((item) => item.key === key);
+      if (!definition) return [];
+      const parsedValue =
+        definition.valueType === "number"
+          ? Number(draft.value.replace(",", "."))
+          : draft.value;
+      return [
+        {
+          key,
+          value: parsedValue,
+          reason: draft.reason,
+          evidenceRef: draft.evidenceRef,
+          actor: persona,
+          at: draft.at,
+        },
+      ];
+    });
+  }, [baseContract, drafts, persona]);
+  const contract = useMemo(
+    () =>
+      settingCase
+        ? buildP545CaseExecutionContract({ settingCase, overrides })
+        : undefined,
+    [settingCase, overrides]
+  );
+  const requiredBlockIds = useMemo(
+    () =>
+      new Set(
+        contract?.plan.blocks
+          .filter((block) => block.action === "recalculate")
+          .map((block) => block.id) ?? []
+      ),
+    [contract]
+  );
+  const editableInputs =
+    contract?.inputs.filter(
+      (item) =>
+        item.requiredBy.some((block) => requiredBlockIds.has(block)) &&
+        (item.status === "missing" ||
+          item.status === "conflict" ||
+          item.status === "overridden")
+    ) ?? [];
+  const latestRun = useMemo(
+    () =>
+      allRuns.find(
+        (run) =>
+          run.id === lastRunId ||
+          (!lastRunId && run.caseId === settingCase?.id)
+      ),
+    [allRuns, lastRunId, settingCase?.id]
+  );
+
+  const updateDraft = (
+    key: string,
+    patch: Partial<Omit<CaseOverrideDraft, "at">>
+  ) => {
+    setDrafts((current) => ({
+      ...current,
+      [key]: {
+        value: current[key]?.value ?? "",
+        reason: current[key]?.reason ?? "",
+        evidenceRef: current[key]?.evidenceRef ?? "",
+        at: current[key]?.at ?? new Date().toISOString(),
+        ...patch,
+      },
+    }));
+  };
+
+  if (!settingCase || !contract) {
+    return (
+      <section className="rounded-xl border border-slate-200 bg-white p-5">
+        <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+          <LockKeyhole className="h-4 w-4 text-slate-500" /> Live case execution
+        </div>
+        <p className="mt-2 text-xs leading-5 text-slate-600">
+          Buka workspace ini dari Setting Change Case. Formula lab tetap dapat
+          dilihat sebagai benchmark, tetapi tidak dapat membuat run operasional.
+        </p>
+      </section>
+    );
+  }
+
+  const canRun =
+    settingCase.stage === "calculation" && contract.status === "ready";
+
+  return (
+    <section className="overflow-hidden rounded-xl border border-indigo-200 bg-white">
+      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-indigo-200 bg-indigo-50 px-5 py-4">
+        <div>
+          <div className="font-mono text-[10px] font-semibold uppercase tracking-wider text-indigo-700">
+            Live P545 case adapter
+          </div>
+          <h2 className="mt-1 text-sm font-semibold text-indigo-950">
+            Immutable Targeted Calculation Run
+          </h2>
+          <p className="mt-1 max-w-3xl text-xs leading-5 text-indigo-800">
+            Input di-resolve dari frozen baseline, proposed revision, scenario,
+            dan override engineer. Hanya block berstatus recalculate yang dieksekusi.
+          </p>
+        </div>
+        <span
+          className={`rounded border px-2 py-1 text-[10px] font-semibold ${
+            contract.status === "ready"
+              ? "border-emerald-300 bg-emerald-50 text-emerald-700"
+              : "border-red-300 bg-red-50 text-red-700"
+          }`}
+        >
+          {contract.status}
+        </span>
+      </div>
+
+      <div className="p-4">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+          <ExecutionMetric label="Required" value={contract.summary.required} />
+          <ExecutionMetric label="Resolved" value={contract.summary.resolved} />
+          <ExecutionMetric label="Override" value={contract.summary.overridden} />
+          <ExecutionMetric label="Missing" value={contract.summary.missing} />
+          <ExecutionMetric label="Conflict" value={contract.summary.conflicts} />
+        </div>
+
+        {settingCase.stage !== "calculation" && (
+          <div className="mt-3 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+            Case masih berada pada stage <span className="font-semibold">{settingCase.stage}</span>.
+            Contract dapat direview sekarang, tetapi run baru dapat dibuat pada stage Calculation.
+          </div>
+        )}
+
+        {contract.blockers.length > 0 && (
+          <div className="mt-3 space-y-1 rounded border border-red-200 bg-red-50 p-3">
+            {contract.blockers.map((message) => (
+              <div key={message} className="flex items-start gap-2 text-xs text-red-800">
+                <TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" /> {message}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {editableInputs.length > 0 && (
+          <div className="mt-4 overflow-hidden rounded border border-slate-200">
+            <div className="border-b border-slate-200 bg-slate-50 px-3 py-2">
+              <h3 className="text-[10px] font-semibold uppercase tracking-wider text-slate-600">
+                Engineering input resolution
+              </h3>
+              <p className="mt-1 text-[11px] text-slate-500">
+                Override wajib memiliki alasan dan evidence reference; nilainya disimpan bersama run.
+              </p>
+            </div>
+            <div className="divide-y divide-slate-100">
+              {editableInputs.map((item) => {
+                const draft = drafts[item.key] ?? {
+                  value: "",
+                  reason: "",
+                  evidenceRef: "",
+                  at: "",
+                };
+                return (
+                  <div key={item.key} className="grid gap-2 px-3 py-3 lg:grid-cols-[220px_150px_1fr_1fr]">
+                    <div>
+                      <div className="text-xs font-medium text-slate-800">{item.label}</div>
+                      <div className="mt-0.5 text-[10px] text-slate-500">
+                        {item.key} · {item.unit} · {item.status}
+                      </div>
+                      {item.issue && (
+                        <div className="mt-1 text-[10px] text-amber-700">{item.issue}</div>
+                      )}
+                    </div>
+                    <input
+                      value={draft.value}
+                      onChange={(event) => updateDraft(item.key, { value: event.target.value })}
+                      inputMode={item.valueType === "number" ? "decimal" : undefined}
+                      placeholder={`Value (${item.unit})`}
+                      className="rounded border border-slate-300 px-2.5 py-2 text-xs focus:border-indigo-500 focus:outline-none"
+                    />
+                    <input
+                      value={draft.reason}
+                      onChange={(event) => updateDraft(item.key, { reason: event.target.value })}
+                      placeholder="Engineering reason (min. 8 karakter)"
+                      className="rounded border border-slate-300 px-2.5 py-2 text-xs focus:border-indigo-500 focus:outline-none"
+                    />
+                    <input
+                      value={draft.evidenceRef}
+                      onChange={(event) => updateDraft(item.key, { evidenceRef: event.target.value })}
+                      placeholder="Evidence/source reference"
+                      className="rounded border border-slate-300 px-2.5 py-2 text-xs focus:border-indigo-500 focus:outline-none"
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            disabled={!canRun}
+            onClick={() => {
+              const result = runP545TargetedCalculation(settingCase.id, overrides);
+              if (!result.ok) {
+                setRunErrors(result.errors);
+                return;
+              }
+              setRunErrors([]);
+              setLastRunId(result.run.id);
+            }}
+            className="inline-flex items-center gap-1.5 rounded bg-indigo-600 px-3.5 py-2 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <Play className="h-3.5 w-3.5" /> Create proposed run
+          </button>
+          <span className="text-[11px] text-slate-500">
+            Adapter {contract.adapterVersion} · {contract.plan.blocks.filter((item) => item.action === "recalculate").length} executed block
+          </span>
+        </div>
+
+        {runErrors.map((message) => (
+          <div key={message} className="mt-2 text-xs text-red-700">{message}</div>
+        ))}
+
+        {latestRun && (
+          <div className="mt-4 rounded border border-emerald-200 bg-emerald-50 p-3">
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <div>
+                <div className="text-xs font-semibold text-emerald-900">Proposed run tersimpan</div>
+                <div className="mt-1 text-[10px] text-emerald-700">
+                  {latestRun.id} · {latestRun.outputs.length} output · {latestRun.executedBlocks.join(", ")}
+                </div>
+              </div>
+              <span className="rounded border border-emerald-300 bg-white px-2 py-1 font-mono text-[10px] text-emerald-800">
+                {latestRun.fingerprint.value}
+              </span>
+            </div>
+            <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+              {latestRun.outputs.map((item) => (
+                <div key={item.key} className="rounded border border-emerald-200 bg-white px-2.5 py-2">
+                  <div className="text-[9px] uppercase tracking-wider text-emerald-600">{item.label}</div>
+                  <div className="mt-1 font-mono text-xs font-semibold text-emerald-950">
+                    {typeof item.value === "number" ? item.value.toPrecision(8) : item.value} {item.unit}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function ExecutionMetric({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded border border-slate-200 bg-slate-50 px-3 py-2">
+      <div className="text-[9px] font-semibold uppercase tracking-wider text-slate-500">{label}</div>
+      <div className="mt-1 font-mono text-sm font-semibold text-slate-900">{value}</div>
+    </div>
+  );
+}
+
+function TargetedRecalculationOverview({
+  plan,
+}: {
+  plan: TargetedRecalculationPlan;
+}) {
+  const activeBlocks = plan.blocks.filter((block) => block.action !== "carry-forward");
+  const readinessClass = {
+    blocked: "border-red-200 bg-red-50 text-red-700",
+    "ready-for-rule-binding": "border-emerald-200 bg-emerald-50 text-emerald-700",
+    deferred: "border-slate-200 bg-slate-100 text-slate-600",
+  }[plan.processReadiness];
+
+  return (
+    <section className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+      <div className="border-b border-slate-200 bg-gradient-to-r from-slate-950 to-blue-950 px-5 py-5 text-white">
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-lg font-semibold">Targeted Recalculation - Line Protection</h1>
+              <span className="rounded border border-blue-300/30 bg-blue-400/10 px-2 py-0.5 text-[10px] font-semibold text-blue-200">
+                Distance + Differential
+              </span>
+            </div>
+            <p className="mt-1 max-w-3xl text-xs leading-5 text-slate-300">
+              Mulai dari issued setting aktif, deklarasikan perubahan, hitung ulang
+              hanya block terdampak, lalu hasilkan proposed revision. Existing Z1-Z3
+              dipakai sebagai baseline pembanding, bukan input rumus baru.
+            </p>
+          </div>
+          <span className={`rounded border px-2 py-1 text-[10px] font-semibold ${readinessClass}`}>
+            {plan.processReadiness.replace(/-/g, " ")}
+          </span>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 border-b border-slate-200 md:grid-cols-3">
+        <RecalculationModeCard
+          title="Targeted recalculation"
+          description="Issued baseline + change set + affected block calculation."
+          status={plan.mode === "targeted-recalculation" ? "active" : "target"}
+        />
+        <RecalculationModeCard
+          title="Full design from zero"
+          description="New bay tanpa issued baseline; data dan coordination contract lebih luas."
+          status="deferred"
+        />
+        <RecalculationModeCard
+          title="Actual setting check"
+          description="Tetap melalui Crosscheck Case dan native relay readback, bukan halaman ini."
+          status="separate"
+        />
+      </div>
+
+      <div className="p-4">
+        <div className="grid grid-cols-1 gap-2 lg:grid-cols-4">
+          {plan.steps.map((step, index) => (
+            <RecalculationStepCard
+              key={step.id}
+              index={index + 1}
+              label={step.label}
+              status={step.status}
+              detail={step.detail}
+            />
+          ))}
+        </div>
+
+        <div className="mt-4 grid grid-cols-1 gap-3 xl:grid-cols-[320px_1fr]">
+          <div className="space-y-2">
+            <div className="rounded border border-slate-200 bg-slate-50 px-3 py-2">
+              <div className="text-[9px] font-semibold uppercase tracking-wider text-slate-500">
+                Issued baseline
+              </div>
+              <div className="mt-1 break-words text-xs font-medium text-slate-800">
+                {plan.baselineLabel}
+              </div>
+            </div>
+            <div className="rounded border border-slate-200 bg-slate-50 px-3 py-2">
+              <div className="text-[9px] font-semibold uppercase tracking-wider text-slate-500">
+                Declared change
+              </div>
+              <div className="mt-1 text-xs font-medium text-slate-800">
+                {plan.changeLabel || "No declared change"}
+              </div>
+            </div>
+            <div className="rounded border border-blue-200 bg-blue-50 px-3 py-2 text-[11px] text-blue-900">
+              <span className="font-semibold">{activeBlocks.length}</span> block perlu
+              recalculation/review; {plan.blocks.length - activeBlocks.length} block dapat
+              carry-forward dengan provenance baseline.
+            </div>
+          </div>
+
+          <div className="overflow-hidden rounded border border-slate-200">
+            <div className="flex items-center justify-between gap-3 border-b border-slate-200 bg-slate-50 px-3 py-2">
+              <h2 className="text-[10px] font-semibold uppercase tracking-wider text-slate-600">
+                Affected calculation blocks
+              </h2>
+              <span className="text-[10px] text-slate-500">reason-driven matrix v1</span>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-[11px]">
+                <thead className="border-b border-slate-200 text-[9px] uppercase tracking-wider text-slate-500">
+                  <tr>
+                    <th className="px-3 py-2 font-medium">Block</th>
+                    <th className="px-3 py-2 font-medium">Action</th>
+                    <th className="px-3 py-2 font-medium">Required data</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {plan.blocks.map((block) => (
+                    <tr key={block.id} className={block.action === "carry-forward" ? "opacity-60" : ""}>
+                      <td className="px-3 py-2 align-top">
+                        <div className="font-medium text-slate-800">{block.label}</div>
+                        <div className="mt-0.5 text-[9px] text-slate-500">
+                          {block.group} - {block.implementation}
+                        </div>
+                      </td>
+                      <td className="px-3 py-2 align-top">
+                        <RecalculationActionBadge action={block.action} />
+                        {block.reasons.length > 0 && (
+                          <div className="mt-1 text-[9px] text-slate-500">
+                            {block.reasons.join(", ")}
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-3 py-2 align-top text-slate-600">
+                        {block.requiredData.join("; ")}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        {(plan.blockers.length > 0 || plan.warnings.length > 0) && (
+          <div className="mt-3 grid grid-cols-1 gap-2 lg:grid-cols-2">
+            {plan.blockers.length > 0 && (
+              <div className="rounded border border-red-200 bg-red-50 px-3 py-2">
+                <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-red-800">
+                  <LockKeyhole className="h-3.5 w-3.5" /> Recalculation blocked
+                </div>
+                <ul className="mt-1.5 space-y-1 text-[11px] text-red-800">
+                  {plan.blockers.map((blocker) => <li key={blocker}>- {blocker}</li>)}
+                </ul>
+              </div>
+            )}
+            {plan.warnings.length > 0 && (
+              <div className="rounded border border-amber-200 bg-amber-50 px-3 py-2">
+                <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-amber-800">
+                  <TriangleAlert className="h-3.5 w-3.5" /> Current boundary
+                </div>
+                <ul className="mt-1.5 space-y-1 text-[11px] text-amber-800">
+                  {plan.warnings.map((warning) => <li key={warning}>- {warning}</li>)}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function RecalculationModeCard({
+  title,
+  description,
+  status,
+}: {
+  title: string;
+  description: string;
+  status: "active" | "target" | "deferred" | "separate";
+}) {
+  const cls = {
+    active: "border-blue-500 bg-blue-50",
+    target: "border-slate-200 bg-white",
+    deferred: "border-slate-200 bg-slate-50",
+    separate: "border-slate-200 bg-white",
+  }[status];
+  return (
+    <div className={`border-b px-4 py-3 last:border-b-0 md:border-b-0 md:border-r md:last:border-r-0 ${cls}`}>
+      <div className="flex items-center justify-between gap-2">
+        <div className="text-xs font-semibold text-slate-800">{title}</div>
+        <span className="rounded border border-slate-200 bg-white px-1.5 py-0.5 text-[9px] text-slate-500">
+          {status}
+        </span>
+      </div>
+      <div className="mt-1 text-[10px] leading-4 text-slate-500">{description}</div>
+    </div>
+  );
+}
+
+function RecalculationStepCard({
+  index,
+  label,
+  status,
+  detail,
+}: {
+  index: number;
+  label: string;
+  status: RecalculationStepStatus;
+  detail: string;
+}) {
+  const cls: Record<RecalculationStepStatus, string> = {
+    complete: "border-emerald-200 bg-emerald-50 text-emerald-800",
+    current: "border-blue-300 bg-blue-50 text-blue-800",
+    blocked: "border-red-200 bg-red-50 text-red-800",
+    pending: "border-slate-200 bg-slate-50 text-slate-600",
+    deferred: "border-slate-200 bg-slate-100 text-slate-500",
   };
   return (
-    <div className={`flex items-center gap-2 text-xs border rounded-md px-3 py-2 ${cls[template.status]}`}>
-      <BookOpenCheck className="w-4 h-4" />
-      {template.status === "executable" ? "Executable" : "Template blueprint"}
+    <div className={`rounded border px-3 py-2 ${cls[status]}`}>
+      <div className="flex items-center gap-2">
+        <span className="flex h-5 w-5 items-center justify-center rounded-full border border-current/20 bg-white/70 text-[9px] font-bold">
+          {index}
+        </span>
+        <div className="text-[10px] font-semibold uppercase tracking-wider">{label}</div>
+      </div>
+      <div className="mt-1.5 text-[10px] leading-4 opacity-80">{detail}</div>
     </div>
+  );
+}
+
+function RecalculationActionBadge({ action }: { action: RecalculationAction }) {
+  const cls: Record<RecalculationAction, string> = {
+    recalculate: "border-blue-200 bg-blue-50 text-blue-700",
+    "engineering-review": "border-amber-200 bg-amber-50 text-amber-700",
+    "carry-forward": "border-slate-200 bg-slate-50 text-slate-500",
+  };
+  return (
+    <span className={`inline-flex rounded border px-1.5 py-0.5 text-[9px] font-semibold ${cls[action]}`}>
+      {action}
+    </span>
   );
 }
 
@@ -606,8 +1132,15 @@ function TemplateOverview({ template }: { template: CalculationTemplate }) {
     <div className="mt-4 rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
-          <div className="text-xs font-semibold text-slate-900">{template.name}</div>
-          <div className="text-[11px] text-slate-600 mt-0.5 max-w-4xl">{template.purpose}</div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="text-xs font-semibold text-slate-900">Legacy reference worksheet - {template.name}</div>
+            <span className="rounded border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[9px] text-amber-700">
+              not a live Calculation Run
+            </span>
+          </div>
+          <div className="text-[11px] text-slate-600 mt-0.5 max-w-4xl">
+            {template.purpose} Gunakan bagian ini untuk inspeksi/reference; rule P545 parity dan Input Contract berada di panel setelahnya.
+          </div>
         </div>
         <div className="flex flex-wrap gap-1">
           {template.functionIds.map((fn) => (
@@ -1097,6 +1630,414 @@ function formatOutput(value: number | string | null | undefined) {
   return value;
 }
 
+function P545DistanceCoreParityPanel() {
+  const result = useMemo(() => calculateP545DistanceCore(), []);
+  const output = result.outputs;
+
+  return (
+    <section className="bg-white border border-slate-200 rounded-lg overflow-hidden">
+      <div className="border-b border-slate-200 bg-slate-50 px-4 py-3 flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <h3 className="text-sm font-semibold text-slate-900">
+              P545 Distance Core - Mathcad Parity
+            </h3>
+            <span className="text-[10px] rounded border border-blue-200 bg-blue-50 text-blue-700 px-1.5 py-0.5">
+              MVP 2B.2
+            </span>
+            <span
+              className={`text-[10px] rounded border px-1.5 py-0.5 ${
+                result.parity.status === "pass"
+                  ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                  : "border-red-200 bg-red-50 text-red-700"
+              }`}
+            >
+              {result.parity.status.toUpperCase()} {result.parity.matched}/{result.parity.rows.length}
+            </span>
+          </div>
+          <p className="text-xs text-slate-600 mt-1 max-w-3xl">
+            Native TypeScript port untuk blok distance Ciledug - Alam Sutera #1.
+            Formula dan intermediate result dibandingkan dengan saved result di XMCD,
+            tanpa pembulatan pada jalur hitung.
+          </p>
+        </div>
+        <div className="text-right text-[10px] text-slate-500">
+          <div className="font-mono text-slate-700">{result.ruleVersion}</div>
+          <div>{result.source.generator} - worksheet {result.source.worksheetVersion}</div>
+        </div>
+      </div>
+
+      <div className="p-4 grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-2">
+        <P545CoreMetric label="Z1 forward" value={output.z1SecondaryOhm} unit="ohm sec" />
+        <P545CoreMetric label="Z2 forward" value={output.z2SecondaryOhm} unit="ohm sec" />
+        <P545CoreMetric label="Z3 forward" value={output.z3SecondaryOhm} unit="ohm sec" />
+        <P545CoreMetric label="Z3 reverse" value={output.z3ReverseSecondaryOhm} unit="ohm sec" />
+        <P545CoreMetric label="Line angle" value={output.lineAngleDeg} unit="degree" />
+        <P545CoreMetric
+          label="tZ1 / tZ2 / tZ3"
+          value={`${output.t1Seconds} / ${output.t2Seconds} / ${output.t3Seconds}`}
+          unit="second"
+        />
+      </div>
+
+      <div className="mx-4 mb-4 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-900">
+        Ini masih <span className="font-semibold">benchmark replay</span> dari input historis XMCD,
+        bukan live recommended setting. Issuance tetap diblokir sampai P545 Input Contract
+        berstatus ready dan engineer menyetujui topology/adjacent equivalent, VT, relay identity,
+        serta fault-study scenario.
+      </div>
+
+      <div className="border-t border-slate-200">
+        <div className="px-4 py-2 bg-slate-50 flex items-center justify-between gap-3 flex-wrap">
+          <h4 className="text-[10px] uppercase tracking-wider font-semibold text-slate-600">
+            Saved-result delta report
+          </h4>
+          <span className="text-[10px] text-slate-500">
+            absolute tolerance {formatP545Exact(result.parity.tolerance)} - display uses round-trip numbers
+          </span>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-[11px]">
+            <thead className="border-y border-slate-200 bg-white text-[9px] uppercase tracking-wider text-slate-500">
+              <tr>
+                <th className="px-4 py-2 font-medium">Result</th>
+                <th className="px-3 py-2 font-medium">XMCD saved</th>
+                <th className="px-3 py-2 font-medium">PLMS actual</th>
+                <th className="px-3 py-2 font-medium">Abs delta</th>
+                <th className="px-3 py-2 font-medium">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {result.parity.rows.map((row) => (
+                <P545ParityTableRow key={row.key} row={row} />
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <details className="border-t border-slate-200">
+        <summary className="cursor-pointer bg-slate-50 px-4 py-3 text-xs font-semibold text-slate-700 hover:bg-slate-100">
+          Formula trace ({result.trace.length} intermediate steps)
+        </summary>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-[11px]">
+            <thead className="border-b border-slate-200 text-[9px] uppercase tracking-wider text-slate-500">
+              <tr>
+                <th className="px-4 py-2 font-medium">Key</th>
+                <th className="px-3 py-2 font-medium">Formula</th>
+                <th className="px-3 py-2 font-medium">Full-precision result</th>
+                <th className="px-3 py-2 font-medium">XMCD locator</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {result.trace.map((step) => (
+                <P545TraceTableRow key={step.key} step={step} />
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </details>
+
+      <div className="border-t border-slate-100 bg-slate-50 px-4 py-2 text-[10px] text-slate-500">
+        Source digest: <span className="font-mono">{result.source.validationDigest}</span> - {result.source.sourceFile}
+      </div>
+    </section>
+  );
+}
+
+const P545_AUXILIARY_BLOCKS: Array<
+  Exclude<P545AuxiliaryBlock, "autoreclose-policy">
+> = [
+  "residual-compensation",
+  "resistive-reach",
+  "load-blinder-psb",
+  "line-differential",
+];
+
+const P545_AUXILIARY_BLOCK_LABELS: Record<P545AuxiliaryBlock, string> = {
+  "residual-compensation": "Residual compensation kZ0",
+  "resistive-reach": "Resistive reach",
+  "load-blinder-psb": "Load blinder / power swing",
+  "line-differential": "Line differential LCD",
+  "autoreclose-policy": "Autoreclose policy",
+};
+
+function P545AuxiliaryParityPanel() {
+  const result = useMemo(() => calculateP545AuxiliaryBlocks(), []);
+  const output = result.outputs;
+  const ar = output.autoreclosePolicy;
+
+  return (
+    <section className="bg-white border border-slate-200 rounded-lg overflow-hidden">
+      <div className="border-b border-slate-200 bg-slate-50 px-4 py-3 flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <h3 className="text-sm font-semibold text-slate-900">
+              P545 Auxiliary Blocks - Mathcad Parity
+            </h3>
+            <span className="text-[10px] rounded border border-blue-200 bg-blue-50 text-blue-700 px-1.5 py-0.5">
+              MVP 2B.3
+            </span>
+            <span
+              className={`text-[10px] rounded border px-1.5 py-0.5 ${
+                result.parity.status === "pass"
+                  ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                  : "border-red-200 bg-red-50 text-red-700"
+              }`}
+            >
+              {result.parity.status.toUpperCase()} {result.parity.matched}/{result.parity.rows.length}
+            </span>
+          </div>
+          <p className="text-xs text-slate-600 mt-1 max-w-3xl">
+            Port lanjutan untuk residual compensation, resistive reach, load
+            blinder/power swing, dan line differential. Autoreclose ditampilkan
+            sebagai extracted policy karena worksheet tidak memiliki ekspresi kalkulasi AR.
+          </p>
+        </div>
+        <div className="text-right text-[10px] text-slate-500">
+          <div className="font-mono text-slate-700">{result.ruleVersion}</div>
+          <div>
+            max delta {formatP545Exact(result.parity.maxAbsoluteDelta)} - tolerance {formatP545Exact(result.parity.tolerance)}
+          </div>
+        </div>
+      </div>
+
+      <div className="p-4 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-2">
+        <P545AuxiliaryMetric
+          label="kZ0"
+          value={`${formatP545Exact(output.residualCompensation.magnitude)} / ${formatP545Exact(output.residualCompensation.angleDeg)} deg`}
+          sub="magnitude / angle"
+        />
+        <P545AuxiliaryMetric
+          label="Phase reach Z1 / Z2 / Z3"
+          value={`${formatP545Exact(output.resistiveReach.phaseReachByZone.z1)} / ${formatP545Exact(output.resistiveReach.phaseReachByZone.z2)} / ${formatP545Exact(output.resistiveReach.phaseReachByZone.z3)}`}
+          sub="ohm secondary"
+        />
+        <P545AuxiliaryMetric
+          label="Ground reach Z1 / Z2 / Z3"
+          value={`${formatP545Exact(output.resistiveReach.groundReachByZone.z1)} / ${formatP545Exact(output.resistiveReach.groundReachByZone.z2)} / ${formatP545Exact(output.resistiveReach.groundReachByZone.z3)}`}
+          sub="ohm secondary"
+        />
+        <P545AuxiliaryMetric
+          label="Blinder / PSB"
+          value={`${formatP545Exact(output.loadBlinderAndPowerSwing.blinderSecondaryOhm)} / ${formatP545Exact(output.loadBlinderAndPowerSwing.deltaRSecondaryOhm)}`}
+          sub="ZB / delta R-X, ohm secondary"
+        />
+        <P545AuxiliaryMetric
+          label="LCD Is1 / Is2"
+          value={`${formatP545Exact(output.lineDifferential.selectedIs1SecondaryA)} / ${formatP545Exact(output.lineDifferential.is2SecondaryA)}`}
+          sub={`A secondary - k1 ${output.lineDifferential.slopeK1} / k2 ${output.lineDifferential.slopeK2}`}
+        />
+      </div>
+
+      <div className="mx-4 mb-4 grid grid-cols-1 xl:grid-cols-[1fr_auto] gap-3">
+        <div className="rounded border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-900">
+          Semua angka masih benchmark replay. `Ihs3f = 26.240 A`, CT/VT,
+          CCC, sequence impedance, dan line susceptance berasal dari worksheet historis;
+          live Calculation Run tetap harus mengambil nilai dari input contract/scenario yang disetujui.
+        </div>
+        <div className="rounded border border-violet-200 bg-violet-50 px-3 py-2 text-[11px] text-violet-900 min-w-72">
+          <div className="font-semibold">Autoreclose - extracted policy</div>
+          <div className="mt-0.5">
+            Mode {ar.tripMode} - dead {ar.deadTime1Seconds}s - reclaim {ar.reclaimTimeSeconds}s - pulse {ar.pulseTimeSeconds}s
+          </div>
+        </div>
+      </div>
+
+      <div className="border-t border-slate-200 divide-y divide-slate-200">
+        {P545_AUXILIARY_BLOCKS.map((block) => {
+          const rows = result.parity.rows.filter((row) => row.block === block);
+          const trace = result.trace.filter((step) => step.block === block);
+          const summary = result.parity.byBlock[block];
+          return (
+            <details key={block}>
+              <summary className="cursor-pointer bg-slate-50 px-4 py-3 hover:bg-slate-100 flex items-center justify-between gap-3">
+                <span className="text-xs font-semibold text-slate-700">
+                  {P545_AUXILIARY_BLOCK_LABELS[block]}
+                </span>
+                <span
+                  className={`text-[10px] rounded border px-1.5 py-0.5 ${
+                    summary.mismatched === 0
+                      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                      : "border-red-200 bg-red-50 text-red-700"
+                  }`}
+                >
+                  {summary.matched}/{rows.length} match - {trace.length} steps
+                </span>
+              </summary>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-[11px]">
+                  <thead className="border-b border-slate-200 bg-white text-[9px] uppercase tracking-wider text-slate-500">
+                    <tr>
+                      <th className="px-4 py-2 font-medium">Result</th>
+                      <th className="px-3 py-2 font-medium">XMCD saved</th>
+                      <th className="px-3 py-2 font-medium">PLMS actual</th>
+                      <th className="px-3 py-2 font-medium">Abs delta</th>
+                      <th className="px-3 py-2 font-medium">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {rows.map((row) => (
+                      <P545ParityTableRow key={row.key} row={row} />
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="border-t border-slate-100 bg-slate-50 px-4 py-2 text-[9px] uppercase tracking-wider font-semibold text-slate-500">
+                Intermediate formula trace
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-[11px]">
+                  <tbody className="divide-y divide-slate-100">
+                    {trace.map((step) => (
+                      <P545AuxiliaryTraceRow key={step.key} step={step} />
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </details>
+          );
+        })}
+      </div>
+
+      <details className="border-t border-slate-200">
+        <summary className="cursor-pointer bg-violet-50 px-4 py-3 text-xs font-semibold text-violet-800 hover:bg-violet-100">
+          Autoreclose policy evidence - not a calculated parity block
+        </summary>
+        <div className="p-4 grid grid-cols-2 md:grid-cols-4 gap-2">
+          {result.trace
+            .filter((step) => step.block === "autoreclose-policy")
+            .map((step) => (
+              <div key={step.key} className="rounded border border-violet-100 bg-white px-3 py-2">
+                <div className="text-[10px] font-semibold text-violet-900">{step.label}</div>
+                <div className="mt-1 font-mono text-xs text-slate-800">
+                  {formatP545AuxiliaryValue(step.value)} {step.unit}
+                </div>
+                <div className="mt-1 text-[9px] text-slate-500">{step.sourceLocator}</div>
+              </div>
+            ))}
+        </div>
+      </details>
+    </section>
+  );
+}
+
+function P545AuxiliaryMetric({
+  label,
+  value,
+  sub,
+}: {
+  label: string;
+  value: string;
+  sub: string;
+}) {
+  return (
+    <div className="rounded border border-slate-200 bg-slate-50 px-3 py-2">
+      <div className="text-[9px] uppercase tracking-wider text-slate-500">{label}</div>
+      <div className="mt-1 font-mono text-[11px] font-semibold text-slate-900 break-words">{value}</div>
+      <div className="mt-0.5 text-[9px] text-slate-400">{sub}</div>
+    </div>
+  );
+}
+
+function P545AuxiliaryTraceRow({ step }: { step: P545AuxiliaryTrace }) {
+  return (
+    <tr>
+      <td className="px-4 py-2 align-top min-w-40">
+        <div className="font-mono font-semibold text-slate-800">{step.key}</div>
+        <div className="text-[9px] text-slate-500">{step.label}</div>
+      </td>
+      <td className="px-3 py-2 align-top font-mono text-slate-700 min-w-72">{step.formula}</td>
+      <td className="px-3 py-2 align-top font-mono text-slate-700 whitespace-nowrap">
+        {formatP545AuxiliaryValue(step.value)} {step.unit}
+      </td>
+      <td className="px-3 py-2 align-top text-slate-500">{step.sourceLocator}</td>
+    </tr>
+  );
+}
+
+function formatP545AuxiliaryValue(value: P545AuxiliaryTrace["value"]) {
+  if (typeof value === "string") return value;
+  return formatP545TraceValue(value);
+}
+
+function P545CoreMetric({
+  label,
+  value,
+  unit,
+}: {
+  label: string;
+  value: number | string;
+  unit: string;
+}) {
+  return (
+    <div className="rounded border border-slate-200 bg-slate-50 px-3 py-2">
+      <div className="text-[9px] uppercase tracking-wider text-slate-500">{label}</div>
+      <div className="mt-1 font-mono text-xs font-semibold text-slate-900">
+        {typeof value === "number" ? formatP545Exact(value) : value}
+      </div>
+      <div className="text-[9px] text-slate-400">{unit}</div>
+    </div>
+  );
+}
+
+function P545ParityTableRow({
+  row,
+}: {
+  row: P545ParityRow | P545AuxiliaryParityRow;
+}) {
+  const badge = {
+    exact: "border-emerald-200 bg-emerald-50 text-emerald-700",
+    "within-tolerance": "border-blue-200 bg-blue-50 text-blue-700",
+    mismatch: "border-red-200 bg-red-50 text-red-700",
+  }[row.status];
+  return (
+    <tr>
+      <td className="px-4 py-2">
+        <div className="font-medium text-slate-800">{row.label}</div>
+        <div className="text-[9px] text-slate-400">{row.sourceLocator} - {row.unit}</div>
+      </td>
+      <td className="px-3 py-2 font-mono text-slate-700">{formatP545Exact(row.expected)}</td>
+      <td className="px-3 py-2 font-mono text-slate-700">{formatP545Exact(row.actual)}</td>
+      <td className="px-3 py-2 font-mono text-slate-700">{formatP545Exact(row.absoluteDelta)}</td>
+      <td className="px-3 py-2">
+        <span className={`rounded border px-1.5 py-0.5 text-[9px] ${badge}`}>
+          {row.status}
+        </span>
+      </td>
+    </tr>
+  );
+}
+
+function P545TraceTableRow({ step }: { step: P545FormulaTrace }) {
+  return (
+    <tr>
+      <td className="px-4 py-2 align-top">
+        <div className="font-mono font-semibold text-slate-800">{step.key}</div>
+        <div className="text-[9px] text-slate-500">{step.label}</div>
+      </td>
+      <td className="px-3 py-2 align-top font-mono text-slate-700 min-w-72">
+        {step.formula}
+      </td>
+      <td className="px-3 py-2 align-top font-mono text-slate-700 whitespace-nowrap">
+        {formatP545TraceValue(step.value)} {step.unit}
+      </td>
+      <td className="px-3 py-2 align-top text-slate-500">{step.sourceLocator}</td>
+    </tr>
+  );
+}
+
+function formatP545TraceValue(value: number | ComplexValue) {
+  return typeof value === "number"
+    ? formatP545Exact(value)
+    : `${formatP545Exact(value.re)} + j${formatP545Exact(value.im)}`;
+}
+
+function formatP545Exact(value: number) {
+  return Number.isFinite(value) ? value.toString() : "invalid";
+}
+
 const P545_SECTION_LABELS: Record<P545InputSection, string> = {
   identity: "Relay identity",
   line: "Protected line",
@@ -1186,8 +2127,9 @@ function P545PilotInputContractPanel() {
           </div>
           <p className="text-xs text-slate-600 mt-1 max-w-3xl">
             Ciledug → Alam Sutera #1. Ini adalah gerbang input typed/unit-aware
-            sebelum formula P545 dipindahkan dari Mathcad; belum terhubung ke
-            tombol Save draft TAP.
+            untuk menjalankan rule P545 yang sudah dipindahkan dari Mathcad.
+            Report parity di bawah masih benchmark replay. Live Calculation Run
+            tetap terkunci sampai contract case berstatus ready dan adapter 2B.4 tersedia.
           </p>
         </div>
         <label className="flex flex-col gap-1 min-w-72">

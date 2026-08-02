@@ -1,5 +1,5 @@
 import { AlertTriangle, CheckCircle2, Save } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   proposedFieldDefinitionsForChangeItems,
 } from "../../domain/case-proposed-revision";
@@ -8,6 +8,7 @@ import type { SettingCase } from "../../domain/setting-case";
 
 export function ProposedRevisionEditor({ settingCase }: { settingCase: SettingCase }) {
   const saveRevision = useProsetStore((state) => state.saveSettingCaseProposedRevision);
+  const sourceIntakeRecords = useProsetStore((state) => state.sourceIntakeRecords);
   const baseline = settingCase.baseline;
   const revisions = settingCase.proposedDataRevisions ?? [];
   const latest = revisions[revisions.length - 1];
@@ -40,8 +41,35 @@ export function ProposedRevisionEditor({ settingCase }: { settingCase: SettingCa
   const [sourceEvidenceIds, setSourceEvidenceIds] = useState<string[]>(
     latest?.sourceEvidenceIds
       ? [...latest.sourceEvidenceIds]
-      : baseline?.evidence.map((item) => item.sourceIntakeId) ?? []
+      : [...settingCase.links.sourceIntakeIds]
   );
+  const linkedEvidence = useMemo(
+    () =>
+      settingCase.links.sourceIntakeIds.map((sourceId) => {
+        const record = sourceIntakeRecords.find((item) => item.id === sourceId);
+        const baselineEvidence = baseline?.evidence.find(
+          (item) => item.sourceIntakeId === sourceId
+        );
+        return {
+          id: sourceId,
+          fileName: record?.fileName ?? baselineEvidence?.fileName ?? sourceId,
+          frozen: Boolean(baselineEvidence),
+        };
+      }),
+    [baseline, settingCase.links.sourceIntakeIds, sourceIntakeRecords]
+  );
+  const linkedEvidenceKey = settingCase.links.sourceIntakeIds.join("|");
+
+  // Returning from Source Index should immediately expose newly linked change
+  // evidence without discarding checkbox choices already made in this draft.
+  useEffect(() => {
+    setSourceEvidenceIds((current) => [
+      ...current,
+      ...settingCase.links.sourceIntakeIds.filter((id) => !current.includes(id)),
+    ]);
+    // linkedEvidenceKey represents the immutable list values, not its array identity.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [linkedEvidenceKey]);
 
   if (!baseline) return null;
 
@@ -170,14 +198,24 @@ export function ProposedRevisionEditor({ settingCase }: { settingCase: SettingCa
 
       <div className="mt-4">
         <div className="text-xs font-medium text-slate-600">
-          Evidence dari baseline beku
+          Evidence perubahan yang ditautkan ke case
         </div>
-        <div className="mt-1.5 grid gap-2 sm:grid-cols-2">
-          {baseline.evidence.map((evidence) => {
-            const checked = sourceEvidenceIds.includes(evidence.sourceIntakeId);
+        <p className="mt-1 text-[11px] leading-4 text-slate-500">
+          Evidence boleh ditambahkan setelah baseline dibekukan. Dokumen baru mendukung
+          usulan perubahan dan tidak mengubah snapshot baseline.
+        </p>
+        {linkedEvidence.length === 0 ? (
+          <div className="mt-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+            Belum ada evidence perubahan. Buka <span className="font-semibold">Dokumen Perubahan</span>,
+            stage minimal satu source, lalu kembali ke case ini.
+          </div>
+        ) : (
+          <div className="mt-1.5 grid gap-2 sm:grid-cols-2">
+          {linkedEvidence.map((evidence) => {
+            const checked = sourceEvidenceIds.includes(evidence.id);
             return (
               <label
-                key={evidence.sourceIntakeId}
+                key={evidence.id}
                 className="flex items-center gap-2 rounded-md border border-slate-200 px-2.5 py-2 text-xs"
               >
                 <input
@@ -186,16 +224,26 @@ export function ProposedRevisionEditor({ settingCase }: { settingCase: SettingCa
                   onChange={() =>
                     setSourceEvidenceIds((current) =>
                       checked
-                        ? current.filter((id) => id !== evidence.sourceIntakeId)
-                        : [...current, evidence.sourceIntakeId]
+                        ? current.filter((id) => id !== evidence.id)
+                        : [...current, evidence.id]
                     )
                   }
                 />
-                <span className="truncate">{evidence.fileName}</span>
+                <span className="min-w-0 flex-1 truncate">{evidence.fileName}</span>
+                <span
+                  className={`shrink-0 rounded border px-1.5 py-0.5 text-[9px] font-semibold uppercase ${
+                    evidence.frozen
+                      ? "border-slate-300 bg-slate-100 text-slate-600"
+                      : "border-blue-200 bg-blue-50 text-blue-700"
+                  }`}
+                >
+                  {evidence.frozen ? "baseline" : "change"}
+                </span>
               </label>
             );
           })}
-        </div>
+          </div>
+        )}
       </div>
 
       <div className="mt-4 flex items-center justify-between gap-3 border-t border-line pt-3">

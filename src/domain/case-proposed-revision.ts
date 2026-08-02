@@ -206,15 +206,17 @@ export function buildProposedDataRevision(input: {
     input.settingCase.primaryReason
   );
   const errors: string[] = [];
-  const baselineEvidenceIds = new Set(
-    input.baseline.evidence.map((item) => item.sourceIntakeId)
+  const linkedCaseEvidenceIds = new Set(
+    input.settingCase.links.sourceIntakeIds
   );
   const sourceEvidenceIds = unique(input.draft.sourceEvidenceIds).filter((id) =>
-    baselineEvidenceIds.has(id)
+    linkedCaseEvidenceIds.has(id)
   );
 
   if (sourceEvidenceIds.length === 0) {
-    errors.push("Pilih minimal satu evidence dari baseline beku.");
+    errors.push(
+      "Pilih minimal satu evidence perubahan yang ditautkan ke Setting Case."
+    );
   }
   if (
     kinds.some(

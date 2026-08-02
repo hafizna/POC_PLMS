@@ -92,6 +92,7 @@ const gateContext = {
   evidenceCount: 1,
   hasScenario: false,
   calculationCount: 0,
+  targetedCalculationRunCount: 0,
   coordinationCheckCount: 0,
   changeSetCount: 0,
   persona: "Engineer",
@@ -116,7 +117,7 @@ const incompleteScope: SettingCase = {
 };
 assert.equal(
   stageGate(incompleteScope, { ...gateContext, evidenceCount: 0 }).blockers.length,
-  3
+  2
 );
 
 const network: UnifiedNetwork = {
@@ -235,11 +236,118 @@ assert.equal(baselineResult.ok, true);
 if (!baselineResult.ok) throw new Error(baselineResult.errors.join(", "));
 assert.equal(baselineResult.baseline.network.lineRelations.length, 1);
 assert.equal(baselineResult.baseline.network.relayIeds.length, 2);
+assert.equal(
+  baselineResult.baseline.issues.some(
+    (issue) => issue.code === "issued-setting-evidence-missing"
+  ),
+  true
+);
+
+const baselineWithoutDocuments = buildCaseBaseline({
+  settingCase: scopedCase,
+  network,
+  evidence: [],
+  revisionBindings: {
+    networkRevisionId: "network_rev_1",
+    technicalDataRevisionId: "technical_rev_1",
+  },
+  frozenAt: now,
+  frozenBy: "Engineer",
+  id: "baseline_without_documents",
+});
+assert.equal(baselineWithoutDocuments.ok, true);
+
+const twoHopNetwork: UnifiedNetwork = {
+  ...network,
+  substations: [
+    ...network.substations,
+    {
+      id: "sub_forward_1",
+      name: "Forward 1",
+      shortCode: "FWD1",
+      voltageKv: 150,
+      kind: "GI",
+      normalizedName: "forward 1",
+    },
+    {
+      id: "sub_forward_2",
+      name: "Forward 2",
+      shortCode: "FWD2",
+      voltageKv: 150,
+      kind: "GI",
+      normalizedName: "forward 2",
+    },
+  ],
+  lineRelations: [
+    ...network.lineRelations,
+    {
+      id: "line_dnm_forward_1",
+      fromBayId: "bay_dnm_forward_1",
+      toBayId: "bay_forward_1_dnm",
+      fromSubstationId: "sub_dnm",
+      toSubstationId: "sub_forward_1",
+      circuit: "1",
+      voltageKv: 150,
+      r1Ohm: 0.2,
+      x1Ohm: 1.2,
+      physicalLengthKm: 5,
+      protectionFunctionIds: [],
+      sourceIds: ["source_1"],
+      confidence: "high",
+      status: "reviewed",
+    },
+    {
+      id: "line_forward_1_forward_2",
+      fromBayId: "bay_forward_1_forward_2",
+      toBayId: "bay_forward_2_forward_1",
+      fromSubstationId: "sub_forward_1",
+      toSubstationId: "sub_forward_2",
+      circuit: "1",
+      voltageKv: 150,
+      r1Ohm: 0.3,
+      x1Ohm: 1.8,
+      physicalLengthKm: 7,
+      protectionFunctionIds: [],
+      sourceIds: ["source_1"],
+      confidence: "high",
+      status: "reviewed",
+    },
+  ],
+};
+const twoHopBaseline = buildCaseBaseline({
+  settingCase: scopedCase,
+  network: twoHopNetwork,
+  evidence: [],
+  revisionBindings: {
+    networkRevisionId: "network_rev_1",
+    technicalDataRevisionId: "technical_rev_1",
+    issuedSettingRevisionId: "issued_rev_1",
+  },
+  frozenAt: now,
+  frozenBy: "Engineer",
+  id: "baseline_two_hop",
+});
+assert.equal(twoHopBaseline.ok, true);
+if (!twoHopBaseline.ok) throw new Error(twoHopBaseline.errors.join(", "));
+assert.ok(
+  twoHopBaseline.baseline.network.lineRelations.some(
+    (item) => item.id === "line_forward_1_forward_2"
+  )
+);
+assert.ok(
+  twoHopBaseline.baseline.network.substations.some(
+    (item) => item.id === "sub_forward_2"
+  )
+);
 
 const frozenCase: SettingCase = {
   ...scopedCase,
   stage: "baseline_frozen",
   baseline: baselineResult.baseline,
+  links: {
+    ...scopedCase.links,
+    sourceIntakeIds: ["source_1"],
+  },
 };
 assert.deepEqual(
   stageGate(frozenCase, { ...gateContext, hasBaseline: true }).blockers,
@@ -279,6 +387,36 @@ assert.equal(
     ?.beforeValue,
   1200
 );
+
+if (!baselineWithoutDocuments.ok) {
+  throw new Error(baselineWithoutDocuments.errors.join(", "));
+}
+const postFreezeEvidenceCase: SettingCase = {
+  ...scopedCase,
+  stage: "baseline_frozen",
+  baseline: baselineWithoutDocuments.baseline,
+  links: {
+    ...scopedCase.links,
+    sourceIntakeIds: ["change_source_1"],
+  },
+};
+const postFreezeEvidenceProposal = buildProposedDataRevision({
+  settingCase: postFreezeEvidenceCase,
+  baseline: baselineWithoutDocuments.baseline,
+  draft: {
+    targetEntityId: "line_dks_dnm",
+    targetLabel: "DKSBI - DNMGT",
+    sourceEvidenceIds: ["change_source_1"],
+    values: proposalValues,
+  },
+  version: 1,
+  id: "proposal_post_freeze_evidence",
+  createdAt: now,
+  createdBy: "Engineer",
+});
+assert.equal(postFreezeEvidenceProposal.status, "ready_for_impact");
+assert.equal(postFreezeEvidenceProposal.validation.valid, true);
+assert.deepEqual(baselineWithoutDocuments.baseline.evidence, []);
 
 const draftProposal = buildProposedDataRevision({
   settingCase: frozenCase,
@@ -584,8 +722,8 @@ assert.deepEqual(
   []
 );
 
-// Sprint 5 opens the `calculation` stage: it is no longer an unimplemented
-// boundary, but it still gates on at least one linked Calculation Run.
+// E1 accepts only the immutable Targeted Calculation Run. A legacy snapshot
+// remains visible as evidence but must not release the gate.
 const calculationBoundaryCase: SettingCase = {
   ...futureCase,
   stage: "calculation",
@@ -593,11 +731,21 @@ const calculationBoundaryCase: SettingCase = {
 };
 assert.equal(isStageImplemented("calculation"), true);
 assert.deepEqual(stageGate(calculationBoundaryCase, gateContext).blockers, [
-  "Belum ada Calculation Run yang tersimpan dan ter-link ke case ini.",
+  "Immutable Targeted Calculation Run belum tersedia untuk case ini.",
 ]);
+const legacyCalculationGate = stageGate(calculationBoundaryCase, {
+  ...gateContext,
+  calculationCount: 1,
+});
+assert.deepEqual(legacyCalculationGate.blockers, [
+  "Immutable Targeted Calculation Run belum tersedia untuk case ini.",
+]);
+assert.equal(legacyCalculationGate.warnings.length, 1);
 assert.deepEqual(
-  stageGate(calculationBoundaryCase, { ...gateContext, calculationCount: 1 })
-    .blockers,
+  stageGate(calculationBoundaryCase, {
+    ...gateContext,
+    targetedCalculationRunCount: 1,
+  }).blockers,
   []
 );
 
@@ -704,8 +852,12 @@ assert.equal(
   assessCrosscheckEvidence(crosscheckCase, [
     { documentType: "tap_setting", fileName: "issued-tap.pdf" },
   ]).ready,
-  false
+  true
 );
+const readbackPreFreeze = assessCrosscheckEvidence(crosscheckCase, []);
+assert.equal(readbackPreFreeze.ready, true);
+assert.equal(readbackPreFreeze.blockers.length, 0);
+assert.equal(readbackPreFreeze.warnings.length, 2);
 
 const tapAuditCase = createSettingCaseObject(
   {
@@ -739,6 +891,10 @@ assert.equal(
   ]).ready,
   true
 );
+const documentAuditPreFreeze = assessCrosscheckEvidence(tapAuditCase, []);
+assert.equal(documentAuditPreFreeze.ready, true);
+assert.equal(documentAuditPreFreeze.blockers.length, 0);
+assert.equal(documentAuditPreFreeze.warnings.length, 1);
 assert.equal(isStageImplemented("document_audit"), true);
 assert.equal(isStageImplemented("actual_readback_intake"), true);
 assert.equal(isStageImplemented("verification"), true);

@@ -82,6 +82,12 @@ import {
   buildCaseFlowProfile,
   validateCaseFlowProfile,
 } from "../domain/case-flow-hardening";
+import {
+  executeP545CaseCalculation,
+  type ExecuteP545CaseResult,
+  type P545CaseInputOverride,
+  type TargetedCalculationRun,
+} from "../domain/p545-case-execution";
 
 export type NetworkGraphOverride = {
   substations: UnifiedSubstation[];
@@ -232,6 +238,7 @@ export type AuditEvent = {
     | "pdf_tap_unpromote"
     | "calculation_snapshot_add"
     | "calculation_snapshot_remove"
+    | "targeted_calculation_run_created"
     | "coordination_check_add"
     | "coordination_check_remove"
     | "reference_verification_staged"
@@ -276,7 +283,12 @@ export type SourceIntakeRecord = {
   extractedPageCount?: number;
   extractionDurationMs?: number;
   extractedFields?: Array<{ field: string; value: string; unit?: string }>;
+  checksum?: { algorithm: "sha256"; value: string };
 };
+
+export type RunP545TargetedCalculationResult =
+  | ExecuteP545CaseResult
+  | { ok: false; errors: string[]; contract?: undefined };
 
 export type CandidateDecision = {
   status: LifecycleStatus;
@@ -420,6 +432,7 @@ type State = {
   sourceIntakeRecords: SourceIntakeRecord[];
   pdfTapPromotions: PdfTapPromotion[];
   calculationSnapshots: CalculationSnapshot[];
+  targetedCalculationRuns: TargetedCalculationRun[];
   coordinationChecks: CoordinationCheckRecord[];
   verificationRuns: VerificationRunRecord[];
   verificationReferenceDraft: VerificationReferenceDraft | null;
@@ -590,6 +603,10 @@ type State = {
     }
   ) => string;
   removeCalculationSnapshot: (id: string) => void;
+  runP545TargetedCalculation: (
+    caseId: string,
+    overrides: readonly P545CaseInputOverride[]
+  ) => RunP545TargetedCalculationResult;
   addCoordinationCheck: (
     record: Omit<CoordinationCheckRecord, "id" | "createdAt" | "actor">
   ) => string;
@@ -638,6 +655,7 @@ export const useProsetStore = create<State>()(
       sourceIntakeRecords: [],
       pdfTapPromotions: [],
       calculationSnapshots: [],
+      targetedCalculationRuns: [],
       coordinationChecks: [],
       verificationRuns: [],
       verificationReferenceDraft: null,
@@ -858,6 +876,9 @@ export const useProsetStore = create<State>()(
             errors: [...flowErrors, ...crosscheckEvidence.blockers],
           };
         }
+        const issuedTapEvidence = linkedEvidence.filter(
+          (item) => item.documentType === "tap_setting"
+        );
 
         const inventoryCase =
           NETWORK_CASES.find((item) => item.id === INVENTORY_MASTER_CASE_ID) ??
@@ -882,7 +903,49 @@ export const useProsetStore = create<State>()(
                 ),
                 masterGraph
               );
+        if (!scopedGraph) {
+          return {
+            ok: false,
+            errors: [
+              `Working network ${settingCase.protectedScope.networkCaseId} tidak tersedia untuk dibekukan.`,
+            ],
+          };
+        }
         const now = new Date().toISOString();
+        const subjectRelation = settingCase.protectedScope.subjectLineId
+          ? scopedGraph.lineRelations.find(
+              (item) => item.id === settingCase.protectedScope.subjectLineId
+            )
+          : undefined;
+        const scopedBayIds = new Set(
+          [
+            settingCase.protectedScope.subjectBayId,
+            subjectRelation?.fromBayId,
+            subjectRelation?.toBayId,
+          ].filter((item): item is string => Boolean(item))
+        );
+        const scopedRelayIds = new Set(
+          scopedGraph.relayIeds
+            .filter((item) => scopedBayIds.has(item.bayId))
+            .map((item) => item.id)
+        );
+        const scopedProtectionFunctionIds = new Set(
+          scopedGraph.protectionFunctions
+            .filter((item) => scopedRelayIds.has(item.relayIedId))
+            .map((item) => item.id)
+        );
+        const hasRegisteredIssuedSetting =
+          (scopedGraph.relaySettings ?? []).some((item) =>
+            scopedRelayIds.has(item.relayIedId)
+          ) ||
+          (scopedGraph.settingRecords ?? []).some((item) =>
+            scopedProtectionFunctionIds.has(item.protectionFunctionId)
+          );
+        const issuedSettingRevisionId = hasRegisteredIssuedSetting
+          ? `case-local-issued-settings:${id}:${now}`
+          : issuedTapEvidence.length === 1
+            ? `issued-evidence:${issuedTapEvidence[0].id}`
+            : undefined;
         const result = buildCaseBaseline({
           settingCase,
           network: scopedGraph,
@@ -898,14 +961,16 @@ export const useProsetStore = create<State>()(
               status: item.status,
               stagedAt: item.stagedAt,
               extractionMethod: item.extractionMethod,
+              checksum: item.checksum,
             })),
           revisionBindings: {
             networkRevisionId: state.sourceSnapshots.find(
               (item) => item.kind === "network-model" && item.state === "current"
-            )?.networkRevisionId,
+            )?.networkRevisionId ?? `case-local-network:${id}:${now}`,
             technicalDataRevisionId: state.sourceSnapshots.find(
               (item) => item.kind === "technical-master" && item.state === "current"
-            )?.id,
+            )?.id ?? `case-local-technical:${id}:${now}`,
+            issuedSettingRevisionId,
           },
           frozenAt: now,
           frozenBy: state.currentPersona,
@@ -942,6 +1007,9 @@ export const useProsetStore = create<State>()(
           detail: [
             `fingerprint=${result.baseline.fingerprint.value}`,
             `evidence=${result.baseline.evidence.length}`,
+            `issued=${result.baseline.revisionBindings.issuedSettingRevisionId ?? "-"}`,
+            `network=${result.baseline.revisionBindings.networkRevisionId ?? "-"}`,
+            `technical=${result.baseline.revisionBindings.technicalDataRevisionId ?? "-"}`,
             `substations=${result.baseline.network.substations.length}`,
             `lines=${result.baseline.network.lineRelations.length}`,
             `relays=${result.baseline.network.relayIeds.length}`,
@@ -1161,6 +1229,9 @@ export const useProsetStore = create<State>()(
           evidenceCount: settingCase.links.sourceIntakeIds.length,
           hasScenario: Boolean(settingCase.links.scenarioId),
           calculationCount: settingCase.links.calculationSnapshotIds.length,
+          targetedCalculationRunCount: state.targetedCalculationRuns.filter(
+            (run) => run.caseId === id
+          ).length,
           coordinationCheckCount: settingCase.links.coordinationCheckIds.length,
           changeSetCount: settingCase.links.engineeringChangeSetIds.length,
           persona: state.currentPersona,
@@ -1246,7 +1317,6 @@ export const useProsetStore = create<State>()(
         const state = get();
         const settingCase = state.settingCases.find((item) => item.id === id);
         if (!settingCase) return;
-        if (link.kind === "source" && settingCase.baseline) return;
         const links = { ...settingCase.links };
         if (link.kind === "source" && !links.sourceIntakeIds.includes(link.refId)) {
           links.sourceIntakeIds = [...links.sourceIntakeIds, link.refId];
@@ -1287,7 +1357,17 @@ export const useProsetStore = create<State>()(
         const state = get();
         const settingCase = state.settingCases.find((item) => item.id === id);
         if (!settingCase) return;
-        if (link.kind === "source" && settingCase.baseline) return;
+        if (
+          link.kind === "source" &&
+          (settingCase.baseline?.evidence.some(
+            (item) => item.sourceIntakeId === link.refId
+          ) ||
+            settingCase.proposedDataRevisions.some((revision) =>
+              revision.sourceEvidenceIds.includes(link.refId)
+            ))
+        ) {
+          return;
+        }
         const links = { ...settingCase.links };
         if (link.kind === "source") {
           links.sourceIntakeIds = links.sourceIntakeIds.filter((ref) => ref !== link.refId);
@@ -2076,8 +2156,19 @@ export const useProsetStore = create<State>()(
       },
 
       removeSourceIntakeRecord: (id) => {
-        const record = get().sourceIntakeRecords.find((item) => item.id === id);
-        set({ sourceIntakeRecords: get().sourceIntakeRecords.filter((item) => item.id !== id) });
+        const current = get();
+        const isGovernedEvidence = current.settingCases.some(
+          (settingCase) =>
+            settingCase.baseline?.evidence.some(
+              (item) => item.sourceIntakeId === id
+            ) ||
+            settingCase.proposedDataRevisions.some((revision) =>
+              revision.sourceEvidenceIds.includes(id)
+            )
+        );
+        if (isGovernedEvidence) return;
+        const record = current.sourceIntakeRecords.find((item) => item.id === id);
+        set({ sourceIntakeRecords: current.sourceIntakeRecords.filter((item) => item.id !== id) });
         appendAuditEvent(get, set, {
           action: "source_intake_remove",
           scope: record?.caseId,
@@ -2151,6 +2242,68 @@ export const useProsetStore = create<State>()(
           summary: "Removed calculation snapshot",
           detail: snapshot?.templateName,
         });
+      },
+
+      runP545TargetedCalculation: (caseId, overrides) => {
+        const current = get();
+        const settingCase = current.settingCases.find((item) => item.id === caseId);
+        if (!settingCase) {
+          return { ok: false, errors: ["Setting Case tidak ditemukan."] };
+        }
+        if (settingCase.stage !== "calculation") {
+          return {
+            ok: false,
+            errors: [
+              `Targeted Calculation Run hanya dapat dibuat pada stage Calculation; stage saat ini ${settingCase.stage}.`,
+            ],
+          };
+        }
+        const now = new Date().toISOString();
+        const result = executeP545CaseCalculation({
+          settingCase,
+          overrides,
+          runId: `target_run_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+          executedAt: now,
+          executedBy: current.currentPersona,
+        });
+        if (!result.ok) return result;
+
+        set({
+          targetedCalculationRuns: [
+            result.run,
+            ...current.targetedCalculationRuns,
+          ],
+          settingCases: current.settingCases.map((item) =>
+            item.id === caseId
+              ? {
+                  ...item,
+                  updatedAt: now,
+                  links: {
+                    ...item.links,
+                    calculationSnapshotIds: item.links.calculationSnapshotIds.includes(
+                      result.run.id
+                    )
+                      ? item.links.calculationSnapshotIds
+                      : [...item.links.calculationSnapshotIds, result.run.id],
+                  },
+                }
+              : item
+          ),
+        });
+        appendAuditEvent(get, set, {
+          action: "targeted_calculation_run_created",
+          scope: caseId,
+          targetId: result.run.id,
+          summary: `Created immutable P545 Targeted Calculation Run for "${settingCase.title}"`,
+          detail: [
+            `fingerprint=${result.run.fingerprint.value}`,
+            `baseline=${result.run.baselineId}:${result.run.baselineFingerprint}`,
+            `proposal=${result.run.proposedRevisionId ?? "-"}`,
+            `blocks=${result.run.executedBlocks.join(",")}`,
+            `outputs=${result.run.outputs.length}`,
+          ].join(" | "),
+        });
+        return result;
       },
 
       addCoordinationCheck: (record) => {
@@ -2232,6 +2385,7 @@ export const useProsetStore = create<State>()(
         sourceIntakeRecords: state.sourceIntakeRecords,
         pdfTapPromotions: state.pdfTapPromotions,
         calculationSnapshots: state.calculationSnapshots,
+        targetedCalculationRuns: state.targetedCalculationRuns,
         coordinationChecks: state.coordinationChecks,
         verificationRuns: state.verificationRuns,
         verificationReferenceDraft: state.verificationReferenceDraft,
@@ -2510,9 +2664,16 @@ export const useProsetStore = create<State>()(
             })
           );
         }
+        if (version < 26) {
+          persisted.targetedCalculationRuns = Array.isArray(
+            persisted.targetedCalculationRuns
+          )
+            ? persisted.targetedCalculationRuns
+            : [];
+        }
         return persisted;
       },
-      version: 25,
+      version: 26,
     }
   )
 );

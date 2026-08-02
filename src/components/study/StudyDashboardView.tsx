@@ -698,8 +698,8 @@ function GuidedFlowPanel({
       action: () => onNavigate("inbox"),
     },
     {
-      label: "Calculation",
-      detail: `${readyCount} bay${readyCount === 1 ? "" : "s"} ready for workbook`,
+      label: "Formula Lab",
+      detail: `${readyCount} bay${readyCount === 1 ? "" : "s"} available as reference`,
       icon: <Calculator className="w-4 h-4" />,
       done: readyCount > 0,
       action: () => onNavigate("calculation"),

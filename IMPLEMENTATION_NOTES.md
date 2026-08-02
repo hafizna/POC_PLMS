@@ -8,6 +8,80 @@ arsitektur dan roadmap produk, rujuk:
 - [`README.md`](./README.md) — MVP roadmap, status implementasi per tahap, dan
   demo flow.
 
+## Update 2026-08-02 - SSOT-1 Asset & Setting Explorer
+
+- Menu `Data Teknis` direstruktur menjadi read-only `Asset & Setting Explorer`.
+  Dense line/bay grid mempertahankan kemampuan scan/filter ala spreadsheet,
+  sedangkan panel Asset 360 menggabungkan identity, endpoint, relay/CT-VT,
+  typed setting, normalized SettingRecord, provenance, quality issue, dan open
+  Setting Case dalam satu konteks.
+- Explorer bukan database kedua. `buildAssetSettingExplorer()` adalah read model
+  deterministik dari confirmed `UnifiedNetwork`, store override, governed case,
+  dan source intake. Tidak ada edit active master dari workspace ini.
+- ANGKE–ANCOL circuit 1 dipakai sebagai production vertical slice pertama dan
+  diselesaikan dari confirmed master, bukan fixture UI. Regression mengunci
+  stable LineRelation ID, dua endpoint, relay/setting, evidence, quality, search,
+  dan case linkage.
+- Geographic map dan full-network SLD belum dibuka. Tahap berikutnya setelah
+  projection parity adalah controlled data update; topology neighborhood view
+  baru dibangun dari authority yang sama setelah itu.
+
+## Update 2026-08-02 - Baseline freeze tidak lagi mengunci audit/readback
+
+- Model evidence dipisah menjadi dua lifecycle: `baseline evidence` yang ikut
+  snapshot dan immutable setelah freeze, serta `change evidence` yang boleh
+  ditautkan setelah freeze untuk mendukung Proposed Data Revision. Penambahan
+  change evidence tidak menulis ulang fingerprint atau isi frozen baseline.
+- Source Index kini menjelaskan bahwa upload saat Scoping bersifat opsional,
+  memberi label/lock pada source yang sudah menjadi baseline evidence, dan
+  memperlakukan source baru setelah freeze sebagai change evidence. Proposed
+  Data Revision membaca seluruh source yang ter-link ke case, bukan hanya source
+  yang kebetulan sudah tersedia sebelum freeze.
+- `Scoping -> Baseline Frozen` sekarang membekukan current working network dan
+  technical data tanpa mensyaratkan TAP/readback lebih awal. Dokumen tersebut
+  merupakan input stage `Document Audit` atau `Actual Readback Intake`, bukan
+  prasyarat transaksi freeze.
+- Register setting yang sudah tersedia di scoped relay dipakai sebagai binding
+  issued setting case-local. Bila belum ada register maupun TAP, freeze tetap
+  berhasil dengan warning `issued-setting-evidence-missing`; hasil expected vs
+  actual belum boleh dinyatakan lengkap sampai authority setting tersedia.
+- Baseline kini ikut menyimpan scoped `relaySettings`, `settingRecords`, trafo,
+  dan remote-bus branch. Network dan technical revision POC yang belum punya
+  backend revision diberi ID case-local eksplisit dan tidak dibiarkan kosong.
+- UI preflight memisahkan blocker transaksi dari warning readiness. Missing TAP,
+  multiple evidence, atau topology master yang belum sempurna tidak lagi membuat
+  tombol freeze mati tanpa mencoba working network; error subject konkret tetap
+  ditampilkan oleh transaksi domain.
+- Regression `test:case-baseline-flow` mengunci jalur nyata store:
+  `scoping -> baseline_frozen -> document_audit -> verification` tanpa
+  pre-freeze TAP, termasuk attach/unlink change evidence setelah freeze tanpa
+  memutasi baseline.
+
+## Update 2026-08-02 - Live P545 Targeted Calculation Run (2B.4 pilot)
+
+- Frozen baseline network diperluas sampai dua-hop secara deterministik agar
+  kebutuhan adjacent dan second-forward Distance tidak membaca topology live
+  setelah baseline dibekukan.
+- Adapter P545 me-resolve input dari frozen baseline, latest proposed revision,
+  compatible scenario, versioned policy, dan justified engineering override.
+  Missing/conflict critical input tetap fail-closed.
+- Reason-driven matrix menentukan block yang benar-benar dieksekusi. Auxiliary
+  calculation mengisolasi input per affected block sehingga carry-forward kZ0,
+  misalnya pada CT replacement, tidak memerlukan R0/X0 atau menghasilkan output
+  residual baru.
+- Immutable `TargetedCalculationRun` menyimpan baseline/proposal/scenario
+  fingerprint, rule version, input provenance, override evidence, output,
+  before/proposed comparison, trace, actor, timestamp, dan content fingerprint.
+- Store mengaitkan run ke Setting Case dan Audit Trail. Gate Calculation hanya
+  menerima targeted run; snapshot formula-lab legacy tetap reference evidence.
+  Run yang valid membuka stage Coordination.
+- Calculation UI menampilkan input-resolution contract, blocker, field override
+  beserta reason/evidence, tombol proposed run, fingerprint, dan output per
+  affected block. Legacy snapshot tetap disabled.
+- Regression `test:p545-case-execution` mencakup fail-closed input, lima affected
+  block rekonduktoring, CT carry-forward isolation, immutable store link, dan
+  pelepasan gate `Calculation -> Coordination`.
+
 ## Update 2026-08-01 — Active Study mengikuti bay/line, tanpa fallback demo
 
 - Data Quality Queue dari sidebar sekarang berhenti di landing Case/Study cards;

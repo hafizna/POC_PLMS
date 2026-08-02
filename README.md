@@ -4,15 +4,15 @@ Protection Lifecycle Management System
 
 PLMS adalah proof-of-concept aplikasi lifecycle management untuk setting proteksi transmisi. Target demo saat ini adalah membuktikan workflow end-to-end untuk satu pilot ULTG, yaitu ULTG Durikosambi, sebelum konsep ini dinaikkan ke level UIT atau korporat.
 
-Tujuan produk ini bukan sekadar membuat spreadsheet digital. PLMS dirancang sebagai sistem kerja engineer proteksi: data aset dan dokumen existing masuk sebagai baseline, engineer membuat study per bay/line, menghitung setting baru, menerbitkan TAP setting, memantau checking setting aktual oleh tim lapangan, lalu menyimpan evidence/report yang traceable.
+Tujuan produk ini bukan sekadar membuat spreadsheet digital. PLMS dirancang sebagai sistem kerja engineer proteksi: issued setting dan data aktif dibekukan sebagai baseline, perubahan engineering dideklarasikan dalam `Setting Case`, hanya blok proteksi yang terdampak dihitung ulang, lalu hasilnya direview, diterbitkan, diimplementasikan, dan diverifikasi secara traceable.
 
 > **Business-process remapping:** arah proses, transaksi data, lifecycle, user access, dan evaluasi modul lama sedang dikonsolidasikan di [`BUSINESS_PROCESS_BLUEPRINT.md`](./BUSINESS_PROCESS_BLUEPRINT.md). Blueprint tersebut menjadi acuan target; uraian fitur lama di bawah tetap dipertahankan sebagai catatan implementasi POC saat ini.
 
 > **Klarifikasi actual setting:** sumber utama setting aktual adalah hasil `Read from IED` menggunakan software resmi vendor beserta native setting file dan acquisition manifest. TAP/PDF adalah expected/issued setting, bukan bukti setting yang sedang tersimpan di relay. CSV/Excel/XML/XRIO/RIO dapat dipakai sebagai derived parsing artifact bila dihasilkan dari sesi readback yang sama; file tanpa bukti akuisisi tetap berstatus unverified candidate.
 
-> **Klarifikasi hitung setting baru:** menu target `Calculate / Revise Setting` membuat Setting Change Case dan terlebih dahulu meminta alasan serta change items. Rekonduktoring, penggantian CT/VT/relay, sisipan GI, atau pekerjaan sisi remote menghasilkan proposed data/network revision di dalam case; perhitungan memakai revision calon tersebut tanpa menimpa database aktif. Aktivasi data baru dilakukan terkontrol saat effective date/energization/commissioning.
+> **Target operasional sekarang — Targeted Recalculation:** entry point membuat Setting Change Case, meminta alasan/change items, mengikat issued setting baseline, lalu membentuk proposed technical/network revision. Impact matrix menentukan blok Distance/LCD mana yang `recalculate`, `engineering review`, atau `carry forward`. Perhitungan tidak memakai Z1/Z2/Z3 existing sebagai input rumus; nilai existing menjadi baseline pembanding. Desain setting benar-benar dari nol, trafo, OCR/GFR, dan ekspansi multi-vendor ditahan sampai performa Distance + line differential stabil.
 
-> **Boundary implementasi saat ini — sampai O1:** fondasi Sprint 4.1 dan gate calculation/coordination tetap berjalan. Crosscheck case kini dapat melewati `document_audit` atau `actual_readback_intake`, lalu `verification` hingga `closed`. RIO/XRIO tersambung ke Vendor Import dan comparison; actual readback hanya berwenang bila acquisition manifest lengkap (device, active group, vendor tool/version, read time, SHA-256). Discrepancy wajib didisposisi sebelum Verification Run dapat disimpan ke case. Review/approval/issuance/commissioning untuk setting-change case masih tahap berikutnya.
+> **Boundary implementasi saat ini — E1 pilot:** P545 distance core + auxiliary formula parity sudah 55/55. Live case adapter 2B.4 sekarang me-resolve frozen baseline, proposed revision, scenario, dan justified override; hanya affected block yang dijalankan dan hasilnya disimpan sebagai immutable `TargetedCalculationRun`. Unresolved critical input tetap fail-closed. Engineering review, canonical proposed setting package, approval, issuance, dan commissioning untuk setting-change case belum operasional.
 
 ## Executive Summary
 
@@ -29,14 +29,15 @@ Masalah utama di proses setting proteksi saat ini:
 PLMS POC menjawab masalah itu dengan alur engineering yang lebih tepat:
 
 ```text
-Existing source documents and asset data
-  -> Master data and setting baseline
-  -> Study workspace per bay/line
-  -> Calculation workbook
-  -> Coverage and engineering validation
-  -> TAP setting issued by engineering
-  -> Field checking: installed setting vs latest TAP
-  -> Comparison, resetting task, verified report, and audit trail
+Issued setting + active asset/network data
+  -> Setting Change Case + declared reason
+  -> Frozen baseline + proposed technical revision
+  -> Affected function/block + scenario readiness
+  -> Targeted recalculation: Distance + Line Differential
+  -> Coordination and engineering review
+  -> Issued TAP / controlled package
+  -> Field readback vs issued revision
+  -> Verification, activation, and audit trail
 ```
 
 Pitch product:
@@ -58,11 +59,18 @@ Pitch product:
 | Sprint | Cakupan | Status |
 |---|---|---|
 | 1–4.1 | Intake/scoping, immutable Case Baseline, append-only Proposed Data Revision, versioned Case Impact Assessment, requirement-driven Study Scenario Package, authority/notification profile, activation vs approval terpisah. | **Implemented.** |
-| 5 | Membuka gerbang `calculation`: case tidak bisa lanjut ke `coordination` tanpa minimal 1 `CalculationRun` ter-link. | **Implemented** (plumbing saja — formula kalkulasi masih POC lama, lihat track E1). |
+| 5 / E1 flow | Gerbang `calculation` direstruktur menjadi case-scoped Targeted Recalculation: issued baseline → change scope → impact/scenario → affected blocks. | **2B.4 pilot implemented.** Immutable P545 live run membuka gate Coordination; snapshot formula-lab legacy tidak diterima. |
 | 6 / O1 handoff | Gate `document_audit`/`actual_readback_intake`/`verification`, acquisition manifest, saved Verification Run, discrepancy disposition. | **Implemented untuk crosscheck case.** |
 | Berikutnya | Review, approval, issuance, field implementation, commissioning, dan verification untuk setting-change case. | **Belum diimplementasikan.** |
 
 Detail lengkap tiap sprint (apa yang dicek, tipe data, bug yang ditemukan) ada di `BUSINESS_PROCESS_BLUEPRINT.md` §13 dan `IMPLEMENTATION_NOTES.md` — tidak diduplikasi di sini.
+
+Operational evidence follows two distinct lifecycles: evidence present at freeze
+becomes immutable `baseline evidence`; supporting documents attached afterward
+become case-linked `change evidence` for Proposed Data Revision and never mutate
+the frozen baseline. Therefore, uploading a document is optional during Scoping,
+but a physical/equipment data proposal must reference at least one change-evidence
+source before it is ready for impact analysis.
 
 ### Sumbu 2 — Engineering Track (F1/O1/D1/E1/C1/N1)
 
@@ -71,17 +79,17 @@ Detail lengkap tiap sprint (apa yang dicek, tipe data, bug yang ditemukan) ada d
 | **F1 — Foundation** | Canonical entity identity, effective dating, `Setting Case`/`Setting Package`/`Setting Revision` schema, lifecycle state machines, org scope/roles. | **Partially implemented, foundation-health backlog closed.** Graph confidence kini multi-indikator; Dadap/Ulujami adalah corroborated candidate yang tidak masuk live graph sebelum konfirmasi, sedangkan Muarakarang tetap identity conflict. Active Study mengikuti subject bay/line user dan diproyeksikan dari confirmed master graph; tidak ada default/fallback DKS–DM–PIK–MKB. Source Index merge master inventory, perubahan scope Study menjadi revision eksplisit, dan SLD Endpoint hanya evidence menuju Graph Builder. Org scope/roles dan formal schema governance belum. |
 | **O1 — Actual Crosscheck** | Pilih bay + issued revision, akuisisi actual setting dari relay fisik lewat vendor tool resmi, retain native file + manifest, parse per model/vendor adapter, compare, discrepancy disposition, verification report. | **Pilot implemented end-to-end.** `.set`, RIO/XRIO/XML, TAP PDF, CSV/text/manual dapat dinormalisasi dan dibandingkan; native readback authority mensyaratkan manifest + SHA-256; mismatch/missing wajib didisposisi; Verification Run tersimpan dan ter-link ke case sebelum closure. Batas produksi: support matrix firmware/model dan official-tool round-trip masih perlu diperluas. |
 | **D1 — Controlled Data Intake** | Source document registry, extraction/mapping queue, protection-relevant asset/topology registry, CT/VT dan relay identity, provenance/data-quality status. | **Connected pilot implemented.** `HEL_PHT_TAP` mencakup 184/184 baris, 13 model, 7 layout; mapping tersedia di Inbox dan menghasilkan `SettingRecord`/`RelaySetting` hanya jika LineRelation, RelayIED, dan DIST function konkret tersedia (tanpa dangling ID). Model/vendor di luar dataset tetap backlog. |
-| **E1 — Calculation and Issuance Pilot** | Satu case P545 tervalidasi dengan Mathcad parity, immutable scenario + calculation run, canonical proposed revision, review/approval/issue/draft TAP, field readback kembali ke O1. | **Input-contract slice implemented.** P545 Ciledug–Alam Sutera: input typed/unit-aware, scenario-gated, provenance/conflict/override eksplisit. Formula parity (port XMCD ke rule module) **belum dikerjakan** — ini pekerjaan terbesar yang tersisa di track ini. |
+| **E1 — Targeted Recalculation and Issuance Pilot** | Recalculate blok Distance/LCD terdampak dari issued baseline, immutable scenario + calculation run, canonical proposed revision, review/approval/issue/draft TAP, field readback kembali ke O1. | **Live calculation pilot implemented.** Native P545 rules mencakup distance core (16/16) dan auxiliary blocks `kZ0`/resistive reach/load-PSB/LCD (39/39). Adapter case 2B.4 menyimpan input provenance, override evidence, trace, affected-block decision, comparison, actor, dan fingerprint. AR tetap extracted policy; engineer sign-off, canonical package, dan issuance masih tersisa. |
 | **C1 — Multi-vendor Pilot** | Capability profile untuk keluarga MiCOM/Siemens/ABB terpilih, semantic mapping + gap classification, proposed target-vendor setting package. | **Seed data available.** Relay Catalog, manual reference, actual/TAP record, 12 XMCD benchmark tersedia sebagai bahan baku; capability profile dan conversion rule belum ada. Native vendor writer eksplisit **deferred** sampai official-tool validation tersedia. |
 | **N1 — Network and Engineering Change** | Topology/equipment change set, affected-setting impact analysis, DIgSILENT staging, approved snapshot re-import, auto-create affected Setting Cases. | **GI-insertion pilot implemented.** Immutable change set, readiness/conflict detection, neutral DIgSILENT staging preview. Perluasan ke change type lain (reconductoring, CT/VT/relay replacement change-set) dan official PowerFactory adapter belum ada; auto-create affected cases belum ada. |
 
 **Urutan kerja saat ini: D1 → O1 → E1 → C1 → N1** (dipilih 2026-08-01) — engineering track lain butuh data nyata dulu sebelum bisa diuji dengan input yang representatif, bukan urutan nomor F1-N1 di atas yang cuma label kategori.
 
-**Next to-do (setelah D1 → O1):**
-1. **E1** — port formula XMCD P545 ke rule module TypeScript, lalu review/approval/issuance case-gated.
-2. **O1 hardening** — tambah sampel readback lintas firmware, validasi official-tool round-trip/checksum, dan perluas adapter support matrix; ini hardening produksi, bukan lagi wiring alur POC.
-3. **D1 hardening** — selesaikan mapping HEL yang masih ambiguous/unmatched dan perluas model di luar 13 model dataset saat ini.
-4. **F1 governance** — formal schema governance, effective dating penuh, serta role/authority backend.
+**Next to-do — tahan ekspansi sampai Distance/LCD stabil:**
+1. **E1 quality gate** — validasi live 2B.4 pada lebih dari satu line/case nyata, mencakup rekonduktoring, CT/VT, relay replacement, GI cut-in, serta remote-side work; pastikan unit conversion, boundary relay, dan failure behavior konsisten.
+2. **E1 workflow** — engineering review terhadap changed/carry-forward blocks, coordination evidence, lalu canonical proposed revision. Issuance belum dibuka sebelum quality gate lolos.
+3. **E1 / 2C** — bentuk canonical Setting Package dari run yang direview dan siapkan draft TAP terkontrol; jangan menghasilkan native vendor file.
+4. **Setelah E1 stabil** — kembali ke O1/D1 hardening, lalu C1 multi-vendor, N1 expansion, trafo, dan OCR/GFR sesuai prioritas bisnis.
 
 <details>
 <summary>Tabel padanan skema lama (MVP 1A-3) → track baru (F1/O1/D1/E1/C1/N1), untuk membaca histori sebelum 2026-08-01</summary>
@@ -103,7 +111,9 @@ Detail lengkap tiap sprint (apa yang dicek, tipe data, bug yang ditemukan) ada d
 
 ### Implementasi yang sudah masuk
 
-- **Reference Engine:** modul calculation terstruktur untuk OCR/GFR, trafo, dan distance; trace menjelaskan input, rumus, hasil, unit, dan warning.
+- **Targeted Recalculation planner:** reason-driven impact matrix untuk Distance core, kZ0, resistive reach, load blinder/PSB, line differential, AR policy, dan remote coordination. Setiap blok ditandai `recalculate`, `engineering-review`, atau `carry-forward`; full design dari nol dan case crosscheck tidak boleh masuk jalur ini.
+- **P545 formula engine:** distance core dan auxiliary blocks tervalidasi 55/55 terhadap saved result Mathcad, lengkap dengan typed outputs dan intermediate trace. Live case execution sudah tersedia secara fail-closed dan menghasilkan immutable proposed run.
+- **Legacy Reference Engine:** modul OCR/GFR, trafo, dan distance lama tetap tersedia sebagai benchmark/reference, bukan jalur penerbitan setting.
 - **Crosscheck Engine:** parser actual setting generik, mapping parameter, tolerance `strict`/`engineering`/`commissioning`, serta report per parameter.
 - **Vendor Import pilot:** pembacaan MiCOM Courier `.set`, metadata relay, record address/value, diagnostic coverage, dan handoff ke Crosscheck.
 - **Relay Catalog UPT Durikosambi:** indexing workbook `Data Setting Penghantar UPT DKSBI (1).xlsx` menjadi 555 inventory aset relay, 73 model teragregasi, 45 kecocokan DIgSILENT, pemetaan fungsi proteksi dan bay, parser readiness, dan manual-library reference.
@@ -117,6 +127,7 @@ Detail lengkap tiap sprint (apa yang dicek, tipe data, bug yang ditemukan) ada d
 - **P545 Input Contract:** pilot Ciledug–Alam Sutera #1 mengikat input line, CT, CCC/rating, fault level, relay identity, dan adjacent-network gaps ke unit serta provenance yang eksplisit. Fault input diblokir tanpa `StudyScenario`; konflik P543/P545 dan 26,24/33,22 kA tidak dipilih diam-diam; override mencatat actor, timestamp, dan alasan.
 - **Setting Case Sprint 1–4.1:** intake dan P1–P5 routing berbasis alasan, baseline scope/evidence immutable, proposed technical revision append-only, impact/readiness lintas endpoint, multi-condition Study Scenario Package, authority/notification profile, commissioning activation contract, dan temporary restoration obligation. Package blocked tetap direkam; hanya package lengkap dan compatible yang membuka Calculation.
 - **Study dan UX:** Study dipisahkan per subject line; Working Network dan Data Mapping Inbox dipindah ke grup `Network & Mapping` karena keduanya bekerja pada level ULTG, bukan level Study.
+- **SSOT-1 Asset & Setting Explorer:** confirmed `UnifiedNetwork`, setting overlay, source provenance, data-quality issue, dan open Setting Case diproyeksikan menjadi dense searchable grid + Asset 360 read-only. ANGKE–ANCOL #1 menjadi vertical slice nyata pertama; explorer tidak mengedit active master dan belum membuat geographic map.
 - **Case-scoped topology remediation:** Data Quality Queue menampilkan group card per Case/Study dan approval card per kandidat `LineRelation`; bulk-confirm GI tidak lagi menjadi jalur UI. Case tanpa relasi diarahkan ke card remediation yang hanya memuat endpoint/bay dalam scope case tersebut.
 - **Verification:** regression scripts tersedia untuk Reference Engine, Crosscheck, Vendor Import, Relay Catalog, Graph Builder, bridge export, dan build aplikasi.
 
@@ -162,7 +173,9 @@ Pilot pertama menggunakan `Tap Setting MiCom P545 GI Ciledug Bay Alam Sutera #1.
 - Input contract TypeScript typed/unit-aware sudah implemented sebagai gerbang sebelum formula dijalankan.
 - Contract saat ini membaca DB line row 311, historical IHS melalui scenario, relay/TAP register, dan benchmark XMCD sebagai kandidat provenance terpisah.
 - Status input dibedakan menjadi `resolved`, `conflict`, `missing`, `blocked`, dan `overridden`; kandidat sumber tetap dipertahankan setelah override.
-- Port formula ke rule module TypeScript dilanjutkan pada 2B.2.
+- Slice 2B.2 sudah mem-port distance core ke rule module TypeScript: ZL1–ZL4, CT/VT impedance factor, transformer cap, Z1/Z2/Z3 forward, Z3 reverse, dan timer.
+- Parity distance-core membandingkan 16 saved result XMCD; auxiliary parity menambah 39 checks untuk `kZ0`, resistive reach, load blinder/PSB, dan LCD. Seluruh 55 checks berada dalam toleransi absolut `1e-12`, dengan 66 trace steps lintas kedua rule.
+- Autoreclose pada worksheet adalah policy text (`1P Trip Mode 1-3`, dead time `1 s`, reclaim `40 s`, pulse `0,2 s`), bukan ekspresi Mathcad. PLMS menyimpannya sebagai `extracted-policy` agar tidak diklaim sebagai calculated output.
 - Scope awal: data saluran/UGC, CT/PT, Z1/Z2/Z3 forward, Z3 reverse, infeed, `kZ0`, resistive reach, load blinder, power swing, autoreclose, serta LCD `Is1`/`Is2`/`k1`/`k2`.
 - Simpan formula trace, asumsi, sumber data, override engineer, rule version, dan hasil intermediate.
 - Buat parity test PLMS vs saved result Mathcad dengan tolerance yang disepakati engineer.
@@ -213,19 +226,21 @@ Implementasi dilakukan dalam slice kecil yang tetap menghasilkan outcome teruji:
 | **2A.3 — implemented** | Data Readiness and Conflict Detection | Required-field matrix `insert-substation-v1`; baseline/topology/electrical/consistency checks; status complete/missing/conflict/stale. | Missing endpoint/length/R1/X1/R0/X0 menjadi blocker; historical baseline menjadi review; X1 alias dan jumlah physical segments dibandingkan dengan line lama. Conflict CCC/rating, relay identity, dan fault-level lintas dokumen menyusul saat source domain tersebut masuk change set. |
 | **2A.4 — implemented** | DIgSILENT Staging Preview | Neutral JSON, line CSV, DGS-like text preview, per-km conversion, provenance, dan validation report. | Preview tidak dibuat bila minimum readiness gagal; historical baseline menghasilkan `importReady: false`; tidak ada direct write atau klaim official PowerFactory DGS. |
 | **2B.1 — implemented** | P545 Input Contract | Typed/unit-aware schema, immutable Mathcad snapshot, scenario gate, provenance candidates, conflict/missing status, dan justified session override di Calculation UI. | Setiap input menunjukkan source, capture timestamp, unit, snapshot/scenario bila tersedia, dan override reason; regression mencakup P543/P545 serta 26,24/33,22 kA. |
-| **2B.2** | P545 Formula Parity | Port formula XMCD per calculation block dan compare intermediate/final outputs. | Delta report per formula; tolerance eksplisit; no silent rounding. |
+| **2B.2 — implemented (distance core)** | P545 Distance Formula Parity | Port ZL1–ZL4, rasio CT/VT, transformer cap, Z1/Z2/Z3 forward, Z3 reverse, dan timer; compare intermediate/final output. | 16/16 saved XMCD result match dengan tolerance `1e-12`; 24-step trace; changed input menghasilkan explicit mismatch; no silent rounding. |
+| **2B.3 — implemented (auxiliary parity)** | P545 Auxiliary Formula Blocks | Port `kZ0`, resistive reach, load blinder, power swing, dan LCD `Is1`/`Is2`/`k1`/`k2`; klasifikasikan AR sebagai extracted policy. | 39/39 saved-result checks match; max delta `7,11e-15`; formula trace per block; AR tidak masuk parity calculation. |
+| **2B.4 — implemented (pilot)** | Live Contract Execution | Bind distance + auxiliary rules ke frozen baseline/proposed revision/scenario yang `ready`, jalankan hanya affected block, lalu simpan immutable Calculation Run. | Unresolved critical input memblokir run; justified override wajib evidence; run menyimpan input, rule version, trace, delta evidence, actor, scenario, timestamp, dan fingerprint; hanya run ini yang membuka gate Coordination. |
 | **2C.1** | Canonical Setting Package | Calculated/policy/manual values + provenance + status. | Package dapat diserialisasi, di-hash, dan di-crosscheck melalui MVP 1B/1C. |
 | **2C.2** | TAP Composer | Draft multi-page PDF berdasarkan canonical package. | Semua value memiliki source; watermark `DRAFT`; issued action belum tersedia tanpa approval. |
 | **2D.1** | Capability Profiles | P543/P545, RED670, dan 7SL87 semantic profiles. | Coverage/gap matrix menunjukkan fungsi dan constraint yang belum dipetakan. |
 | **2D.2** | Conversion Pilot | P545 canonical intent -> proposed RED670/7SL87 settings. | Setiap mapping berstatus exact/transformed/decision/unsupported; tidak menghasilkan native file. |
 
-**Next coding slice: MVP 2B.2.** Port formula XMCD P545 per calculation block, simpan intermediate trace, dan buat delta report tanpa silent rounding.
+**Next coding slice: E1 quality gate + review contract.** Uji live 2B.4 pada case/line nyata tambahan, lalu strukturkan keputusan changed/carry-forward sebelum membentuk canonical proposed setting revision. Benchmark tetap parity evidence, bukan current network truth.
 
 ### Batas klaim saat ini
 
 - PLMS **sudah dapat membaca** pilot MiCOM `.set`, tetapi **belum menghasilkan** native `.set`.
-- PLMS **sudah memiliki reference calculation**, tetapi belum boleh disebut pengganti penuh Mathcad sampai parity P545 case nyata selesai.
-- PLMS **sudah memiliki input contract P545**, tetapi contract masih berstatus blocked sampai VT, adjacent-network equivalent/infeed, relay identity, dan basis fault-level diselesaikan; contract ini belum menghitung setting.
+- PLMS **sudah memiliki native P545 calculation rules** dengan total 55/55 saved-result checks dan live case adapter 2B.4, tetapi belum boleh disebut pengganti penuh Mathcad sampai diuji lintas case nyata dan memperoleh engineer sign-off.
+- PLMS **sudah memiliki input contract P545** yang fail-closed terhadap VT, adjacent-network equivalent/infeed, relay identity, dan basis fault-level. Missing value dapat diisi hanya sebagai justified engineering override dengan evidence; output tetap `proposed`, bukan issued setting.
 - PLMS **sudah dapat membuat printable report**, tetapi belum memiliki TAP composer enam halaman yang mengikuti kontrol dokumen resmi.
 - Relay catalog menunjukkan aset dan kesiapan parser/manual, tetapi keberadaan model di catalog tidak berarti exporter model tersebut sudah tervalidasi.
 - Manual library saat ini mencakup family yang menaungi 336 dari 555 aset, tetapi manual tersebut belum diekstrak menjadi semantic capability profiles; catalog belum cukup untuk conversion otomatis tanpa engineering review.
@@ -377,7 +392,7 @@ Yang sudah dilakukan:
 - **Visualisasi SLD (diagram single-line) belum ada penggantinya sama sekali.** Salah satu peran NMM yang dulu direncanakan adalah render diagram visual dari topology (bukan cuma data). Sekarang PLMS punya topology yang benar (graph builder) tapi hanya direpresentasikan sebagai list/card di UI (Inbox, Network Builder) — belum ada rendering diagram SLD. Ini gap nyata, dicatat sebagai backlog terpisah: perlu diputuskan nanti apakah PLMS generate diagram sendiri dari data `UnifiedNetwork`, atau cukup menerima SLD asli (PDF/gambar) sebagai referensi visual tanpa generate ulang.
 - `DIGSILENT_TO_SLD_ALIAS` dan `DISPLAY_NAME_OVERRIDE` sengaja append-only dan bersumber dari konfirmasi eksplisit engineer, bukan inferensi — kalau ada GI lain yang butuh disambiguasi/relabel serupa (misal ada singkatan tidak standar lain seperti "M. KARANG LAMA"), tambahkan ke situ setelah dikonfirmasi, jangan digeneralisasi jadi heuristic otomatis.
 - Populate `Transformer`/`RemoteBusBranch` dari data nyata belum dikerjakan — tipenya baru ada, belum ada yang mengisi.
-- **Calculation engine saat ini masih generik, belum rule/profile per model relay.** Reference Engine sudah menjalankan OCR/GFR, trafo, dan distance, tetapi port formula/policy spesifik MiCOM P545 baru masuk roadmap MVP 2B. LCD dan AR/SYNC masih blueprint. Template busbar protection belum ada. Pemisahan yang dipilih: engineering rule menyimpan intent canonical, sedangkan capability/address/scaling vendor berada di relay profile/adapter.
+- **Calculation engine belum lengkap per model relay.** Reference Engine sudah menjalankan OCR/GFR, trafo, dan distance; rule spesifik MiCOM P545 kini mencakup distance core serta `kZ0`, resistive reach, load/PSB, dan LCD dengan total parity 55/55. AR adalah extracted policy dan SYNC belum menjadi calculated block. Live binding serta template busbar protection belum ada. Pemisahan yang dipilih: engineering rule menyimpan intent canonical, sedangkan capability/address/scaling vendor berada di relay profile/adapter.
 - `CoverageView.tsx` tidak override-aware sama sekali — konsekuensi langsung dari poin coverage engine di atas, bukan gap terpisah. Baru bisa diperbaiki setelah/bersamaan dengan corridor-math dibuat graph-aware.
 
 ## Engineering Lifecycle Clarification
@@ -395,9 +410,11 @@ Karena itu, lifecycle yang benar adalah:
 
 ```text
 Trigger perubahan
-  -> kumpulkan data aset dan setting baseline
-  -> hitung setting baru di Calculation Workbook
-  -> validasi coverage/coordination
+  -> buat Setting Change Case dan bekukan issued baseline
+  -> catat proposed data/network revision
+  -> konfirmasi affected endpoint/function + scenario readiness
+  -> targeted recalculation hanya untuk blok Distance/LCD terdampak
+  -> review before/proposed delta dan validasi coordination
   -> engineering menerbitkan TAP setting baru
   -> tim lapangan melakukan checking / resetting
   -> actual setting dibandingkan dengan TAP terbaru
@@ -413,7 +430,7 @@ Dengan model ini, Comparison bukan sekadar halaman "cek beda angka". Comparison 
 
 ## Demo Scope
 
-Scope demo saat ini:
+Scope demo data tetap ULTG Durikosambi, tetapi scope engineering operasional saat ini dipersempit ke line protection Distance + LCD sampai quality gate E1 terpenuhi:
 
 - Pilot: ULTG Durikosambi.
 - Study contoh: dua Study per subject line (bukan satu Study gabungan) — "Penghantar DKSBI - DNMGT" dan "Penghantar DNMGT - PINKA", keduanya dari seed graph-builder (lihat Strategic Positioning).
@@ -444,9 +461,9 @@ Hal yang sengaja tidak dipaksakan di POC:
 
 ## What Works Now
 
-Fitur yang sudah berjalan di frontend POC:
+Fitur yang sudah berjalan di frontend POC (fitur legacy/reference tidak berarti siap menjadi jalur penerbitan):
 
-- Home dan Study Dashboard sebagai entry point user.
+- Setting Case sebagai entry point pekerjaan operasional; Home dan Study Dashboard diberi label legacy/reference.
 - Study Wizard untuk memilih subject bay/line dan membentuk study scope.
 - Master Data Registry untuk GI/GIS, line relation, relay IED, dan protection function.
 - Network Builder untuk menambah substation, relation, IED, dan CT/VT master.
@@ -457,14 +474,12 @@ Fitur yang sudah berjalan di frontend POC:
   - regex extraction untuk Z1/Z2/Z3, OCR/GFR, CT ratio, VT/PT ratio, dan TAP document number
 - Data Mapping Inbox untuk review/import candidate, termasuk Graph Builder untuk konfirmasi topology per-GI (lihat Strategic Positioning). Menu ini ada di grup "Network & Mapping", terpisah dari Study — kerja level-ULTG yang mendahului Study manapun.
 - Setting Register dengan per-line lifecycle status dan per-function promotion.
-- Calculation Workbook untuk distance line 150 kV.
-- Calculation Template Library + Mathcad Bridge:
-  - template selector di Calculation page
-  - executable template untuk Distance Line 150 kV
-  - blueprint template untuk OCR/GFR, Line Differential/LCD, dan AR/SYNC
-  - input specs, formula steps, outputs, assumptions, dan benchmark requirements per template
-  - hasil Distance Workbook bisa disimpan sebagai calculation snapshot / draft TAP ke Setting Register
-  - index sample Mathcad `.xmcd` untuk ABB REL670 dan MiCOM P545 sebagai benchmark artifact awal
+- Targeted Recalculation workspace untuk Distance + LCD:
+  - dibuka dari Setting Change Case dan terikat ke case ID yang eksplisit;
+  - menampilkan issued baseline, change scope, readiness, dan affected-block plan;
+  - P545 distance + auxiliary parity 55/55 beserta intermediate trace;
+  - live P545 case adapter menghasilkan immutable `TargetedCalculationRun` dan hanya run tersebut yang memenuhi gate Calculation;
+  - legacy distance workbook tetap terlihat sebagai formula reference dan tidak dapat disimpan sebagai draft TAP resmi.
 - Legacy Crosscheck Workbook index:
   - membaca workbook "Aplikasi Crosscheck Setting Relay"
   - mengekstrak DB line dari DIgSILENT, data fault/IHS, formula count, dan active legacy case Distance + OCR/GFR
@@ -602,34 +617,26 @@ Output:
 
 - satu line punya evidence lengkap: topology, relay, source, fungsi, dan status.
 
-### 7. Calculation Workbook
+### 7. Targeted Recalculation — Distance + Line Differential
 
-Calculation dipakai untuk menghitung setting baru, misalnya karena bay baru, rekonduktoring, sisipan GI, atau hasil checking menunjukkan setting aktual perlu dikoreksi.
+Fitur operasional hanya dibuka dari `Setting Change Case`, bukan sebagai kalkulator global. User terlebih dahulu memilih alasan perubahan dan bay/line yang terkena dampak.
 
-Prefill dari:
+Empat gate yang harus terlihat dan dapat diaudit:
 
-- active LineRelation
-- line impedance
-- relay IED
-- CT/VT structured master
-- promoted setting source
-- legacy crosscheck workbook, jika study dibuat dari spreadsheet benchmark
+1. `Current baseline`: active network/technical revision, relay identity, CT/VT, dan issued setting yang tersedia dibekukan. TAP/readback tidak diwajibkan sebelum freeze karena dapat diakuisisi pada stage audit/intake; bila issued setting belum tersedia, case tetap maju dengan status `unresolved` dan comparison belum boleh dinyatakan lengkap.
+2. `Change scope`: before/after data untuk rekonduktoring, CT/VT, relay, topology/GI cut-in, remote work, atau policy revision.
+3. `Impact & scenario`: affected endpoint/function dikonfirmasi; maximum/minimum/normal scenario diwajibkan hanya bila rule membutuhkannya.
+4. `Proposed recalculation`: hanya blok terdampak dijalankan; blok lain direview atau di-carry-forward secara eksplisit.
 
-User melihat:
+Input rumus berasal dari technical/network data dan approved scenario—bukan dari Z1/Z2/Z3 existing. Existing issued setting dipakai untuk before/proposed comparison dan untuk memastikan parameter yang tidak terdampak tetap terjaga.
 
-- input engineering
-- formula trace
-- intermediate result
-- final TAP preview
-- validation warning
-- benchmark Excel: input GI/bay/fault/CT/PT, L1-L4 selector, output Z1/Z2/Z3/timer, dan OCR/GFR
+Output 2B.4 yang sudah tersedia:
 
-Output:
+- immutable `CalculationRun` berisi case/baseline/proposal/scenario/rule version;
+- typed input, unit conversion, formula trace, warning, dan affected-block decision;
+- before/proposed comparison untuk Distance dan LCD; reach delta ditahan bila basis primary/secondary issued setting belum eksplisit.
 
-- draft calculation yang dapat diaudit dan dibandingkan dengan Mathcad existing.
-- calculation snapshot masuk ke Setting Register sebagai source `calculation` dengan status `reviewed`.
-- basis penerbitan TAP setting baru oleh tim engineering.
-- untuk legacy benchmark study, target berikutnya adalah menghitung ulang di PLMS lalu menampilkan deviasi terhadap output Excel.
+Formula lab lama tetap benchmark/reference dan snapshot-nya tidak memenuhi gate. Live run hanya dapat dibuat dari Setting Case pada stage Calculation; hasilnya `proposed` dan belum otomatis menjadi canonical package atau issued TAP.
 
 ### 8. Engineering Validation dan TAP Setting Baru
 
@@ -785,7 +792,7 @@ Important design decision:
 
 | Data | Why needed | Minimal sample |
 |---|---|---|
-| Mathcad export/template | validate Calculation Workbook formula equivalence | P545 Ciledug–Alam Sutera menjadi pilot MVP 2B; perlu sign-off expected values/tolerance |
+| Mathcad export/template | validate typed rule equivalence | P545 Ciledug–Alam Sutera sudah parity 55/55; berikutnya engineer sign-off dan multi-case regression |
 | Legacy crosscheck workbook | replace spreadsheet workflow with PLMS flow | workbook indexed; next step is UI mapping into Study Wizard and Calculation |
 | Latest TAP setting PDF per side | baseline setting before engineering change and source evidence | PDF with text layer or scanned sample |
 | New TAP setting output | official result from engineering calculation | generated from PLMS calculation workflow |
@@ -806,7 +813,7 @@ Yang sudah dikerjakan tidak dimasukkan sebagai pending. OCR pipeline dan CT/VT s
 |---|---|---:|---|
 | Source Snapshot + Study Scenario | DB/IHS/TAP/actual/Mathcad belum memiliki snapshot dan scenario contract yang konsisten. | 3-5 hari | Highest |
 | Engineering Change Set + DIgSILENT staging | GI-insertion pilot sudah menghasilkan immutable delta, validation/readiness report, serta neutral JSON/CSV/DGS-like preview. Berikutnya: change type lain dan official PowerFactory adapter/round-trip validation di staging. | dependent on staging access | Medium |
-| P545 calculation parity | Input contract typed/unit-aware sudah tersedia; berikutnya pindahkan formula XMCD Ciledug–Alam Sutera dan validasi semua hasil intermediate/final. | 1-2 minggu + engineer review | Highest |
+| P545 live calculation | Adapter live + immutable run sudah tersedia; berikutnya validasi multi-case, review changed/carry-forward, dan engineer sign-off. | 1 minggu + engineer review | Highest |
 | Canonical Setting Package | Schema source-of-truth untuk input, calculated value, policy value, override, provenance, dan approval belum ada. | 3-5 hari | Highest |
 | TAP Report Composer | Printable report generik sudah ada; template TAP resmi multi-page, address table, revision, dan approval block belum ada. | 1 minggu | High |
 | OCR/GFR hardening | Reference engine sudah executable; perlu curve/policy coverage yang lebih luas dan benchmark lebih banyak case nyata. | 3-5 hari setelah data fault tersedia | High |
@@ -836,7 +843,7 @@ Yang sudah dikerjakan tidak dimasukkan sebagai pending. OCR pipeline dan CT/VT s
 
 ### Recommended Next Priorities
 
-1. **MVP 2B.2 — P545 calculation + Mathcad parity.** Port case Ciledug–Alam Sutera di atas input contract 2B.1 dan jelaskan deviasi seperti `Ihs3f` 26,24 kA vs IHS 2021 sekitar 33,22 kA.
+1. **E1 quality gate untuk live 2B.4.** Jalankan multi-case validation dan engineer review. Deviasi seperti `Ihs3f` 26,24 kA vs IHS 2021 sekitar 33,22 kA tetap harus dipilih lewat scenario/justified override, bukan otomatis.
 2. **Tutup input blocker pilot.** Konfirmasi model/effective date P543 vs P545, CT/VT, forward/reverse equivalent, infeed, serta scenario fault yang disetujui engineer.
 3. **Perluasan MVP 2A rules.** Tambahkan readiness matrix untuk new bay, reconductoring, CT/PT/relay replacement, serta cross-document conflicts saat use case masuk.
 4. **MVP 2C — Canonical Setting Package + TAP Composer.** Strukturkan engineering intent, hasilkan draft PDF terkontrol, lalu re-import untuk crosscheck.
@@ -1049,7 +1056,7 @@ Known limits:
 - Relay Catalog/manual library sudah ada, tetapi semantic capability profiles dan multi-vendor conversion rules belum diimplementasikan.
 - Historical IHS Semester 1 2021 tersedia, tetapi bukan current scenario model; fault level harus diikat ke network revision, study method, max/min condition, dan timestamp.
 - Topology insertion belum menghasilkan DIgSILENT staging package atau otomatis menerima hasil study balik.
-- Sample Mathcad P545 sudah tersedia dan didissect, tetapi formulanya belum selesai dipindahkan ke calculation rule PLMS dan belum menjalani parity sign-off engineer.
+- Sample Mathcad P545 sudah tersedia dan didissect; distance + auxiliary blocks sudah dipindahkan dengan total 55/55 saved-result checks, tetapi live-contract run dan parity sign-off engineer belum selesai.
 - Distance/reference workbook functional, tetapi template spesifik P545 masih perlu benchmark terhadap saved Mathcad result.
 - Printable report sudah ada, tetapi TAP composer resmi multi-page dengan document-control dan approval gate belum ada.
 - Calculation snapshot / draft TAP already exists for Distance, but approval-to-issued TAP workflow is still status/audit concept, not enforced role workflow.

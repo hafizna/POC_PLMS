@@ -67,6 +67,18 @@ export function SourceIndexView() {
   const sources = REGISTRY_SOURCES.filter((s) => activeCase.sourceIds.includes(s.id));
   const intakeScopeId = openedFromCaseId ?? activeCase.id;
   const stagedSources = sourceIntakeRecords.filter((record) => record.caseId === intakeScopeId);
+  const frozenBaselineSourceIds = new Set(
+    openedFromCase?.baseline?.evidence.map((item) => item.sourceIntakeId) ?? []
+  );
+  const proposedRevisionSourceIds = new Set(
+    openedFromCase?.proposedDataRevisions.flatMap((revision) =>
+      revision.sourceEvidenceIds
+    ) ?? []
+  );
+  const protectedSourceIds = new Set([
+    ...frozenBaselineSourceIds,
+    ...proposedRevisionSourceIds,
+  ]);
   const addCaseScopedSource = (record: SourceIntakeInput) => {
     const recordId = addSourceIntakeRecord({ ...record, caseId: intakeScopeId });
     if (openedFromCaseId) {
@@ -75,6 +87,9 @@ export function SourceIndexView() {
     return recordId;
   };
   const removeCaseScopedSource = (recordId: string) => {
+    // Frozen baseline evidence is immutable. Change evidence linked after the
+    // freeze remains removable until it is used by a later governed artifact.
+    if (protectedSourceIds.has(recordId)) return;
     if (openedFromCaseId) {
       unlinkFromSettingCase(openedFromCaseId, { kind: "source", refId: recordId });
     }
@@ -152,8 +167,9 @@ export function SourceIndexView() {
             {openedFromCase.title}
           </div>
           <p className="mt-1 text-xs text-emerald-800">
-            Dokumen baru yang di-stage di halaman ini otomatis ditautkan sebagai bukti
-            baseline case. Kembali ke case setelah status source tersimpan.
+            {openedFromCase.baseline
+              ? "Dokumen baru otomatis ditautkan sebagai evidence perubahan. Frozen baseline tetap utuh dan tidak ikut berubah."
+              : "Upload dokumen bersifat opsional untuk membekukan baseline. Jika tidak ada source baru, langsung kembali ke case dan pilih Bekukan baseline."}
           </p>
         </section>
       )}
@@ -164,6 +180,8 @@ export function SourceIndexView() {
         onAdd={addCaseScopedSource}
         onUpdate={updateSourceIntakeRecord}
         onRemove={removeCaseScopedSource}
+        protectedSourceIds={protectedSourceIds}
+        frozenBaselineSourceIds={frozenBaselineSourceIds}
         availableLines={availableLines}
         promotions={pdfTapPromotions.filter((p) => p.caseId === activeCase.id)}
         onPromote={addPdfTapPromotion}
@@ -526,7 +544,7 @@ function LegacyCrosscheckWorkbookPanel() {
             <MetricBox label="GFR pickup" value={`${formatOutput(ocrGfrCase.outputs?.gfrPickupPrimaryA)} A`} />
           </div>
           <div className="mt-3 text-[10px] text-slate-500">
-            Next bridge: gunakan DB/IHS ini untuk auto-fill Study Wizard, Working Network, dan benchmark Calculation Workbook terhadap hasil spreadsheet lama.
+            Next bridge: gunakan DB/IHS ini untuk case-scoped scenario readiness dan benchmark Formula Lab terhadap hasil spreadsheet lama.
           </div>
         </div>
       </div>
@@ -735,6 +753,8 @@ function SourceIntakePanel({
   onAdd,
   onUpdate,
   onRemove,
+  protectedSourceIds,
+  frozenBaselineSourceIds,
   availableLines,
   promotions,
   onPromote,
@@ -748,6 +768,8 @@ function SourceIntakePanel({
   onAdd: (record: SourceIntakeInput) => string;
   onUpdate: (id: string, patch: Partial<SourceIntakeRecord>) => void;
   onRemove: (id: string) => void;
+  protectedSourceIds: ReadonlySet<string>;
+  frozenBaselineSourceIds: ReadonlySet<string>;
   availableLines: { id: string; label: string }[];
   promotions: PdfTapPromotion[];
   onPromote: (record: Omit<PdfTapPromotion, "id" | "promotedAt" | "actor" | "status"> & { status?: PdfTapPromotion["status"] }) => string;
@@ -943,6 +965,8 @@ function SourceIntakePanel({
             <div className="divide-y divide-slate-100 max-h-80 overflow-auto">
               {records.map((record) => {
                 const recordPromotions = promotions.filter((p) => p.sourceIntakeId === record.id);
+                const isProtectedEvidence = protectedSourceIds.has(record.id);
+                const isFrozenBaselineEvidence = frozenBaselineSourceIds.has(record.id);
                 return (
                 <div key={record.id} className="px-3 py-2">
                   <div className="flex items-start justify-between gap-3">
@@ -956,11 +980,22 @@ function SourceIntakePanel({
                       </div>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
+                      {isProtectedEvidence && (
+                        <span className="rounded border border-slate-300 bg-slate-100 px-1.5 py-0.5 text-[9px] font-semibold uppercase text-slate-600">
+                          {isFrozenBaselineEvidence ? "frozen baseline" : "proposal evidence"}
+                        </span>
+                      )}
                       <IntakeStatusBadge status={record.status} />
                       <button
                         type="button"
                         onClick={() => onRemove(record.id)}
-                        className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded border border-slate-200 text-slate-500 hover:border-red-300 hover:text-red-700 hover:bg-red-50"
+                        disabled={isProtectedEvidence}
+                        title={
+                          isProtectedEvidence
+                            ? "Evidence ini sudah direferensikan oleh artifact immutable."
+                            : "Hapus evidence dari case"
+                        }
+                        className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded border border-slate-200 text-slate-500 hover:border-red-300 hover:text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-slate-200 disabled:hover:bg-transparent disabled:hover:text-slate-500"
                       >
                         <Trash2 className="w-3 h-3" />
                         remove

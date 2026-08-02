@@ -297,7 +297,7 @@ export function LineRegistryView() {
                     </td>
                     <td className="px-4 py-3 align-top">
                       <div className="flex flex-col gap-1.5 min-w-28">
-                        <ActionButton label="Calculate" icon={<Calculator className="w-3.5 h-3.5" />} onClick={() => void openCalculation(line.id)} />
+                        <ActionButton label="Formula Lab" icon={<Calculator className="w-3.5 h-3.5" />} onClick={() => void openCalculation(line.id)} />
                         <ActionButton label="Coverage" icon={<Route className="w-3.5 h-3.5" />} onClick={() => void openCoverage(line.id)} />
                         <ActionButton label="Compare" icon={<GitCompareArrows className="w-3.5 h-3.5" />} onClick={() => void openComparison(line.id)} disabled={!compareBay} />
                       </div>

@@ -336,7 +336,7 @@ export function SettingCaseWizard({
                 <div className="mt-0.5 text-sm font-semibold text-slate-900">
                   {entryKind === "crosscheck"
                     ? "Crosscheck actual setting"
-                    : "Hitung / revisi setting"}
+                    : "Targeted recalculation setting"}
                 </div>
                 <p className="mt-0.5 text-xs text-slate-600">
                   {entryKind === "crosscheck"
@@ -722,7 +722,7 @@ export function SettingCaseWizard({
                       </div>
                       <p className="mt-1">
                         Case tetap bisa dibuat untuk menindaklanjuti temuan ini — lihat detail di
-                        Reference Setting / Actual Verification sebelum menerbitkan setting baru.
+                        Issued Reference / Actual Verification sebelum membuat proposed recalculation.
                       </p>
                     </div>
                   )}
@@ -743,8 +743,8 @@ export function SettingCaseWizard({
                 <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
                   {CHANGE_ITEM_LABEL[primaryReason as ChangeItemKind]} berlaku untuk satu
                   bay/line spesifik — pilih bay-nya di atas (bukan hanya GI) supaya
-                  Calculation dan Coordination nanti tahu line mana yang dituju dan hasilnya
-                  ter-link balik ke case ini.
+                  Targeted Recalculation dan Coordination tahu line mana yang dituju dan
+                  hasilnya ter-link balik ke case ini.
                 </div>
               ) : (
                 <div>

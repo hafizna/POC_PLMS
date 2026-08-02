@@ -4,6 +4,10 @@ import type {
   LineRelation,
   ProtectionFunction,
   RelayIED,
+  RelaySetting,
+  RemoteBusBranch,
+  SettingRecord,
+  Transformer,
   UnifiedNetwork,
   UnifiedSubstation,
 } from "./unified";
@@ -28,6 +32,10 @@ export type CaseBaselineNetworkSnapshot = {
   readonly lineRelations: readonly LineRelation[];
   readonly relayIeds: readonly RelayIED[];
   readonly protectionFunctions: readonly ProtectionFunction[];
+  readonly relaySettings?: readonly RelaySetting[];
+  readonly settingRecords?: readonly SettingRecord[];
+  readonly transformers?: readonly Transformer[];
+  readonly remoteBusBranches?: readonly RemoteBusBranch[];
 };
 
 export type CaseBaselineRevisionBindings = {
@@ -42,6 +50,8 @@ export type CaseBaselineIssue = {
   readonly code:
     | "network-revision-unresolved"
     | "technical-revision-unresolved"
+    | "network-revision-case-local"
+    | "technical-revision-case-local"
     | "evidence-content-unverified"
     | "issued-setting-evidence-missing"
     | "actual-readback-evidence-missing";
@@ -100,9 +110,6 @@ export function buildCaseBaseline(input: {
   if (!scope.subjectLineId && scope.substationIds.length === 0) {
     errors.push("Protected scope belum memiliki line atau GI.");
   }
-  if (input.evidence.length === 0) {
-    errors.push("Minimal satu dokumen sumber harus ditautkan sebelum baseline dibekukan.");
-  }
   const invalidEvidence = input.evidence.filter((item) =>
     INVALID_EVIDENCE_STATES.has(item.status)
   );
@@ -135,12 +142,28 @@ export function buildCaseBaseline(input: {
   }
   if (errors.length > 0 || !network) return { ok: false, errors };
 
-  const lineRelations = network.lineRelations.filter(
+  const firstHopRelations = network.lineRelations.filter(
     (relation) =>
       relation.id === scope.subjectLineId ||
       substationIds.has(relation.fromSubstationId) ||
       substationIds.has(relation.toSubstationId)
   );
+  const firstHopSubstationIds = new Set(substationIds);
+  for (const relation of firstHopRelations) {
+    firstHopSubstationIds.add(relation.fromSubstationId);
+    firstHopSubstationIds.add(relation.toSubstationId);
+  }
+  const lineRelations = network.lineRelations.filter(
+    (relation) =>
+      firstHopRelations.some((item) => item.id === relation.id) ||
+      firstHopSubstationIds.has(relation.fromSubstationId) ||
+      firstHopSubstationIds.has(relation.toSubstationId)
+  );
+  const snapshotSubstationIds = new Set(firstHopSubstationIds);
+  for (const relation of lineRelations) {
+    snapshotSubstationIds.add(relation.fromSubstationId);
+    snapshotSubstationIds.add(relation.toSubstationId);
+  }
   const bayIds = new Set<string>();
   if (scope.subjectBayId) bayIds.add(scope.subjectBayId);
   for (const relation of lineRelations) {
@@ -151,6 +174,11 @@ export function buildCaseBaseline(input: {
   const relayIds = new Set(relayIeds.map((ied) => ied.id));
   const revisionBindings = { ...(input.revisionBindings ?? {}) };
   const issues = baselineIssues(settingCase, input.evidence, revisionBindings);
+
+  const fatalIssues = issues.filter((item) => item.severity === "error");
+  if (fatalIssues.length > 0) {
+    return { ok: false, errors: fatalIssues.map((item) => item.message) };
+  }
 
   const payload = {
     settingCaseId: settingCase.id,
@@ -170,7 +198,7 @@ export function buildCaseBaseline(input: {
     network: {
       networkCaseId: scope.networkCaseId,
       substations: network.substations
-        .filter((item) => substationIds.has(item.id))
+        .filter((item) => snapshotSubstationIds.has(item.id))
         .map((item) => ({ ...item })),
       bays: network.bays.filter((item) => bayIds.has(item.id)).map((item) => ({ ...item })),
       lineRelations: lineRelations.map((item) => ({
@@ -185,6 +213,26 @@ export function buildCaseBaseline(input: {
       })),
       protectionFunctions: network.protectionFunctions
         .filter((item) => relayIds.has(item.relayIedId))
+        .map((item) => ({ ...item })),
+      relaySettings: (network.relaySettings ?? [])
+        .filter((item) => relayIds.has(item.relayIedId))
+        .map((item) => ({
+          ...item,
+          zones: item.zones.map((zone) => ({ ...zone })) as RelaySetting["zones"],
+          loadEncroachment: { ...item.loadEncroachment },
+        })),
+      settingRecords: (network.settingRecords ?? [])
+        .filter((item) =>
+          network.protectionFunctions.some(
+            (fn) => fn.id === item.protectionFunctionId && relayIds.has(fn.relayIedId)
+          )
+        )
+        .map((item) => ({ ...item, values: { ...item.values } })),
+      transformers: (network.transformers ?? [])
+        .filter((item) => snapshotSubstationIds.has(item.substationId))
+        .map((item) => ({ ...item })),
+      remoteBusBranches: (network.remoteBusBranches ?? [])
+        .filter((item) => lineRelations.some((line) => line.id === item.lineRelationId))
         .map((item) => ({ ...item })),
     },
   };
@@ -219,12 +267,28 @@ function baselineIssues(
         "Belum ada ID network revision aktif/approved yang dapat diikat ke baseline.",
     });
   }
+  if (bindings.networkRevisionId?.startsWith("case-local-network:")) {
+    issues.push({
+      severity: "warning",
+      code: "network-revision-case-local",
+      message:
+        "Network revision memakai case-local frozen snapshot POC; ganti dengan enterprise/current revision saat backend tersedia.",
+    });
+  }
   if (!bindings.technicalDataRevisionId) {
     issues.push({
       severity: "error",
       code: "technical-revision-unresolved",
       message:
         "Belum ada ID technical-data revision aktif/approved yang dapat diikat ke baseline.",
+    });
+  }
+  if (bindings.technicalDataRevisionId?.startsWith("case-local-technical:")) {
+    issues.push({
+      severity: "warning",
+      code: "technical-revision-case-local",
+      message:
+        "Technical-data revision memakai case-local frozen snapshot POC; provenance enterprise belum tersedia.",
     });
   }
   if (evidence.some((item) => !item.checksum)) {
@@ -236,26 +300,16 @@ function baselineIssues(
     });
   }
   if (
-    settingCase.caseType === "crosscheck" &&
+    settingCase.caseType !== "data_correction" &&
+    settingCase.primaryReason !== "new_gi_insertion" &&
     !bindings.issuedSettingRevisionId &&
     !evidence.some((item) => item.documentType === "tap_setting")
   ) {
     issues.push({
-      severity: "error",
+      severity: "warning",
       code: "issued-setting-evidence-missing",
-      message: "Crosscheck belum memiliki issued TAP/setting revision sebagai expected setting.",
-    });
-  }
-  if (
-    settingCase.caseType === "crosscheck" &&
-    !bindings.actualReadbackId &&
-    !evidence.some((item) => item.documentType === "relay_export")
-  ) {
-    issues.push({
-      severity: "error",
-      code: "actual-readback-evidence-missing",
       message:
-        "Crosscheck belum memiliki native relay export/readback sebagai actual setting.",
+        "Issued setting revision/TAP belum tersedia. Baseline tetap membekukan network dan technical data, tetapi perbandingan expected vs actual belum boleh dinyatakan lengkap.",
     });
   }
   return issues;

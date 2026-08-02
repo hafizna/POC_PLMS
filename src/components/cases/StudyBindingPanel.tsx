@@ -171,7 +171,7 @@ export function StudyBindingPanel({ settingCase }: { settingCase: SettingCase })
           </button>
           <p className="mt-2 text-[11px] leading-relaxed text-ink-4">
             Package blocked tetap append-only. Hanya package terbaru yang lengkap
-            dan compatible membuka Calculation.
+            dan compatible membuka Targeted Recalculation.
           </p>
         </div>
 

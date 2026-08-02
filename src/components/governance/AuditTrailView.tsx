@@ -25,6 +25,8 @@ const actionClass: Record<AuditEvent["action"], string> = {
   pdf_tap_unpromote: "bg-slate-50 text-slate-600 border-slate-200",
   calculation_snapshot_add: "bg-emerald-50 text-emerald-700 border-emerald-200",
   calculation_snapshot_remove: "bg-slate-50 text-slate-600 border-slate-200",
+  targeted_calculation_run_created:
+    "bg-emerald-50 text-emerald-700 border-emerald-200",
   coordination_check_add: "bg-emerald-50 text-emerald-700 border-emerald-200",
   coordination_check_remove: "bg-slate-50 text-slate-600 border-slate-200",
   reference_verification_staged: "bg-indigo-50 text-indigo-700 border-indigo-200",
