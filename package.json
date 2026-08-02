@@ -32,6 +32,7 @@
     "test:asset-explorer": "tsx scripts/test-asset-setting-explorer.ts",
     "test:ssot-governance": "tsx scripts/test-ssot-governance.ts",
     "test:repository": "tsx scripts/test-protection-lifecycle-repository.ts",
+    "test:d1-setting-case-repository": "tsx scripts/test-d1-setting-case-repository.ts",
     "test:p545-input-contract": "tsx scripts/test-p545-input-contract.ts",
     "test:p545-calculation": "tsx scripts/test-p545-calculation.ts",
     "test:p545-auxiliary": "tsx scripts/test-p545-auxiliary-calculation.ts",
@@ -56,11 +57,13 @@
     "zustand": "^4.5.5"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^9.6.0",
     "@types/d3": "^7.4.3",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.3",
     "autoprefixer": "^10.4.20",
+    "better-sqlite3": "^13.0.2",
     "pdf-parse": "^2.4.5",
     "postcss": "^8.4.47",
     "tailwindcss": "^3.4.14",

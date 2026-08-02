@@ -18,6 +18,64 @@ Documentation ownership:
   migrations, limitations, and defects that actually exist. Planned behavior is
   recorded here only when explicitly labelled as not implemented.
 
+## Update 2026-08-03 - SSOT-2D.0 ADR/ERD and SSOT-2D.1 slice 1 (local D1 pilot)
+
+- `docs/adr/0001-ssot-2d0-persistence-and-authority-design.md` records the
+  Cloudflare D1 decision (app already runs as a Cloudflare Worker; D1 binds
+  with zero network hop and its `.batch()` covers the atomic-activation
+  requirement `GovernedDataRepository.activate()` already documents), an
+  ERD mapping every SSOT-2A/2C type to a table, and seven business-decision
+  points recorded as explicit `ASSUMPTION — PENDING REVIEW` markers rather
+  than answers. It also names a real gap found while designing "most recent
+  confirmed setting" provenance: nothing today flags which
+  `SourceObservation` is currently authoritative for a given entity —
+  `MAX(captured_at)` is the only present way to derive it, and is fragile
+  under concurrent/out-of-order writes. The ADR proposes an
+  `entity_current_observation` join table for this and flags that its
+  authority-ordering write-check is new logic, not something
+  `ssot-governance.ts` already validates.
+- The ADR's migration section also found that `buildProposedDataRevision()`
+  (`case-proposed-revision.ts:198-281`) already constructs real
+  `DataChangeProposal` objects via `createDataChangeProposal()`, but each
+  one's `proposedRevisionId` is a synthetic string
+  (`${proposalId}:${proposalKind}`) with no corresponding `GovernedRevision`
+  ever persisted — `createGovernedRevision()` is currently exercised only by
+  `test:ssot-governance` fixtures, not the live case-proposal path. This is
+  flagged as needing its own spike before any real backfill script is
+  written.
+- SSOT-2D.1 slice 1: `migrations/0001_setting_case.sql` defines
+  `setting_case` + `case_stage_event`. `src/repositories/d1/sql-driver.ts`
+  is a driver interface shaped after Cloudflare's `D1Database` API;
+  `d1-setting-case-repository.ts` implements `SettingCaseRepository`
+  against only that interface (no direct D1 or better-sqlite3 import), so it
+  is expected to run unmodified against a real `D1Database` binding later.
+- `better-sqlite3-driver.ts` is an explicitly local/dev-only driver
+  satisfying the same interface, added because a D1 binding is only
+  reachable inside the Worker runtime (workerd) and this project has no
+  vitest-pool-workers/unstable_dev harness yet — building one was judged
+  out of scope for a first slice. `db.transaction()` supplies `.batch()`'s
+  atomicity; the statement class splits a synchronous `runSync()` from the
+  async `run()` wrapper specifically so batch execution never calls the
+  async path inside a synchronous transaction callback, which would
+  silently return before the write actually happened.
+- `scripts/test-d1-setting-case-repository.ts`
+  (`npm run test:d1-setting-case-repository`) runs the same assertions
+  `test:repository` runs against `InMemorySettingCaseRepository` — create,
+  detached reads, stage-history round-trip, optimistic-concurrency
+  accept/reject — against the D1-shaped adapter instead, backed by an
+  in-memory better-sqlite3 database. One real bug surfaced by this parity
+  test: SQLite returns `NULL` for an absent `note` column, and naively
+  mapping that to `note: undefined` fails `deepEqual` against the original
+  object shape (which omits the `note` key entirely rather than setting it
+  to `undefined`) — fixed by omitting the key when absent.
+- Not implemented yet: `GovernedDataRepository` (atomic activation),
+  `SourceObservationRepository`, `AuditRepository`, any real `wrangler d1
+  create` provisioning, or wiring this adapter into the running app.
+  Zustand/localStorage remains the only persistence path the deployed app
+  actually uses. `npx tsc --noEmit` and `npm run build` both pass with this
+  slice added; `better-sqlite3` is a devDependency only and does not appear
+  in the Vite/Worker bundle.
+
 ## Update 2026-08-03 - SSOT-2C repository boundary and agent handoff
 
 - `src/repositories/protection-lifecycle-repository.ts` defines persistence-

@@ -102,6 +102,55 @@ readback from the official vendor tool is the authority for actual device state.
 - `InMemorySettingCaseRepository` is the reference optimistic-concurrency
   implementation for repository contract tests.
 
+### SSOT-2D.0 — Persistence and authority design
+
+- `docs/adr/0001-ssot-2d0-persistence-and-authority-design.md` is the ADR/ERD:
+  Cloudflare D1 decision, table design for `canonical_entity`,
+  `governed_revision`, `data_change_proposal`, `data_activation_event`,
+  `setting_case`, `case_stage_event`, `source_observation`, `audit_event`,
+  an `entity_current_observation` gap found while designing "most recent
+  confirmed setting" provenance, transaction/optimistic-lock behavior, and a
+  migration/backfill/rollback draft.
+- Seven business-decision assumptions are recorded explicitly as
+  `ASSUMPTION — PENDING REVIEW` rather than resolved; §6 below is unchanged
+  by this document and remains the actual confirmation gate.
+- Design only. No Cloudflare resource was provisioned by this slice.
+
+### SSOT-2D.1 — Local database pilot (in progress, slice 1 of N)
+
+- `migrations/0001_setting_case.sql` defines `setting_case` and
+  `case_stage_event` only, matching the ADR's §4.2 schema for those two
+  tables. `governed_revision`/`data_change_proposal`/
+  `data_activation_event`/`source_observation`/`audit_event` are not yet
+  migrated — later slices.
+- `src/repositories/d1/sql-driver.ts` defines a minimal driver interface
+  shaped after Cloudflare's `D1Database` API (`prepare().bind().run()/
+  first()/all()`). `src/repositories/d1/d1-setting-case-repository.ts`
+  implements `SettingCaseRepository` against that interface only — it does
+  not import D1 or better-sqlite3 directly, so it is expected to run
+  unmodified against a real `D1Database` binding later.
+- `src/repositories/d1/better-sqlite3-driver.ts` is a **local/dev-only**
+  driver satisfying the same interface, backed by `better-sqlite3` (new
+  devDependency). It exists because a D1 binding cannot be reached from a
+  plain Node/tsx process — there is no vitest-pool-workers/unstable_dev
+  harness in this project yet, and adding one was judged out of scope for a
+  first slice. `db.transaction()` provides `.batch()`'s atomicity; note the
+  `runSync()` split from `run()` in that file — calling the async wrapper
+  inside a synchronous `db.transaction()` callback would silently break
+  atomicity, so batch execution calls the synchronous path directly.
+- `scripts/test-d1-setting-case-repository.ts` (`npm run
+  test:d1-setting-case-repository`) proves parity against the exact same
+  assertions `test:repository` runs for `InMemorySettingCaseRepository`:
+  create/read, detached reads (mutating a returned record must not affect
+  stored state), stage-history round-trip through `case_stage_event`, and
+  optimistic-concurrency accept/reject on `expectedVersion`.
+- **Not done yet**: `GovernedDataRepository` (the harder half — atomic
+  activation), `SourceObservationRepository`, `AuditRepository`; wiring this
+  adapter into the actual app (Zustand still uses the browser-localStorage
+  adapter exclusively); provisioning a real D1 database via `wrangler d1
+  create`; any migration/backfill script execution against real pilot data.
+  Nothing in this slice changes runtime behavior for end users.
+
 ## 4. Important Existing Engineering Capability
 
 - P545 Distance core and auxiliary parity: 55/55 saved Mathcad checks.
@@ -149,15 +198,13 @@ exist.
 
 ## 7. Recommended Future Development
 
-### SSOT-2D.0 — Persistence and authority design (next)
+### SSOT-2D.0 — Persistence and authority design (done as a design doc)
 
-- Produce an ADR/ERD, not a production deployment.
-- Separate authoritative write tables from Explorer/read projections.
-- Define transaction and optimistic-lock behavior.
-- Define D1/PostgreSQL decision criteria and file/object-storage boundary.
-- Draft migration/backfill and rollback strategy.
+- `docs/adr/0001-ssot-2d0-persistence-and-authority-design.md` covers all five
+  bullets below. Business-decision confirmation (§6 above) is still open —
+  the ADR stands on explicit assumptions, not answers.
 
-Candidate authoritative records:
+Candidate authoritative records (as designed in the ADR):
 
 - canonical entity and external identity binding;
 - governed technical/network/equipment revision;
@@ -167,20 +214,32 @@ Candidate authoritative records:
 - issued Setting Package/Setting Revision;
 - field implementation and commissioning evidence;
 - Data Activation Event;
-- actual readback session and normalized result;
+- actual readback session and normalized result (plus the
+  `entity_current_observation` gap noted in the ADR §4.4 — nothing in the
+  domain layer today flags which observation is currently authoritative for
+  a given entity; that requires new logic, not just new storage);
 - audit event.
 
 Explorer grids, KPI counts, readiness summaries, and Asset 360 are projections,
 not directly editable authoritative tables.
 
-### SSOT-2D.1 — Local database pilot
+### SSOT-2D.1 — Local database pilot (in progress — slice 1 of N landed)
 
-- Implement the repository ports against a local/dev database.
-- Seed a bounded real dataset, preferably ANGKE–ANCOL plus one P545 calculation
-  case and one crosscheck case.
-- Run the local adapter and database adapter against the same contract tests.
-- Rehearse snapshot import without treating imported rows as automatically
-  active canonical data.
+- Slice 1 (`setting_case` + `case_stage_event`, D1-shaped driver interface,
+  better-sqlite3 local adapter, parity regression) is implemented — see §3
+  above for detail.
+- Remaining: `GovernedDataRepository` (atomic activation — the harder half,
+  since D1's `.batch()` semantics need to be proven against the same
+  baseline-drift/supersession assertions `test:ssot-governance` already
+  locks), `SourceObservationRepository`, `AuditRepository`.
+- Still open after those: seed the bounded real dataset (ANGKE–ANCOL plus one
+  P545 calculation case and one crosscheck case per the ADR §7.1 draft), spike
+  the `case-proposed-revision.ts` → `governed_revision` wiring gap the ADR's
+  migration section flagged, and only then attempt an actual backfill from
+  the current localStorage snapshot.
+- Not started: provisioning a real D1 database (`wrangler d1 create`) or
+  wiring any adapter into the running app — Zustand still exclusively uses
+  the browser-localStorage adapter today.
 
 ### SSOT-2D.2 — Staging multi-user workflow
 
@@ -226,6 +285,7 @@ Run at minimum:
 ```powershell
 npx tsc --noEmit
 npm run test:repository
+npm run test:d1-setting-case-repository
 npm run test:ssot-governance
 npm run test:setting-case
 npm run test:case-baseline-flow
@@ -247,6 +307,13 @@ the explicit task.
 - `src/domain/ssot-governance.ts` — executable SSOT invariants.
 - `src/repositories/protection-lifecycle-repository.ts` — SSOT-2C ports and
   local snapshot adapter.
+- `docs/adr/0001-ssot-2d0-persistence-and-authority-design.md` — SSOT-2D.0
+  ADR/ERD; assumptions in its §3 are pending product-owner confirmation.
+- `src/repositories/d1/` — SSOT-2D.1 D1-shaped `SettingCaseRepository`
+  adapter (`d1-setting-case-repository.ts`), driver interface
+  (`sql-driver.ts`), and local-only better-sqlite3 driver
+  (`better-sqlite3-driver.ts`) used only to run its regression from tsx.
+- `migrations/0001_setting_case.sql` — first D1 migration slice.
 - `src/domain/case-proposed-revision.ts` — case proposal to governed proposal
   bridge.
 - `src/store/useProsetStore.ts` — POC application state/actions and historical
