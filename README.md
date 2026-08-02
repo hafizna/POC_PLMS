@@ -242,7 +242,7 @@ Implementasi dilakukan dalam slice kecil yang tetap menghasilkan outcome teruji:
 | **2D.1** | Capability Profiles | P543/P545, RED670, dan 7SL87 semantic profiles. | Coverage/gap matrix menunjukkan fungsi dan constraint yang belum dipetakan. |
 | **2D.2** | Conversion Pilot | P545 canonical intent -> proposed RED670/7SL87 settings. | Setiap mapping berstatus exact/transformed/decision/unsupported; tidak menghasilkan native file. |
 
-**Next coding slice: E1 quality gate + review contract.** Uji live 2B.4 pada case/line nyata tambahan, lalu strukturkan keputusan changed/carry-forward sebelum membentuk canonical proposed setting revision. Benchmark tetap parity evidence, bukan current network truth.
+**Next coding slice:** lihat "Next to-do" di atas dan `DEVELOPMENT_HANDOFF.md` §7 — SSOT-2D.0 (authority review, ADR/ERD, transaction/storage boundary) sekarang menjadi prioritas sebelum melanjutkan E1 quality gate/review contract. Baris ini sebelumnya menunjuk E1 sebagai next slice; itu sudah digantikan oleh urutan SSOT-2D di atas per 2026-08-03.
 
 ### Batas klaim saat ini
 
