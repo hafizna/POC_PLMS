@@ -463,9 +463,26 @@ one crosscheck case). A backfill script would:
    inferring its payload from the same `ProposedFieldChange[]` the proposal
    already carries, or (b) wiring `buildProposedDataRevision()` to call
    `createGovernedRevision()` for real before migration, so the backfill has
-   an actual row to copy instead of one it must invent. **This wiring gap is
-   the single largest unknown in the migration** — it needs its own spike
-   before 2D.1 writes the backfill script, not just this ADR's say-so.
+   an actual row to copy instead of one it must invent.
+
+   **Update 2026-08-03 — spike done, option (b), partially.**
+   `buildProposedDataRevision()` now calls `createGovernedRevision()` for
+   real for 4 of 7 `ProposedRevisionKind` values (`line_technical`,
+   `instrument_ct`, `instrument_vt`, `network_topology`) — see
+   `IMPLEMENTATION_NOTES.md`'s "case-proposed-revision.ts to
+   GovernedRevision spike" entry for the full writeup. The remaining 3
+   (`relay_asset`, `policy_rule`, `master_correction`/`other_technical`)
+   still produce a synthetic `proposedRevisionId`, and closing those needs
+   more than mapping work: `policy_rule`/`master_correction`/
+   `other_technical` have no corresponding entry in
+   `CanonicalRevisionPayload`'s union at all, and `relay_asset`'s payload
+   type exists but needs a physical-relay identity field the UI does not
+   currently collect. **Backfilling those 3 kinds still requires option
+   (a)** (synthesize a `governed_revision` row at migration time) until
+   either `ssot-governance.ts` gains new payload types or the proposal UI
+   collects relay identity. The baseline side (`baselineRevisionId`) is
+   unchanged by this spike — still the case-local frozen snapshot POC — and
+   remains a separate, larger piece of work.
 
 ### 7.2 Acceptance criteria
 

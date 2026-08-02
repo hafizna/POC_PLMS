@@ -2,9 +2,15 @@ import type { SettingCaseBaseline } from "./case-baseline";
 import type { ChangeItem, ChangeItemKind, SettingCase } from "./setting-case";
 import {
   createDataChangeProposal,
+  createGovernedRevision,
   type ActivationPolicy,
   type CanonicalEntityRef,
+  type CanonicalRevisionPayload,
   type DataChangeProposal,
+  type GovernedRevision,
+  type InstrumentTransformerRevisionPayload,
+  type LineTechnicalRevisionPayload,
+  type NetworkTopologyRevisionPayload,
 } from "./ssot-governance";
 
 export type ProposedRevisionKind =
@@ -65,6 +71,15 @@ export type ProposedDataRevision = {
   readonly governedProposal?: DataChangeProposal;
   /** One governed proposal per canonical target when a case has multiple change kinds. */
   readonly governedProposals?: readonly DataChangeProposal[];
+  /**
+   * Real GovernedRevision rows backing each governedProposals[].proposedRevisionId
+   * that has a typed CanonicalRevisionPayload (line_technical, instrument_ct/vt,
+   * relay_asset, network_topology). Proposal kinds without a corresponding
+   * payload type (policy_rule, master_correction, other_technical) have no
+   * entry here and keep a synthetic proposedRevisionId — see
+   * payloadForProposalKind()'s comment for why that gap is not closed here.
+   */
+  readonly governedRevisions?: readonly GovernedRevision[];
 };
 
 export type ProposedDataRevisionDraft = {
@@ -274,33 +289,62 @@ export function buildProposedDataRevision(input: {
   }
 
   const proposalId = input.id;
+  const governedRevisions: GovernedRevision[] = [];
   const governedProposals = kinds.map((proposalKind) => {
     const allowedFields = new Set(
       FIELD_DEFINITIONS[proposalKind].map((definition) => definition.key)
     );
+    const kindFieldChanges = fieldChanges.filter((change) => allowedFields.has(change.fieldKey));
+    const target = canonicalTargetForProposal(
+      input.settingCase,
+      proposalKind,
+      input.draft.targetEntityId
+    );
+    // A real GovernedRevision only gets built for kinds that have a typed
+    // CanonicalRevisionPayload to hold their fields (line_technical,
+    // instrument_ct/vt, relay_asset, network_topology). policy_rule and
+    // master_correction/other_technical stay on the synthetic
+    // `${proposalId}:${kind}` id below — SettingRevisionPayload's shape
+    // (settingPackageId/endpointBayId/canonicalParameterSetRef) has no
+    // correspondence to the policy/correction field definitions collected
+    // here, and line_relation/bay/substation have no payload type in
+    // ssot-governance.ts at all. Forcing either into a payload would
+    // fabricate data, not close the gap — flagged as a separate
+    // ssot-governance.ts extension, not something this function should
+    // guess at.
+    const revisionPayload = payloadForProposalKind(proposalKind, target, kindFieldChanges, input.baseline);
+    let proposedRevisionId = `${proposalId}:${proposalKind}`;
+    if (revisionPayload && target.id) {
+      const revision = createGovernedRevision({
+        id: `governed_rev_${proposalId}_${proposalKind}`,
+        entity: target,
+        revisionNumber: 2, // 1 is reserved for the case-local baseline revision (see baselineRevisionId below); this is POC-local numbering, not an enterprise revision count.
+        caseId: input.settingCase.id,
+        payload: revisionPayload,
+        sourceEvidenceIds: sourceEvidenceIds.length > 0 ? sourceEvidenceIds : ["pending-evidence"],
+        createdAt: input.createdAt,
+        createdBy: input.createdBy,
+      });
+      governedRevisions.push(revision);
+      proposedRevisionId = revision.id;
+    }
     const base = createDataChangeProposal({
       id: `data_change_${proposalId}_${proposalKind}`,
       caseId: input.settingCase.id,
-      target: canonicalTargetForProposal(
-        input.settingCase,
-        proposalKind,
-        input.draft.targetEntityId
-      ),
+      target,
       baselineRevisionId:
         input.baseline.revisionBindings.technicalDataRevisionId ?? input.baseline.id,
-      proposedRevisionId: `${proposalId}:${proposalKind}`,
+      proposedRevisionId,
       reason: input.settingCase.changeItems.find(
         (item) => proposedRevisionKindForReason(item.kind) === proposalKind
       )?.kind ?? input.settingCase.primaryReason,
-      fieldChanges: fieldChanges
-        .filter((change) => allowedFields.has(change.fieldKey))
-        .map((change) => ({
-          fieldPath: change.fieldKey,
-          beforeValue: change.beforeValue,
-          proposedValue: change.proposedValue,
-          unit: change.unit,
-          sourceEvidenceIds,
-        })),
+      fieldChanges: kindFieldChanges.map((change) => ({
+        fieldPath: change.fieldKey,
+        beforeValue: change.beforeValue,
+        proposedValue: change.proposedValue,
+        unit: change.unit,
+        sourceEvidenceIds,
+      })),
       sourceEvidenceIds,
       activationPolicy: activationPolicyForReason(
         input.settingCase.changeItems.find(
@@ -360,6 +404,7 @@ export function buildProposedDataRevision(input: {
     },
     governedProposal,
     governedProposals,
+    governedRevisions,
   };
 }
 
@@ -424,6 +469,118 @@ export function canonicalTargetForProposal(
           settingCase.protectedScope.substationIds[0] ??
           "",
       };
+  }
+}
+
+/**
+ * Maps a proposal kind's flat field changes onto a typed CanonicalRevisionPayload,
+ * so the DataChangeProposal built for that kind can bind to a real
+ * GovernedRevision instead of a synthetic `${caseId}:${kind}` id (the gap
+ * flagged in docs/adr/0001-ssot-2d0-persistence-and-authority-design.md
+ * §7.1). Returns undefined for kinds with no corresponding payload type in
+ * ssot-governance.ts (policy_rule, master_correction, other_technical) —
+ * see the caller's comment for why those are not force-mapped here.
+ *
+ * Unchanged fields fall back to the baseline value via
+ * baselineValueForProposedField() so the payload reflects the full proposed
+ * state, not just the delta.
+ */
+function payloadForProposalKind(
+  kind: ProposedRevisionKind,
+  target: CanonicalEntityRef,
+  fieldChanges: readonly ProposedFieldChange[],
+  baseline: SettingCaseBaseline
+): CanonicalRevisionPayload | undefined {
+  const value = (key: string): string | number | undefined => {
+    const changed = fieldChanges.find((change) => change.fieldKey === key);
+    return changed ? changed.proposedValue : baselineValueForProposedField(baseline, key);
+  };
+  const numberValue = (key: string): number | undefined => {
+    const raw = value(key);
+    return typeof raw === "number" ? raw : raw !== undefined ? Number(raw) : undefined;
+  };
+  const textValue = (key: string): string | undefined => {
+    const raw = value(key);
+    return raw === undefined ? undefined : String(raw);
+  };
+
+  switch (kind) {
+    case "line_technical": {
+      const payload: LineTechnicalRevisionPayload = {
+        type: "line_technical",
+        lineRelationId: target.id,
+        conductorDesignation: textValue("line.conductor_designation"),
+        physicalLengthKm: numberValue("line.physical_length_km"),
+        currentRatingA: numberValue("line.current_rating_a"),
+        r1Ohm: numberValue("line.r1_ohm"),
+        x1Ohm: numberValue("line.x1_ohm"),
+        r0Ohm: numberValue("line.r0_ohm"),
+        x0Ohm: numberValue("line.x0_ohm"),
+        c1NfPerKm: numberValue("line.c1_nf_per_km"),
+        c0NfPerKm: numberValue("line.c0_nf_per_km"),
+      };
+      return payload;
+    }
+    case "instrument_ct": {
+      const primary = numberValue("ct.primary_a");
+      const secondary = numberValue("ct.secondary_a");
+      if (primary === undefined || secondary === undefined) return undefined;
+      const payload: InstrumentTransformerRevisionPayload = {
+        type: "instrument_transformer",
+        bayId: target.id.replace(/:CT$/, ""),
+        transformerKind: "CT",
+        primary,
+        secondary,
+        accuracyClass: textValue("ct.accuracy_class"),
+        polarityRef: textValue("ct.polarity"),
+      };
+      return payload;
+    }
+    case "instrument_vt": {
+      const primary = numberValue("vt.primary_kv");
+      const secondary = numberValue("vt.secondary_v");
+      if (primary === undefined || secondary === undefined) return undefined;
+      const payload: InstrumentTransformerRevisionPayload = {
+        type: "instrument_transformer",
+        bayId: target.id.replace(/:VT$/, ""),
+        transformerKind: "VT",
+        primary,
+        secondary,
+        accuracyClass: textValue("vt.accuracy_class"),
+        polarityRef: textValue("vt.polarity"),
+      };
+      return payload;
+    }
+    case "relay_asset":
+      // No mapping: RelayInstallationRevisionPayload.relayIedId needs the
+      // physical relay's stable identity (serial/asset id), but this kind's
+      // field definitions (relay.make/model/firmware/order_code/...) only
+      // capture specification data, not identity — "MiCOM P545" is a model
+      // name, not the id of the specific unit being installed. Mapping
+      // relay.model to relayIedId would fabricate an identity the UI never
+      // collected. Closing this requires adding a relay-identity field to
+      // FIELD_DEFINITIONS.relay_asset first, not a mapping-layer fix.
+      return undefined;
+    case "network_topology": {
+      const changeDescription = textValue("topology.change_description");
+      if (!changeDescription) return undefined;
+      const affectedIds = (textValue("topology.affected_asset_ids") ?? "")
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean);
+      const payload: NetworkTopologyRevisionPayload = {
+        type: "network_topology",
+        substationIds: baseline.protectedScope.substationIds,
+        activeLineRelationIds: affectedIds,
+        supersededLineRelationIds: [],
+        changeDescription,
+      };
+      return payload;
+    }
+    case "policy_rule":
+    case "master_correction":
+    case "other_technical":
+      return undefined;
   }
 }
 

@@ -196,6 +196,57 @@ readback from the official vendor tool is the authority for actual device state.
   a passing parity regression — the remaining SSOT-2D.1 work is seeding a
   real dataset and the backfill spike, not more port coverage.
 
+### `case-proposed-revision.ts` → `governed_revision` wiring spike (proposed side only)
+
+Closes part of the gap the ADR's §7.1 migration section flagged — recap:
+`buildProposedDataRevision()` built real `DataChangeProposal` objects, but
+each `proposedRevisionId` was a synthetic string
+(`${caseId}:${proposalKind}`) with no corresponding `GovernedRevision` ever
+persisted. Scope for this spike was **proposed side only** — the baseline
+side (`baselineRevisionId`) still points at the case-local frozen snapshot
+POC, unchanged; that's a separate spike.
+
+- `payloadForProposalKind()` (new, in `case-proposed-revision.ts`) maps a
+  proposal kind's flat field changes (`line.r1_ohm`, `ct.primary_a`, etc.)
+  onto a typed `CanonicalRevisionPayload`, falling back to the frozen
+  baseline's value via the existing `baselineValueForProposedField()` for
+  fields the user didn't change. `buildProposedDataRevision()` now calls
+  `createGovernedRevision()` with that payload when one exists, and uses the
+  resulting revision's real `id` as `proposedRevisionId` instead of the
+  synthetic string. The new `GovernedRevision[]` is exposed as
+  `ProposedDataRevision.governedRevisions`.
+- **Only 4 of 7 proposal kinds get a real revision**: `line_technical`,
+  `instrument_ct`, `instrument_vt`, `network_topology`. The other 3 keep the
+  synthetic id, and that's a deliberate finding, not an oversight:
+  - `policy_rule` and `master_correction`/`other_technical` map to
+    `CanonicalEntityRef` kinds (`setting_revision`, `line_relation`/`bay`/
+    `substation`) that have **no corresponding entry** in
+    `CanonicalRevisionPayload`'s union in `ssot-governance.ts` at all —
+    closing this needs a `ssot-governance.ts` extension (a new payload
+    type), not a mapping fix here.
+  - `relay_asset` **does** have a payload type
+    (`RelayInstallationRevisionPayload`), but that type's `relayIedId` needs
+    the physical relay's stable identity (serial/asset id), and the UI's
+    field definitions for this kind (`relay.make`/`model`/`firmware`/
+    `order_code`/...) only ever collected specification data, not identity.
+    Mapping `relay.model` ("MiCOM P545") to `relayIedId` would fabricate an
+    identity nobody entered. Closing this needs a new identity field added
+    to `FIELD_DEFINITIONS.relay_asset` first.
+- `scripts/test-case-proposed-governed-revision.ts`
+  (`npm run test:case-proposed-governed-revision`) proves both halves: a
+  `reconductoring` case's `line_technical` proposal now binds to a real
+  `GovernedRevision` that independently satisfies `ssot-governance.ts`'s own
+  `validateRevisionChain()` (not just a shape match), and a
+  `relay_replacement` case correctly produces zero `GovernedRevision`
+  entries and keeps the synthetic id, proving the fallback isn't silently
+  fabricating data where the UI hasn't collected enough to be honest about
+  identity.
+- Full regression suite, `tsc --noEmit`, and `npm run build` all still pass
+  — this change is additive to `case-proposed-revision.ts`'s existing
+  output shape (new optional field, existing `governedProposals` behavior
+  unchanged for all callers that don't read `proposedRevisionId`'s exact
+  format).
+
 ## 4. Important Existing Engineering Capability
 
 - P545 Distance core and auxiliary parity: 55/55 saved Mathcad checks.
@@ -280,11 +331,18 @@ not directly editable authoritative tables.
 - Remaining before this stops being "ports only": the
   `entity_current_observation` table the ADR's §4.4 flagged (needs an
   authority-ordering design decision first, not just a migration).
-- Still open after that: seed the bounded real dataset (ANGKE–ANCOL plus one
-  P545 calculation case and one crosscheck case per the ADR §7.1 draft), spike
-  the `case-proposed-revision.ts` → `governed_revision` wiring gap the ADR's
-  migration section flagged, and only then attempt an actual backfill from
-  the current localStorage snapshot.
+- The `case-proposed-revision.ts` → `governed_revision` wiring gap the ADR's
+  migration section flagged is **closed for 4 of 7 proposal kinds** — see §3
+  above (`buildProposedDataRevision()`). `line_technical`,
+  `instrument_ct`/`instrument_vt`, and `network_topology` now bind to a real
+  `GovernedRevision`; `relay_asset`, `policy_rule`,
+  `master_correction`/`other_technical` still use the synthetic
+  `${caseId}:${kind}` id, and that's correct given what data currently
+  exists — see §3's note on why forcing those would fabricate data.
+- Still open: seed the bounded real dataset (ANGKE–ANCOL plus one P545
+  calculation case and one crosscheck case per the ADR §7.1 draft), then
+  attempt an actual backfill from the current localStorage snapshot using
+  the now-real proposed revisions.
 - Not started: provisioning a real D1 database (`wrangler d1 create`) or
   wiring any adapter into the running app — Zustand still exclusively uses
   the browser-localStorage adapter today.
@@ -336,6 +394,7 @@ npm run test:repository
 npm run test:d1-setting-case-repository
 npm run test:d1-governed-data-repository
 npm run test:d1-source-observation-audit-repository
+npm run test:case-proposed-governed-revision
 npm run test:ssot-governance
 npm run test:setting-case
 npm run test:case-baseline-flow
@@ -370,8 +429,11 @@ the explicit task.
   regressions from tsx.
 - `migrations/0001_setting_case.sql`, `migrations/0002_governed_revision.sql`,
   `migrations/0003_source_observation_audit.sql` — D1 migration slices 1-3.
-- `src/domain/case-proposed-revision.ts` — case proposal to governed proposal
-  bridge.
+- `src/domain/case-proposed-revision.ts` — case proposal to governed
+  proposal bridge; `payloadForProposalKind()` maps 4 of 7 proposal kinds to
+  a real `GovernedRevision` (relay_asset/policy_rule/master_correction/
+  other_technical still use a synthetic `proposedRevisionId` — see §3's
+  spike writeup for why).
 - `src/store/useProsetStore.ts` — POC application state/actions and historical
   local snapshot migrations.
 - `src/components/master/MasterDataView.tsx` — Asset 360 and change entry point.

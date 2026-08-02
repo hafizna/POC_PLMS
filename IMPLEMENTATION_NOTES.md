@@ -18,6 +18,65 @@ Documentation ownership:
   migrations, limitations, and defects that actually exist. Planned behavior is
   recorded here only when explicitly labelled as not implemented.
 
+## Update 2026-08-03 - case-proposed-revision.ts to GovernedRevision spike (proposed side)
+
+- Closes part of the gap `docs/adr/0001-ssot-2d0-persistence-and-authority-
+  design.md` §7.1 flagged during migration-strategy investigation:
+  `buildProposedDataRevision()` built real `DataChangeProposal` objects via
+  `createDataChangeProposal()`, but every `proposedRevisionId` was a
+  synthetic string (`${caseId}:${proposalKind}`) with no corresponding
+  `GovernedRevision` ever persisted anywhere — `createGovernedRevision()`
+  was exercised only by `test:ssot-governance` fixtures. Scope for this
+  change is the proposed side only; `baselineRevisionId` still points at
+  the case-local frozen snapshot POC (`case-baseline.ts` itself already
+  labels that `technical-revision-case-local`), which is a separate,
+  larger spike deliberately deferred.
+- New `payloadForProposalKind()` in `case-proposed-revision.ts` maps a
+  proposal kind's flat field changes (e.g. `line.r1_ohm`, `ct.primary_a`)
+  onto a typed `CanonicalRevisionPayload`, using the existing
+  `baselineValueForProposedField()` as the fallback for fields the user
+  didn't touch so the payload reflects full proposed state, not just the
+  delta. `buildProposedDataRevision()` calls `createGovernedRevision()` with
+  that payload when one exists and uses the resulting revision's real `id`
+  as `proposedRevisionId`; the new revisions are exposed as
+  `ProposedDataRevision.governedRevisions`.
+- Investigation found the gap only closes for 4 of 7 `ProposedRevisionKind`
+  values, and the other 3 are correctly left alone rather than forced:
+  - `policy_rule` → `setting_revision` and `master_correction`/
+    `other_technical` → `line_relation`/`bay`/`substation` have **no
+    corresponding payload type** in `CanonicalRevisionPayload`'s union at
+    all (`ssot-governance.ts`'s union only has 5 members:
+    `line_technical`, `relay_installation`, `instrument_transformer`,
+    `network_topology`, `setting_revision` — and `setting_revision`'s shape,
+    `settingPackageId`/`endpointBayId`/`canonicalParameterSetRef`, has no
+    correspondence to `policy_rule`'s field definitions
+    `policy.reference`/`policy.rule_version`/`policy.change_summary`).
+    Closing this needs a `ssot-governance.ts` extension, not a mapping fix.
+  - `relay_asset` **does** have a payload type
+    (`RelayInstallationRevisionPayload`), but that type's `relayIedId` field
+    needs the physical relay's stable identity (serial/asset id).
+    `FIELD_DEFINITIONS.relay_asset` only collects
+    `relay.make`/`model`/`firmware`/`order_code`/`capability_profile`/
+    `logic_communication_notes` — specification data, not identity.
+    Mapping `relay.model` ("MiCOM P545") to `relayIedId` would fabricate an
+    identity nobody entered in the UI. Closing this needs a new identity
+    field added to the field definitions first, not a mapping change.
+- `scripts/test-case-proposed-governed-revision.ts`
+  (`npm run test:case-proposed-governed-revision`) proves both outcomes: a
+  `reconductoring` case's `line_technical` proposal now binds to a real
+  `GovernedRevision` whose id `validateRevisionChain()` (from
+  `ssot-governance.ts`, independently) accepts — not just a shape match,
+  but a value the domain contract's own validation was satisfied by — and a
+  `relay_replacement` case produces zero `GovernedRevision` entries,
+  proving the fallback path doesn't silently fabricate an identity where
+  the UI hasn't collected enough to be honest about it.
+- Full regression suite (all existing `test:*` scripts plus the two new
+  ones), `tsc --noEmit`, and `npm run build` all pass. This change is
+  additive to `case-proposed-revision.ts`'s output shape — existing callers
+  reading `governedProposals` are unaffected; only callers that assumed
+  `proposedRevisionId`'s exact synthetic string format would need updating,
+  and none currently do.
+
 ## Update 2026-08-03 - SSOT-2D.1 slice 3: SourceObservation/Audit D1 adapters, all four ports covered
 
 - `migrations/0003_source_observation_audit.sql` adds `source_observation`
