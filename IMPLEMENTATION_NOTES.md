@@ -18,6 +18,31 @@ Documentation ownership:
   migrations, limitations, and defects that actually exist. Planned behavior is
   recorded here only when explicitly labelled as not implemented.
 
+## Update 2026-08-03 - SSOT-2C repository boundary and agent handoff
+
+- `src/repositories/protection-lifecycle-repository.ts` defines persistence-
+  neutral ports for Setting Case, governed data/revision activation, source
+  observations, and audit. The governed activation port explicitly requires one
+  atomic backend transaction and an expected baseline revision.
+- Zustand remains the POC application-state orchestrator, but browser persistence
+  now uses `createSnapshotStateStorage()` instead of implicit middleware storage.
+  The storage key, JSON format, and version remain unchanged for compatibility.
+- `PROTECTION_LIFECYCLE_SNAPSHOT_KEYS` is the explicit persistence allowlist.
+  Wizard requests, opened-from-case navigation, modal state, and action functions
+  are excluded. Node/test execution receives a memory fallback rather than an
+  unavailable-browser-storage warning.
+- `InMemorySettingCaseRepository` provides detached reads and optimistic
+  concurrency via `expectedVersion`; stale writes throw
+  `RepositoryConflictError`. It is a reference adapter, not a database.
+- Regression `test:repository` locks snapshot selection, transient exclusion,
+  serialized storage behavior, copy isolation, and stale-write rejection.
+- `DEVELOPMENT_HANDOFF.md` is added as the required cross-agent recap covering
+  product direction, invariants, implemented slices, limitations, manual UI
+  acceptance, database gates, future sequence, tests, and key source files.
+- Not implemented: a database/API adapter, server-side authentication/RBAC,
+  cross-user review, transaction-backed activation, or backend migration. Local
+  snapshot migration code remains in `useProsetStore.ts` for POC compatibility.
+
 ## Update 2026-08-03 - SSOT-2B governed proposal UI
 
 - Asset 360 di `Data Teknis` sekarang memiliki tindakan `Usulkan perubahan`.

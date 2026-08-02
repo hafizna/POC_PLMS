@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { createJSONStorage, persist } from "zustand/middleware";
 import { Relay, Zone } from "../domain/types";
 import { TOPOLOGY, CORRIDORS } from "../domain/seed-corridor";
 import { COMPARISON_BAYS, findComparisonBayIdForLine } from "../domain/seed-comparison";
@@ -89,6 +89,12 @@ import {
   type P545CaseInputOverride,
   type TargetedCalculationRun,
 } from "../domain/p545-case-execution";
+import {
+  createSnapshotStateStorage,
+  PROTECTION_LIFECYCLE_SNAPSHOT_NAME,
+  PROTECTION_LIFECYCLE_SNAPSHOT_VERSION,
+  selectProtectionLifecycleSnapshot,
+} from "../repositories/protection-lifecycle-repository";
 
 export type NetworkGraphOverride = {
   substations: UnifiedSubstation[];
@@ -2387,37 +2393,9 @@ export const useProsetStore = create<State>()(
       },
     }),
     {
-      name: "proset-poc-state-v1",
-      partialize: (state) => ({
-        relayOverrides: state.relayOverrides,
-        candidateDecisions: state.candidateDecisions,
-        graphBuildDecisions: state.graphBuildDecisions,
-        networkGraphOverrides: state.networkGraphOverrides,
-        networkUndoStack: state.networkUndoStack,
-        ctVtOverrides: state.ctVtOverrides,
-        auditEvents: state.auditEvents,
-        sourceIntakeRecords: state.sourceIntakeRecords,
-        pdfTapPromotions: state.pdfTapPromotions,
-        calculationSnapshots: state.calculationSnapshots,
-        targetedCalculationRuns: state.targetedCalculationRuns,
-        coordinationChecks: state.coordinationChecks,
-        verificationRuns: state.verificationRuns,
-        verificationReferenceDraft: state.verificationReferenceDraft,
-        vendorImportHandoffDraft: state.vendorImportHandoffDraft,
-        studies: state.studies,
-        activeStudyId: state.activeStudyId,
-        sourceSnapshots: state.sourceSnapshots,
-        studyScenarios: state.studyScenarios,
-        engineeringChangeSets: state.engineeringChangeSets,
-        settingCases: state.settingCases,
-        activeSettingCaseId: state.activeSettingCaseId,
-        currentTab: state.currentTab,
-        activeCorridorId: state.activeCorridorId,
-        selectedRelayId: state.selectedRelayId,
-        comparisonBayId: state.comparisonBayId,
-        activeNetworkCaseId: state.activeNetworkCaseId,
-        activeNetworkLineId: state.activeNetworkLineId,
-      }),
+      name: PROTECTION_LIFECYCLE_SNAPSHOT_NAME,
+      storage: createJSONStorage(() => createSnapshotStateStorage()),
+      partialize: selectProtectionLifecycleSnapshot,
       migrate: (persisted: any, version: number) => {
         if (!persisted) return persisted;
         if (persisted.currentTab === "network") {
@@ -2687,7 +2665,7 @@ export const useProsetStore = create<State>()(
         }
         return persisted;
       },
-      version: 26,
+      version: PROTECTION_LIFECYCLE_SNAPSHOT_VERSION,
     }
   )
 );

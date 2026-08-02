@@ -31,6 +31,7 @@
     "test:case-baseline-flow": "tsx scripts/test-case-baseline-flow.ts",
     "test:asset-explorer": "tsx scripts/test-asset-setting-explorer.ts",
     "test:ssot-governance": "tsx scripts/test-ssot-governance.ts",
+    "test:repository": "tsx scripts/test-protection-lifecycle-repository.ts",
     "test:p545-input-contract": "tsx scripts/test-p545-input-contract.ts",
     "test:p545-calculation": "tsx scripts/test-p545-calculation.ts",
     "test:p545-auxiliary": "tsx scripts/test-p545-auxiliary-calculation.ts",

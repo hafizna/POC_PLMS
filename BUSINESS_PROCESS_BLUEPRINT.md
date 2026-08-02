@@ -1,6 +1,6 @@
 # PLMS Business Process Blueprint
 
-Status: working blueprint v0.4
+Status: working blueprint v0.5
 Purpose: operating blueprint for the PLMS protection lifecycle, protection-domain SSOT, data authority, and staged implementation.
 
 ## 1. Product Boundary
@@ -1044,8 +1044,10 @@ SSOT delivery is intentionally incremental:
 | SSOT-1 | Read-only dense Asset & Setting Explorer plus Asset 360 projection from confirmed canonical data | implemented; ANGKE–ANCOL #1 regression |
 | SSOT-2A | Executable authority matrix, stable entity reference, immutable governed revision chain, field-level Data Change Proposal, approval/activation separation, effective-time resolution, supersession, and conflict detection | implemented as domain contract and regression |
 | SSOT-2B | `Usulkan perubahan data` from Explorer/Setting Case using the governed contract | implemented for the POC: stable scope/reason preset, case creation, canonical target, baseline binding, field diff/evidence, and activation-policy preview; active data remains read-only |
-| SSOT-2C | Repository boundary separating domain/UI from Zustand persistence | planned |
-| SSOT-2D | Backend schema, migration, transaction/locking, RBAC, and API implementation | deferred until 2A–2C contracts stabilize |
+| SSOT-2C | Repository boundary separating domain/UI from Zustand persistence | implemented for the POC: aggregate ports, snapshot allowlist, local/memory storage adapters, and concurrency reference; Zustand remains application-state orchestration |
+| SSOT-2D.0 | Authority recap, ADR/ERD, transaction/storage boundary, migration and rollback design | next; design only, no production provisioning |
+| SSOT-2D.1 | Local/dev database adapter with repository contract parity | planned after 2D.0 review |
+| SSOT-2D.2 | Staging multi-user backend, identity, organizational RBAC, locking, and atomic activation | required before cross-user approval is operational |
 | SSOT-3 | Local topology-neighborhood visualization over the same effective projection | after controlled update parity; geographic map requires a separate business case |
 
 ### Operational MVP O1 — Actual Crosscheck
