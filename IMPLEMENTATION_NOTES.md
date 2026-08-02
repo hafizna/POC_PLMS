@@ -18,6 +18,59 @@ Documentation ownership:
   migrations, limitations, and defects that actually exist. Planned behavior is
   recorded here only when explicitly labelled as not implemented.
 
+## Update 2026-08-03 - SSOT-2D.1 slice 2: D1GovernedDataRepository (atomic activation)
+
+- `migrations/0002_governed_revision.sql` adds `canonical_entity`,
+  `governed_revision`, `data_change_proposal`, `data_activation_event`.
+  `source_observation`/`audit_event`/`entity_current_observation` remain a
+  later slice.
+- `src/repositories/d1/d1-governed-data-repository.ts` implements
+  `GovernedDataRepository` — the port the interface's own doc comment
+  requires to be "one backend transaction: validate baseline, activate the
+  proposed revision, supersede the prior active revision, and append
+  activation event." The adapter adds no business rule: `activate()` loads
+  the proposal, the proposed revision, and every existing revision for the
+  target entity from storage, passes them unmodified to
+  `activateApprovedProposal()` (`ssot-governance.ts`), and only on `ok: true`
+  persists the result as one `driver.batch()` call (supersede + activate +
+  mark proposal activated + insert the event). A rejected activation writes
+  nothing — the thrown error carries `activateApprovedProposal()`'s own
+  error messages verbatim.
+- `scripts/test-d1-governed-data-repository.ts`
+  (`npm run test:d1-governed-data-repository`) replays the same
+  reconductoring scenario `test:ssot-governance` runs directly against the
+  domain function — same entity, same baseline/proposed revisions, same
+  proposal — but routed through the repository layer, to prove persistence
+  parity rather than re-test the business rule a second time. It also
+  asserts: detached reads on `saveDraftRevision()`/`saveProposal()`,
+  optimistic concurrency on the proposal row (`expectedVersion`/
+  `RepositoryConflictError`), commissioning activation without evidence
+  failing closed, and a second `activate()` call against an
+  already-`activated` proposal failing closed rather than silently
+  re-superseding.
+- One real bug found and fixed while building this: `saveDraftRevision` was
+  initially insert-only (`INSERT ... ON CONFLICT DO NOTHING` on the parent
+  `canonical_entity` row, plain `INSERT` on `governed_revision`). The test
+  immediately hit a `UNIQUE constraint failed` the moment
+  `approveDataChangeProposal()`'s returned revision — same id as the
+  original draft, state changed to `scheduled` — was saved again, because a
+  revision's *state* legitimately transitions in storage
+  (draft → approved/scheduled → active → superseded) even though its
+  *payload* is immutable once created. Fixed by making the insert an
+  `ON CONFLICT(id) DO UPDATE` that only touches the mutable columns
+  (state/approved_at/approved_by/valid_from/valid_to/fingerprint) — entity,
+  payload, predecessor, and case binding stay write-once.
+- Not implemented yet: `SourceObservationRepository`, `AuditRepository`,
+  the `entity_current_observation` table from the ADR's §4.4 (needs an
+  authority-ordering write-check design decision before it can be migrated
+  safely — flagged there, not resolved here), wiring either D1 adapter into
+  the running app, or any real `wrangler d1 create` provisioning. Full
+  regression suite (`test:repository`, `test:d1-setting-case-repository`,
+  `test:d1-governed-data-repository`, `test:ssot-governance`,
+  `test:setting-case`, `test:case-baseline-flow`, `test:asset-explorer`,
+  `test:p545-case-execution`), `tsc --noEmit`, and `npm run build` all pass
+  with this slice added.
+
 ## Update 2026-08-03 - SSOT-2D.0 ADR/ERD and SSOT-2D.1 slice 1 (local D1 pilot)
 
 - `docs/adr/0001-ssot-2d0-persistence-and-authority-design.md` records the

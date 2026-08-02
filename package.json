@@ -33,6 +33,7 @@
     "test:ssot-governance": "tsx scripts/test-ssot-governance.ts",
     "test:repository": "tsx scripts/test-protection-lifecycle-repository.ts",
     "test:d1-setting-case-repository": "tsx scripts/test-d1-setting-case-repository.ts",
+    "test:d1-governed-data-repository": "tsx scripts/test-d1-governed-data-repository.ts",
     "test:p545-input-contract": "tsx scripts/test-p545-input-contract.ts",
     "test:p545-calculation": "tsx scripts/test-p545-calculation.ts",
     "test:p545-auxiliary": "tsx scripts/test-p545-auxiliary-calculation.ts",

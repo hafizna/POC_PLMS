@@ -116,7 +116,7 @@ readback from the official vendor tool is the authority for actual device state.
   by this document and remains the actual confirmation gate.
 - Design only. No Cloudflare resource was provisioned by this slice.
 
-### SSOT-2D.1 — Local database pilot (in progress, slice 1 of N)
+### SSOT-2D.1 — Local database pilot (in progress, slices 1-2 of N)
 
 - `migrations/0001_setting_case.sql` defines `setting_case` and
   `case_stage_event` only, matching the ADR's §4.2 schema for those two
@@ -144,12 +144,37 @@ readback from the official vendor tool is the authority for actual device state.
   create/read, detached reads (mutating a returned record must not affect
   stored state), stage-history round-trip through `case_stage_event`, and
   optimistic-concurrency accept/reject on `expectedVersion`.
-- **Not done yet**: `GovernedDataRepository` (the harder half — atomic
-  activation), `SourceObservationRepository`, `AuditRepository`; wiring this
-  adapter into the actual app (Zustand still uses the browser-localStorage
-  adapter exclusively); provisioning a real D1 database via `wrangler d1
-  create`; any migration/backfill script execution against real pilot data.
-  Nothing in this slice changes runtime behavior for end users.
+- Slice 2 (`governed_revision` + `data_change_proposal` +
+  `data_activation_event`, `migrations/0002_governed_revision.sql`):
+  `D1GovernedDataRepository` (`src/repositories/d1/d1-governed-data-
+  repository.ts`) implements the harder half —
+  `listRevisions`/`resolveEffective`/`saveDraftRevision`/`saveProposal`/
+  `activate`. It adds no business rule of its own: `activate()` loads the
+  proposal, proposed revision, and every existing revision for the target
+  entity, hands them unmodified to `activateApprovedProposal()`
+  (`ssot-governance.ts`), and only if that returns `ok: true` does it persist
+  the result as one `driver.batch()` — supersede the prior active revision,
+  activate the proposed one, mark the proposal `activated`, insert the
+  `data_activation_event`. A rejected activation writes nothing.
+  `scripts/test-d1-governed-data-repository.ts` (`npm run
+  test:d1-governed-data-repository`) replays the same reconductoring
+  scenario `test:ssot-governance` exercises directly against the domain
+  function, but through the repository layer — proving persistence parity,
+  not re-testing the business rule. One real bug found while building this:
+  `saveDraftRevision` was initially insert-only and threw a UNIQUE
+  constraint violation the moment `approveDataChangeProposal()`'s returned
+  revision (same id, new state `scheduled`) was saved — revision *state*
+  legitimately transitions in storage even though its *payload* is
+  immutable, so the insert had to become `ON CONFLICT(id) DO UPDATE` on the
+  mutable columns only (state/approval/validity/fingerprint), never on
+  entity/payload/predecessor.
+- **Not done yet**: `SourceObservationRepository`, `AuditRepository`; wiring
+  either adapter into the actual app (Zustand still uses the
+  browser-localStorage adapter exclusively); provisioning a real D1 database
+  via `wrangler d1 create`; any migration/backfill script execution against
+  real pilot data; the `entity_current_observation` table the ADR's §4.4
+  flagged (needs its own authority-ordering design work first). Nothing in
+  this slice changes runtime behavior for end users.
 
 ## 4. Important Existing Engineering Capability
 
@@ -223,15 +248,16 @@ Candidate authoritative records (as designed in the ADR):
 Explorer grids, KPI counts, readiness summaries, and Asset 360 are projections,
 not directly editable authoritative tables.
 
-### SSOT-2D.1 — Local database pilot (in progress — slice 1 of N landed)
+### SSOT-2D.1 — Local database pilot (in progress — slices 1-2 of N landed)
 
-- Slice 1 (`setting_case` + `case_stage_event`, D1-shaped driver interface,
-  better-sqlite3 local adapter, parity regression) is implemented — see §3
-  above for detail.
-- Remaining: `GovernedDataRepository` (atomic activation — the harder half,
-  since D1's `.batch()` semantics need to be proven against the same
-  baseline-drift/supersession assertions `test:ssot-governance` already
-  locks), `SourceObservationRepository`, `AuditRepository`.
+- Slice 1 (`setting_case` + `case_stage_event`) and slice 2
+  (`governed_revision` + `data_change_proposal` + `data_activation_event`,
+  including atomic `activate()`) are implemented — see §3 above for detail.
+  Both proved parity against their existing in-memory/domain-function
+  regressions rather than inventing a new contract.
+- Remaining: `SourceObservationRepository`, `AuditRepository`, and the
+  `entity_current_observation` table the ADR's §4.4 flagged (needs an
+  authority-ordering design decision first, not just a migration).
 - Still open after those: seed the bounded real dataset (ANGKE–ANCOL plus one
   P545 calculation case and one crosscheck case per the ADR §7.1 draft), spike
   the `case-proposed-revision.ts` → `governed_revision` wiring gap the ADR's
@@ -286,6 +312,7 @@ Run at minimum:
 npx tsc --noEmit
 npm run test:repository
 npm run test:d1-setting-case-repository
+npm run test:d1-governed-data-repository
 npm run test:ssot-governance
 npm run test:setting-case
 npm run test:case-baseline-flow
@@ -309,11 +336,14 @@ the explicit task.
   local snapshot adapter.
 - `docs/adr/0001-ssot-2d0-persistence-and-authority-design.md` — SSOT-2D.0
   ADR/ERD; assumptions in its §3 are pending product-owner confirmation.
-- `src/repositories/d1/` — SSOT-2D.1 D1-shaped `SettingCaseRepository`
-  adapter (`d1-setting-case-repository.ts`), driver interface
-  (`sql-driver.ts`), and local-only better-sqlite3 driver
-  (`better-sqlite3-driver.ts`) used only to run its regression from tsx.
-- `migrations/0001_setting_case.sql` — first D1 migration slice.
+- `src/repositories/d1/` — SSOT-2D.1 D1-shaped adapters:
+  `d1-setting-case-repository.ts` (`SettingCaseRepository`),
+  `d1-governed-data-repository.ts` (`GovernedDataRepository`, including
+  atomic `activate()`), driver interface (`sql-driver.ts`), and local-only
+  better-sqlite3 driver (`better-sqlite3-driver.ts`) used only to run these
+  regressions from tsx.
+- `migrations/0001_setting_case.sql`, `migrations/0002_governed_revision.sql`
+  — D1 migration slices 1-2.
 - `src/domain/case-proposed-revision.ts` — case proposal to governed proposal
   bridge.
 - `src/store/useProsetStore.ts` — POC application state/actions and historical
