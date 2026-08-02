@@ -8,6 +8,47 @@ arsitektur dan roadmap produk, rujuk:
 - [`README.md`](./README.md) — MVP roadmap, status implementasi per tahap, dan
   demo flow.
 
+Documentation ownership:
+
+- `BUSINESS_PROCESS_BLUEPRINT.md` is normative: target process, authority,
+  invariants, lifecycle, roles, and staged architecture.
+- `README.md` is navigational: product boundary, current status, demo scope, and
+  the next ordered slices. It must not duplicate detailed transaction rules.
+- `IMPLEMENTATION_NOTES.md` is evidentiary: chronological code changes, tests,
+  migrations, limitations, and defects that actually exist. Planned behavior is
+  recorded here only when explicitly labelled as not implemented.
+
+## Update 2026-08-03 - SSOT-2A governed data contract
+
+- `src/domain/ssot-governance.ts` introduces the persistence-neutral contract
+  that future local repositories and backend databases must preserve. It covers
+  stable canonical entity references, explicit authority domains, source
+  observations, typed line/CT-VT/relay-installation/topology/setting payloads,
+  immutable governed revisions, field-level Data Change Proposal, and atomic
+  activation outcomes.
+- `DEFAULT_DATA_AUTHORITY_MATRIX` distinguishes external asset identity,
+  validated topology, approved electrical data, reviewed vendor capability,
+  PLMS-issued setting, physical relay readback, and controlled source documents.
+  Evidence/extraction never promotes itself into active data.
+- `resolveEffectiveRevision()` fails closed when more than one active revision
+  applies to the same entity and instant. It does not use array order or a
+  latest-row heuristic.
+- Approval now has an executable contract separate from activation. The creator
+  cannot approve their own proposal; approval produces `approved`/`scheduled`
+  state while the prior active revision remains effective.
+- `activateApprovedProposal()` validates proposal/revision/entity binding,
+  activation-policy trigger, commissioning evidence, planned effective time,
+  and active-baseline drift. Success activates the new revision, closes and
+  supersedes the former revision, and emits a `DataActivationEvent` in one
+  returned transaction payload.
+- Regression `test:ssot-governance` covers reconductoring and relay replacement.
+  Relay replacement versions the stable bay/role installation position; the old
+  and new physical `RelayIED` identities are retained rather than overwritten.
+- This slice is not yet wired into Zustand or Asset Explorer and does not create
+  a production database. SSOT-2B will create governed proposals from the case/UI;
+  SSOT-2C adds the repository boundary; SSOT-2D implements backend persistence,
+  locking, migration, API, and RBAC after those contracts stabilize.
+
 ## Update 2026-08-02 - SSOT-1 Asset & Setting Explorer
 
 - Menu `Data Teknis` direstruktur menjadi read-only `Asset & Setting Explorer`.

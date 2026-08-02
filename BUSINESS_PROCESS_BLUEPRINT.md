@@ -1,7 +1,7 @@
 # PLMS Business Process Blueprint
 
-Status: working blueprint v0.3
-Purpose: remap PLMS around the protection-setting lifecycle before further UI or database implementation.
+Status: working blueprint v0.4
+Purpose: operating blueprint for the PLMS protection lifecycle, protection-domain SSOT, data authority, and staged implementation.
 
 ## 1. Product Boundary
 
@@ -134,6 +134,60 @@ Activation is a separate controlled transaction:
 
 If a project is cancelled, its proposed revisions are closed without contaminating current active data.
 
+### 2.2 Protection-domain SSOT Contract
+
+PLMS is a protection-domain SSOT, not the unilateral owner of every upstream
+fact. It reconciles external authority, governs protection-specific revisions,
+and exposes one effective view without erasing the evidence or system that
+originated each fact.
+
+The four data layers must remain distinct:
+
+```text
+Source Observation
+PDF / Excel / native relay readback / asset registry / network model
+        |
+        v
+Canonical Identity
+Substation / voltage level / bay / relation / relay IED / protection function
+        |
+        v
+Versioned Technical State
+topology / line technical / CT-VT / relay installation / setting revision
+        |
+        v
+Case Proposal
+unapproved before/proposed change with evidence, review, and activation policy
+```
+
+Core invariants:
+
+1. Entity identity is stable; a name, alias, value, or installation change does
+   not create an unrelated replacement identity.
+2. A source observation is evidence and cannot become active canonical data
+   merely because extraction succeeded.
+3. Material changes create immutable revisions linked to a Setting Case,
+   predecessor revision, actor, timestamp, and source evidence.
+4. At most one `active` revision may apply to the same governed entity at the
+   same instant. Multiple matches are a data conflict; `latest row wins` is
+   prohibited.
+5. Approval and activation are separate transactions. Approval may schedule a
+   revision, but it does not modify the effective view.
+6. Activation occurs only through its declared policy: commissioning evidence,
+   approved effective date, or an explicitly controlled manual transaction.
+7. Activation supersedes the former revision and closes its validity interval;
+   it never overwrites or deletes the former payload.
+
+Reason-specific identity behavior:
+
+| Change | Stable identity | Versioned payload | Activation |
+|---|---|---|---|
+| Reconductoring | `LineRelation` and its technical subject | conductor, CCC, length, R1/X1/R0/X0/C1/C0 | commissioning/effective-date event supersedes prior line-technical revision |
+| Relay replacement | physical old/new `RelayIED` identities plus stable bay/role installation position | relay assigned to installation, CT/VT references | commissioning event activates new installation and retires the former assignment |
+| CT/VT replacement | bay/function association | ratio, class, burden, polarity, effective date | commissioning event |
+| GI insertion | project and affected network identities | new topology revision with new/retired relations | approved network effective/commissioning event |
+| Setting revision | `SettingPackage`/endpoint identity | canonical parameters, method, evidence, issued artifact | issuance then field implementation/readback lifecycle |
+
 ## 3. End-to-End Business Process
 
 ```mermaid
@@ -163,13 +217,16 @@ flowchart LR
     P -- Rework --> I
     P -- Yes --> Q[Issue TAP / controlled package]
     Q --> R[Field implementation]
-    R --> S[Capture relay readback and evidence]
+    R --> R1{Activation policy satisfied?}
+    R1 -- No --> R
+    R1 -- Yes --> R2[Record activation event and supersede prior data revision]
+    R2 --> S[Capture relay readback and evidence]
     S --> M
     M --> T{Acceptable?}
     T -- No --> U[Resetting, exception, or engineering review]
     U --> R
     T -- Yes --> V[Verify and close case]
-    V --> W[Supersede prior revision and retain audit]
+    V --> W[Retain immutable revisions, evidence, and audit]
 ```
 
 ### 3.1 Triggers
@@ -545,29 +602,47 @@ Alternate states: `extract_failed`, `rejected`, `duplicate`.
 
 ```text
 draft
-→ proposed
-→ validated
-→ approved
+→ submitted
+→ approved / scheduled
 → active
 → superseded
 ```
 
+Alternate states: `rejected`, `cancelled`. `Approved` and `scheduled` are not
+effective current data. Only an `ActivationEvent` may move the revision to
+`active` and close the former active revision's validity interval.
+
+### 5.5 Data Change Proposal and Activation
+
+```text
+draft
+→ ready
+→ submitted
+→ approved
+→ activated
+```
+
+Alternate states: `rejected`, `cancelled`. A proposal binds one stable target,
+its baseline revision, one proposed revision, field-level before/proposed values,
+source evidence, reason, and activation policy. Structural readiness does not
+mean engineering approval. Activation fails closed when the active baseline has
+drifted, the trigger does not match policy, or commissioning evidence is absent.
+
 ## 6. Data Domains and Ownership
 
-| Data domain | Main entities | Preferred source of truth | PLMS responsibility |
+| Data domain | System of record / observation authority | PLMS role | Activation authority |
 |---|---|---|---|
-| Organization and access | unit, UPT, ULTG, team, user, role, scope | corporate identity / PLMS administration | authorization, assignment, segregation of duties |
-| Asset identity | substation, voltage level, busbar, bay, equipment | PST/asset register when available | map protection objects and retain snapshots |
-| Protection topology | terminal, line section, transformer branch, bay lawan | approved engineering model / project documents | protection-relevant working projection and change impact |
-| Electrical technical data | conductor, length, R/X/B sequence, transformer impedance | engineering-data owner / DIgSILENT input | version, validate, and bind to calculations |
-| Study results | fault level, source contribution, scenario, network revision | DIgSILENT/PowerFactory study | immutable scenario snapshot and provenance |
-| Instrument transformers | CT/VT specification and installation | asset/commissioning source | conversion basis and readiness checks |
-| Relay asset | make, model, serial, firmware, installed location | asset/field record | bind actual device to protection functions |
-| Relay capability library | functions, ranges, curves, semantics, vendor mapping | vendor manuals + reviewed PLMS library | canonical mapping and conversion constraints |
-| Setting intent | protection scheme, canonical parameters, policy override | PLMS Setting Package | controlled engineering source of truth |
-| Issued setting | TAP, approved revision, implementation instruction | PLMS or controlled document system | issue, version, distribute, and supersede |
-| Actual setting | connected relay readback and acquisition evidence | identified physical relay observation | retain native artifact, normalize, compare, and preserve chain of custody |
-| Source evidence | PDF, Excel, XMCD, SLD, `.set`, CSV | originating repository/system | checksum, extraction, mapping, and traceability |
+| Organization and access | corporate identity and organization directory | enforce scope, assignment, and segregation of duties | authorized IAM/PLMS administrator; admin is not engineering approver |
+| Asset identity | corporate asset register/PST | reconcile external ID, alias, and protection relationship; do not create a competing physical identity silently | Asset Data Steward |
+| Protection topology | validated network model plus approved project/commissioning evidence | govern protection-relevant topology revisions and impact | Network/Protection Data Approver |
+| Electrical technical data | approved technical registry and study input owner | govern line/transformer technical revisions and calculation binding | Technical Data Approver |
+| Study results | DIgSILENT/PowerFactory study execution | retain immutable scenario/result snapshot with revision compatibility | authorized Study/Protection Engineer |
+| Instrument transformers | asset/commissioning record | govern installation/specification revision used by protection | Technical Data Approver plus commissioning evidence |
+| Relay identity and installation | asset/field record | keep physical IED identity separate from its versioned bay/role installation | Asset/Protection Data Approver plus commissioning evidence |
+| Relay capability library | reviewed official vendor documentation | reference canonical semantics, limits, and conversion constraints | Protection Method Library Owner |
+| Setting intent and issued setting | PLMS setting lifecycle plus controlled document system | govern package/revision, approval, issuance, distribution, and supersession | Authorized Setting Approver/Issuer |
+| Actual setting | identified physical IED readback | observe, retain native artifact, normalize, compare, and preserve chain of custody | Field/Commissioning Engineer records observation; reviewer accepts disposition |
+| Source evidence | controlled originating repository/system | reference/checksum/extract/map; accepted evidence is not automatically active data | Document/Data Steward controls artifact status |
 
 ## 7. Principal Data Entities
 
@@ -585,6 +660,7 @@ draft
 - `ConductorOrCable`
 - `InstrumentTransformer`
 - `RelayIED`
+- `RelayInstallation` (stable bay/role position versioned separately from the physical IED)
 - `RelayFirmware`
 - `ProtectionScheme`
 
@@ -594,7 +670,12 @@ Every physical and logical entity needs stable identity plus effective dating. N
 
 - `NetworkRevision`
 - `TechnicalDataRevision`
+- `LineTechnicalRevision`
+- `InstrumentTransformerRevision`
+- `RelayInstallationRevision`
 - `EngineeringChangeSet`
+- `DataChangeProposal`
+- `DataActivationEvent`
 - `StudyScenario`
 - `FaultStudySnapshot`
 - `FaultResult`
@@ -628,6 +709,7 @@ Every physical and logical entity needs stable identity plus effective dating. N
 
 - `SourceDocument`
 - `SourceDataset`
+- `SourceObservation`
 - `ExtractionRun`
 - `MappingCandidate`
 - `MappingDecision`
@@ -643,8 +725,10 @@ All material writes should create an audit event and preserve the prior version.
 | Stage source document | file metadata | SourceDocument | Data Steward / Engineer | checksum, classification, access scope |
 | Extract document | SourceDocument | ExtractionRun, candidates | System | parser version, confidence, raw evidence |
 | Confirm mapping | candidates, asset graph | MappingDecision, links | Data Steward / Engineer | human review for ambiguous identity |
-| Propose master change | source evidence, current revision | draft master revision | Data Steward | reason, effective date, impact preview |
-| Approve master change | draft revision, impact | active revision | Master Data Approver | independent approval |
+| Propose master change | source evidence, active baseline revision | DataChangeProposal + draft governed revision | Data Steward / Engineer | stable target ID, field before/proposed, reason, activation policy, impact preview |
+| Submit master change | ready proposal and immutable revision | submitted proposal/revision | Proposal creator | structural validation; revision frozen for review |
+| Approve master change | submitted proposal, revision, impact | approved/scheduled revision | Master Data Approver | independent approval; creator cannot approve; effective view remains unchanged |
+| Activate master change | approved proposal/revision, current active baseline, trigger evidence | DataActivationEvent + new active revision + prior superseded revision | Commissioning Engineer / authorized activation actor | baseline-drift check, policy/trigger match, effective time, evidence; atomic transaction |
 | Create setting case | trigger, asset scope | SettingCase | Engineer / Supervisor | ownership and organizational scope |
 | Freeze baseline | active revisions, issued setting, actual | baseline snapshot | Engineer | immutable identifiers and timestamps |
 | Select study scenario | network/fault snapshots | case scenario binding | Protection Engineer | compatible revision and approved status |
@@ -663,7 +747,7 @@ All material writes should create an audit event and preserve the prior version.
 | Verify actual | issued + actual | VerificationRun, differences | Engineer / Reviewer | tolerance profile and disposition |
 | Resolve discrepancy | difference, evidence | resetting task or exception | Supervisor / Engineer | risk classification and due date |
 | Close setting case | verified outcome | closed case | Case Owner / Approver | required evidence complete |
-| Supersede revision | newly verified revision | prior revision state | System after approval | retain full history |
+| Supersede revision | successful activation event | prior revision state and closed validity interval | System inside activation transaction | atomic with new revision activation; retain full history |
 
 ## 9. Roles and Access
 
@@ -940,10 +1024,10 @@ Sprint 5 originally opened the `calculation` stage as generic plumbing. E1 now n
   `1e-12` tolerance (maximum delta `7.11e-15`). Autoreclose values are retained
   as extracted policy evidence because the worksheet contains text values, not
   an AR calculation expression.
-- Coordination tooling exists as POC evidence, but it is unreachable through
-  the setting-change lifecycle while the calculation gate is locked. Review,
-  approval, issuance, field implementation, commissioning, and verification
-  remain outside the executable setting-change boundary.
+- A valid Targeted Calculation Run opens the executable `coordination` stage;
+  leaving that stage requires a saved `CoordinationCheck`. Independent review,
+  approval, issuance, field implementation, commissioning, and activation for
+  setting-change cases remain outside the executable boundary.
 
 ### Foundation F1 — Domain and Governance
 
@@ -952,6 +1036,17 @@ Sprint 5 originally opened the `calculation` stage as generic plumbing. E1 now n
 - separate lifecycle state machines;
 - organization scope, roles, and segregation of duties;
 - evidence and audit contract.
+
+SSOT delivery is intentionally incremental:
+
+| Slice | Outcome | Current status |
+|---|---|---|
+| SSOT-1 | Read-only dense Asset & Setting Explorer plus Asset 360 projection from confirmed canonical data | implemented; ANGKE–ANCOL #1 regression |
+| SSOT-2A | Executable authority matrix, stable entity reference, immutable governed revision chain, field-level Data Change Proposal, approval/activation separation, effective-time resolution, supersession, and conflict detection | implemented as domain contract and regression; not yet persisted or wired to UI |
+| SSOT-2B | `Usulkan perubahan data` from Explorer/Setting Case using the governed contract | next; no direct edit of active data |
+| SSOT-2C | Repository boundary separating domain/UI from Zustand persistence | planned |
+| SSOT-2D | Backend schema, migration, transaction/locking, RBAC, and API implementation | deferred until 2A–2C contracts stabilize |
+| SSOT-3 | Local topology-neighborhood visualization over the same effective projection | after controlled update parity; geographic map requires a separate business case |
 
 ### Operational MVP O1 — Actual Crosscheck
 
@@ -1000,12 +1095,13 @@ need real data before they can be tested against representative input.
 - review, approval, issue, and TAP draft;
 - field readback returning to O1.
 
-Current E1 boundary (2026-08-02): the case-driven recalculation planner, input
-contract, and distance/auxiliary formula-parity slices are implemented. The
-native TypeScript rules pass 55/55 saved-result checks and expose block-level
-intermediate traces. Autoreclose is explicitly extracted policy. Live-contract
-execution, immutable Calculation Run creation from resolved inputs, canonical
-proposed revision, engineer sign-off, and issuance remain outside this slice.
+Current E1 boundary (2026-08-03): the case-driven recalculation planner, input
+contract, distance/auxiliary formula-parity, and live P545 execution are
+implemented. The native TypeScript rules pass 55/55 saved-result checks; a valid
+case contract produces an immutable Targeted Calculation Run and opens
+Coordination. Autoreclose remains extracted policy. Canonical proposed Setting
+Revision composition, independent engineer review, approval, and issuance remain
+outside this slice.
 
 **E1 expansion gate:** do not expand the operational calculation UI to trafo,
 OCR/GFR, multi-vendor conversion, or full design from zero until Distance/LCD

@@ -14,6 +14,8 @@ Tujuan produk ini bukan sekadar membuat spreadsheet digital. PLMS dirancang seba
 
 > **Boundary implementasi saat ini — E1 pilot:** P545 distance core + auxiliary formula parity sudah 55/55. Live case adapter 2B.4 sekarang me-resolve frozen baseline, proposed revision, scenario, dan justified override; hanya affected block yang dijalankan dan hasilnya disimpan sebagai immutable `TargetedCalculationRun`. Unresolved critical input tetap fail-closed. Engineering review, canonical proposed setting package, approval, issuance, dan commissioning untuk setting-change case belum operasional.
 
+> **Boundary data saat ini — SSOT-2A:** Asset & Setting Explorer membaca projection canonical secara read-only. Contract authority/revision kini executable: stable entity ID, immutable predecessor chain, field-level proposal, segregation of duties, approval terpisah dari activation, effective-time resolution, commissioning evidence, supersession, dan conflict detection. Contract belum dihubungkan ke UI/store dan belum menjadi backend database; itu urutan SSOT-2B–2D.
+
 ## Executive Summary
 
 Masalah utama di proses setting proteksi saat ini:
@@ -36,8 +38,9 @@ Issued setting + active asset/network data
   -> Targeted recalculation: Distance + Line Differential
   -> Coordination and engineering review
   -> Issued TAP / controlled package
-  -> Field readback vs issued revision
-  -> Verification, activation, and audit trail
+  -> Field implementation + policy-driven activation
+  -> Native relay readback vs issued revision
+  -> Verification, closure, and immutable audit trail
 ```
 
 Pitch product:
@@ -76,7 +79,7 @@ source before it is ready for impact analysis.
 
 | Track | Outcome | Status POC saat ini |
 |---|---|---|
-| **F1 — Foundation** | Canonical entity identity, effective dating, `Setting Case`/`Setting Package`/`Setting Revision` schema, lifecycle state machines, org scope/roles. | **Partially implemented, foundation-health backlog closed.** Graph confidence kini multi-indikator; Dadap/Ulujami adalah corroborated candidate yang tidak masuk live graph sebelum konfirmasi, sedangkan Muarakarang tetap identity conflict. Active Study mengikuti subject bay/line user dan diproyeksikan dari confirmed master graph; tidak ada default/fallback DKS–DM–PIK–MKB. Source Index merge master inventory, perubahan scope Study menjadi revision eksplisit, dan SLD Endpoint hanya evidence menuju Graph Builder. Org scope/roles dan formal schema governance belum. |
+| **F1 — Foundation** | Canonical entity identity, effective dating, `Setting Case`/`Setting Package`/`Setting Revision` schema, lifecycle state machines, org scope/roles. | **SSOT-2A contract implemented.** SSOT-1 menyediakan read-only Asset 360. Authority matrix, stable entity ref, governed revision, Data Change Proposal, independent approval, activation policy, effective-time lookup, supersession, dan active-revision conflict sudah executable dan teruji untuk rekonduktoring serta relay replacement. Persistence backend, transaction locking, organizational RBAC, dan UI proposal masih belum. |
 | **O1 — Actual Crosscheck** | Pilih bay + issued revision, akuisisi actual setting dari relay fisik lewat vendor tool resmi, retain native file + manifest, parse per model/vendor adapter, compare, discrepancy disposition, verification report. | **Pilot implemented end-to-end.** `.set`, RIO/XRIO/XML, TAP PDF, CSV/text/manual dapat dinormalisasi dan dibandingkan; native readback authority mensyaratkan manifest + SHA-256; mismatch/missing wajib didisposisi; Verification Run tersimpan dan ter-link ke case sebelum closure. Batas produksi: support matrix firmware/model dan official-tool round-trip masih perlu diperluas. |
 | **D1 — Controlled Data Intake** | Source document registry, extraction/mapping queue, protection-relevant asset/topology registry, CT/VT dan relay identity, provenance/data-quality status. | **Connected pilot implemented.** `HEL_PHT_TAP` mencakup 184/184 baris, 13 model, 7 layout; mapping tersedia di Inbox dan menghasilkan `SettingRecord`/`RelaySetting` hanya jika LineRelation, RelayIED, dan DIST function konkret tersedia (tanpa dangling ID). Model/vendor di luar dataset tetap backlog. |
 | **E1 — Targeted Recalculation and Issuance Pilot** | Recalculate blok Distance/LCD terdampak dari issued baseline, immutable scenario + calculation run, canonical proposed revision, review/approval/issue/draft TAP, field readback kembali ke O1. | **Live calculation pilot implemented.** Native P545 rules mencakup distance core (16/16) dan auxiliary blocks `kZ0`/resistive reach/load-PSB/LCD (39/39). Adapter case 2B.4 menyimpan input provenance, override evidence, trace, affected-block decision, comparison, actor, dan fingerprint. AR tetap extracted policy; engineer sign-off, canonical package, dan issuance masih tersisa. |
@@ -85,11 +88,11 @@ source before it is ready for impact analysis.
 
 **Urutan kerja saat ini: D1 → O1 → E1 → C1 → N1** (dipilih 2026-08-01) — engineering track lain butuh data nyata dulu sebelum bisa diuji dengan input yang representatif, bukan urutan nomor F1-N1 di atas yang cuma label kategori.
 
-**Next to-do — tahan ekspansi sampai Distance/LCD stabil:**
-1. **E1 quality gate** — validasi live 2B.4 pada lebih dari satu line/case nyata, mencakup rekonduktoring, CT/VT, relay replacement, GI cut-in, serta remote-side work; pastikan unit conversion, boundary relay, dan failure behavior konsisten.
-2. **E1 workflow** — engineering review terhadap changed/carry-forward blocks, coordination evidence, lalu canonical proposed revision. Issuance belum dibuka sebelum quality gate lolos.
-3. **E1 / 2C** — bentuk canonical Setting Package dari run yang direview dan siapkan draft TAP terkontrol; jangan menghasilkan native vendor file.
-4. **Setelah E1 stabil** — kembali ke O1/D1 hardening, lalu C1 multi-vendor, N1 expansion, trafo, dan OCR/GFR sesuai prioritas bisnis.
+**Next to-do — rapikan SSOT sebelum ekspansi fitur:**
+1. **SSOT-2B** — `Usulkan perubahan data` dari Explorer/Setting Case memakai governed proposal; active data tetap read-only.
+2. **SSOT-2C** — repository boundary agar UI/domain tidak tergantung langsung pada Zustand/localStorage.
+3. **SSOT-2D** — implement backend schema, migration, atomic activation, concurrency control, dan RBAC setelah contract 2B–2C stabil.
+4. **E1 workflow** — lanjutkan engineering review, canonical Setting Revision, dan issuance di atas revision authority yang sama; ekspansi trafo/OCR-GFR/multi-vendor tetap ditahan.
 
 <details>
 <summary>Tabel padanan skema lama (MVP 1A-3) → track baru (F1/O1/D1/E1/C1/N1), untuk membaca histori sebelum 2026-08-01</summary>
@@ -128,6 +131,7 @@ source before it is ready for impact analysis.
 - **Setting Case Sprint 1–4.1:** intake dan P1–P5 routing berbasis alasan, baseline scope/evidence immutable, proposed technical revision append-only, impact/readiness lintas endpoint, multi-condition Study Scenario Package, authority/notification profile, commissioning activation contract, dan temporary restoration obligation. Package blocked tetap direkam; hanya package lengkap dan compatible yang membuka Calculation.
 - **Study dan UX:** Study dipisahkan per subject line; Working Network dan Data Mapping Inbox dipindah ke grup `Network & Mapping` karena keduanya bekerja pada level ULTG, bukan level Study.
 - **SSOT-1 Asset & Setting Explorer:** confirmed `UnifiedNetwork`, setting overlay, source provenance, data-quality issue, dan open Setting Case diproyeksikan menjadi dense searchable grid + Asset 360 read-only. ANGKE–ANCOL #1 menjadi vertical slice nyata pertama; explorer tidak mengedit active master dan belum membuat geographic map.
+- **SSOT-2A governed data contract:** executable authority matrix memisahkan external system of record, PLMS governance, dan physical readback observation. Stable entity reference, immutable revision chain, field-level Data Change Proposal, segregation of duties, approval/activation separation, effective dating, commissioning evidence, supersession, baseline-drift guard, dan active-revision conflict detection sudah memiliki regression.
 - **Case-scoped topology remediation:** Data Quality Queue menampilkan group card per Case/Study dan approval card per kandidat `LineRelation`; bulk-confirm GI tidak lagi menjadi jalur UI. Case tanpa relasi diarahkan ke card remediation yang hanya memuat endpoint/bay dalam scope case tersebut.
 - **Verification:** regression scripts tersedia untuk Reference Engine, Crosscheck, Vendor Import, Relay Catalog, Graph Builder, bridge export, dan build aplikasi.
 
