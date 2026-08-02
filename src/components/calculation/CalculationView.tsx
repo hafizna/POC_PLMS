@@ -242,7 +242,7 @@ export function CalculationView() {
             </ul>
           )}
           <select
-            className="mt-4 w-full max-w-xl rounded border border-amber-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+            className="mt-4 w-full max-w-xl rounded border border-amber-300 bg-white px-3 py-2 text-sm focus:border-brand-accent focus:outline-none"
             value=""
             onChange={(event) => {
               if (event.target.value) void ensureStudyForLine(event.target.value);
@@ -291,7 +291,7 @@ export function CalculationView() {
               <select
                 value={selectedTemplateId}
                 onChange={(event) => setSelectedTemplateId(event.target.value)}
-                className="bg-white text-xs px-2 py-1.5 rounded border border-slate-300 focus:border-blue-500 focus:outline-none min-w-56"
+                className="bg-white text-xs px-2 py-1.5 rounded border border-slate-300 focus:border-brand-accent focus:outline-none min-w-56"
               >
                 {CALCULATION_TEMPLATES.filter(
                   (template) => template.id === "distance-line-150kv"
@@ -321,14 +321,14 @@ export function CalculationView() {
         </div>
         <TemplateOverview template={selectedTemplate} />
         {activeLine && (
-          <div className="mt-4 border border-blue-200 bg-blue-50 rounded-md px-3 py-2 text-xs text-blue-900 flex items-center justify-between gap-3 flex-wrap">
+          <div className="mt-4 border border-brand-accent/40 bg-brand-accent/10 rounded-md px-3 py-2 text-xs text-brand-accent-dark flex items-center justify-between gap-3 flex-wrap">
             <div className="flex items-center gap-3 flex-wrap">
               <div>
                 Context:{" "}
                 <span className="font-semibold">
                   {localNode?.shortCode} -&gt; {remoteNode?.shortCode} {activeLine.circuit}
                 </span>
-                <span className="text-blue-700">
+                <span className="text-brand-accent-dark">
                   {" "}
                   | IED:{" "}
                   {calcIed
@@ -339,11 +339,11 @@ export function CalculationView() {
                 </span>
               </div>
               {fromIed && toIed && (
-                <div className="inline-flex rounded border border-blue-300 overflow-hidden">
+                <div className="inline-flex rounded border border-brand-accent/40 overflow-hidden">
                   <button
                     type="button"
                     onClick={() => setSide("from")}
-                    className={`px-2 py-0.5 text-[11px] ${side === "from" ? "bg-blue-600 text-white" : "bg-white text-blue-700"
+                    className={`px-2 py-0.5 text-[11px] ${side === "from" ? "bg-brand-ink text-white" : "bg-white text-brand-accent-dark"
                       }`}
                   >
                     {fromNode?.shortCode} side
@@ -351,7 +351,7 @@ export function CalculationView() {
                   <button
                     type="button"
                     onClick={() => setSide("to")}
-                    className={`px-2 py-0.5 text-[11px] border-l border-blue-300 ${side === "to" ? "bg-blue-600 text-white" : "bg-white text-blue-700"
+                    className={`px-2 py-0.5 text-[11px] border-l border-brand-accent/40 ${side === "to" ? "bg-brand-ink text-white" : "bg-white text-brand-accent-dark"
                       }`}
                   >
                     {toNode?.shortCode} side
@@ -359,7 +359,7 @@ export function CalculationView() {
                 </div>
               )}
             </div>
-            <span className="text-blue-700">
+            <span className="text-brand-accent-dark">
               Prefilled dari {calcIed ? "network graph IED" : promotedLine ? "promoted LCD+DIST" : "registry"}.
             </span>
             {linkedSettingCase && (
@@ -392,7 +392,7 @@ export function CalculationView() {
               label="Line Z1"
               value={`${result.lineZOhm.toFixed(3)} ohm`}
               sub={`R ${result.lineROhm.toFixed(3)} | X ${result.lineXOhm.toFixed(3)}`}
-              icon={<Calculator className="w-4 h-4 text-blue-600" />}
+              icon={<Calculator className="w-4 h-4 text-brand-accent-dark" />}
               tone="blue"
             />
             <SummaryCard
@@ -905,12 +905,12 @@ function TargetedRecalculationOverview({
 
   return (
     <section className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-      <div className="border-b border-slate-200 bg-gradient-to-r from-slate-950 to-blue-950 px-5 py-5 text-white">
+      <div className="border-b border-slate-200 bg-gradient-to-r from-brand-ink to-brand-ink-2 px-5 py-5 text-white">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <h1 className="text-lg font-semibold">Targeted Recalculation - Line Protection</h1>
-              <span className="rounded border border-blue-300/30 bg-blue-400/10 px-2 py-0.5 text-[10px] font-semibold text-blue-200">
+              <span className="rounded border border-brand-accent/30 bg-brand-accent/10 px-2 py-0.5 text-[10px] font-semibold text-brand-accent">
                 Distance + Differential
               </span>
             </div>
@@ -975,7 +975,7 @@ function TargetedRecalculationOverview({
                 {plan.changeLabel || "No declared change"}
               </div>
             </div>
-            <div className="rounded border border-blue-200 bg-blue-50 px-3 py-2 text-[11px] text-blue-900">
+            <div className="rounded border border-brand-accent/40 bg-brand-accent/10 px-3 py-2 text-[11px] text-brand-accent-dark">
               <span className="font-semibold">{activeBlocks.length}</span> block perlu
               recalculation/review; {plan.blocks.length - activeBlocks.length} block dapat
               carry-forward dengan provenance baseline.
@@ -1065,7 +1065,7 @@ function RecalculationModeCard({
   status: "active" | "target" | "deferred" | "separate";
 }) {
   const cls = {
-    active: "border-blue-500 bg-blue-50",
+    active: "border-brand-accent bg-brand-accent/10",
     target: "border-slate-200 bg-white",
     deferred: "border-slate-200 bg-slate-50",
     separate: "border-slate-200 bg-white",
@@ -1096,7 +1096,7 @@ function RecalculationStepCard({
 }) {
   const cls: Record<RecalculationStepStatus, string> = {
     complete: "border-emerald-200 bg-emerald-50 text-emerald-800",
-    current: "border-blue-300 bg-blue-50 text-blue-800",
+    current: "border-brand-accent/40 bg-brand-accent/10 text-brand-accent-dark",
     blocked: "border-red-200 bg-red-50 text-red-800",
     pending: "border-slate-200 bg-slate-50 text-slate-600",
     deferred: "border-slate-200 bg-slate-100 text-slate-500",
@@ -1116,7 +1116,7 @@ function RecalculationStepCard({
 
 function RecalculationActionBadge({ action }: { action: RecalculationAction }) {
   const cls: Record<RecalculationAction, string> = {
-    recalculate: "border-blue-200 bg-blue-50 text-blue-700",
+    recalculate: "border-brand-accent/40 bg-brand-accent/10 text-brand-accent-dark",
     "engineering-review": "border-amber-200 bg-amber-50 text-amber-700",
     "carry-forward": "border-slate-200 bg-slate-50 text-slate-500",
   };
@@ -1144,7 +1144,7 @@ function TemplateOverview({ template }: { template: CalculationTemplate }) {
         </div>
         <div className="flex flex-wrap gap-1">
           {template.functionIds.map((fn) => (
-            <span key={fn} className="text-[10px] px-1.5 py-0.5 rounded border border-blue-200 bg-white text-blue-700">
+            <span key={fn} className="text-[10px] px-1.5 py-0.5 rounded border border-brand-accent/40 bg-white text-brand-accent-dark">
               {fn}
             </span>
           ))}
@@ -1157,16 +1157,16 @@ function TemplateOverview({ template }: { template: CalculationTemplate }) {
 
 function TemplateBlueprintPanel({ template }: { template: CalculationTemplate }) {
   return (
-    <div className="mt-4 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-900">
+    <div className="mt-4 rounded-md border border-brand-accent/40 bg-brand-accent/10 px-3 py-2 text-xs text-brand-accent-dark">
       <div className="flex items-start gap-2">
         <ClipboardList className="w-4 h-4 mt-0.5 shrink-0" />
         <div>
           <div className="font-semibold">Template belum executable.</div>
-          <div className="mt-0.5 text-blue-800">
+          <div className="mt-0.5 text-brand-accent-dark">
             Struktur input, formula, output, asumsi, dan benchmark sudah disiapkan. Langkah berikutnya adalah mengisi formula engine dan benchmark terhadap template Mathcad existing.
           </div>
           {template.nextImplementationStep && (
-            <div className="mt-1 text-blue-700">Next: {template.nextImplementationStep}</div>
+            <div className="mt-1 text-brand-accent-dark">Next: {template.nextImplementationStep}</div>
           )}
         </div>
       </div>
@@ -1225,7 +1225,7 @@ function TextInput({
       <input
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="w-full px-2 py-1.5 text-sm border border-slate-300 rounded focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+        className="w-full px-2 py-1.5 text-sm border border-slate-300 rounded focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent/30"
       />
     </label>
   );
@@ -1269,7 +1269,7 @@ function CalculationSteps({
       <div className="divide-y divide-slate-100">
         {steps.map((step, index) => (
           <div key={step.label} className="px-4 py-3 grid grid-cols-[32px_1fr] gap-3">
-            <div className="w-7 h-7 rounded-full bg-blue-50 text-blue-700 border border-blue-200 flex items-center justify-center text-xs font-semibold">
+            <div className="w-7 h-7 rounded-full bg-brand-accent/10 text-brand-accent-dark border border-brand-accent/40 flex items-center justify-center text-xs font-semibold">
               {index + 1}
             </div>
             <div>
@@ -1337,7 +1337,7 @@ function TemplateFormulaPanel({ template }: { template: CalculationTemplate }) {
       <div className="divide-y divide-slate-100">
         {template.formulaSteps.map((step, index) => (
           <div key={step.id} className="px-4 py-3 grid grid-cols-[32px_1fr] gap-3">
-            <div className="w-7 h-7 rounded-full bg-blue-50 text-blue-700 border border-blue-200 flex items-center justify-center text-xs font-semibold">
+            <div className="w-7 h-7 rounded-full bg-brand-accent/10 text-brand-accent-dark border border-brand-accent/40 flex items-center justify-center text-xs font-semibold">
               {index + 1}
             </div>
             <div>
@@ -1436,7 +1436,7 @@ function LegacyCrosscheckBenchmarkPanel() {
             <BenchmarkRow label="CCC ref" value={`${formatMaybeNumber(distanceCase.cccA)} A`} />
             <BenchmarkRow label="CT / PT" value={`${formatMaybeNumber(distanceCase.ctPrimaryA)}/${formatMaybeNumber(distanceCase.ctSecondaryA)} | ${formatMaybeNumber(distanceCase.ptPrimaryV)}/${formatMaybeNumber(distanceCase.ptSecondaryV)}`} />
           </div>
-          <div className="mt-3 rounded border border-blue-100 bg-blue-50 px-3 py-2 text-[11px] text-blue-800">
+          <div className="mt-3 rounded border border-brand-accent/40 bg-brand-accent/10 px-3 py-2 text-[11px] text-brand-accent-dark">
             Ini adalah versi Excel dari “Create Study”: user memilih GI dan bay, lalu workbook mencari remote GI, fault current, dan line sekitar.
           </div>
         </div>
@@ -1642,7 +1642,7 @@ function P545DistanceCoreParityPanel() {
             <h3 className="text-sm font-semibold text-slate-900">
               P545 Distance Core - Mathcad Parity
             </h3>
-            <span className="text-[10px] rounded border border-blue-200 bg-blue-50 text-blue-700 px-1.5 py-0.5">
+            <span className="text-[10px] rounded border border-brand-accent/40 bg-brand-accent/10 text-brand-accent-dark px-1.5 py-0.5">
               MVP 2B.2
             </span>
             <span
@@ -1776,7 +1776,7 @@ function P545AuxiliaryParityPanel() {
             <h3 className="text-sm font-semibold text-slate-900">
               P545 Auxiliary Blocks - Mathcad Parity
             </h3>
-            <span className="text-[10px] rounded border border-blue-200 bg-blue-50 text-blue-700 px-1.5 py-0.5">
+            <span className="text-[10px] rounded border border-brand-accent/40 bg-brand-accent/10 text-brand-accent-dark px-1.5 py-0.5">
               MVP 2B.3
             </span>
             <span
@@ -1989,7 +1989,7 @@ function P545ParityTableRow({
 }) {
   const badge = {
     exact: "border-emerald-200 bg-emerald-50 text-emerald-700",
-    "within-tolerance": "border-blue-200 bg-blue-50 text-blue-700",
+    "within-tolerance": "border-brand-accent/40 bg-brand-accent/10 text-brand-accent-dark",
     mismatch: "border-red-200 bg-red-50 text-red-700",
   }[row.status];
   return (
@@ -2121,7 +2121,7 @@ function P545PilotInputContractPanel() {
               P545 Pilot Input Contract
             </h3>
             <P545ContractStatusBadge status={contract.status} />
-            <span className="text-[10px] rounded border border-blue-200 bg-blue-50 text-blue-700 px-1.5 py-0.5">
+            <span className="text-[10px] rounded border border-brand-accent/40 bg-brand-accent/10 text-brand-accent-dark px-1.5 py-0.5">
               MVP 2B.1
             </span>
           </div>
@@ -2143,7 +2143,7 @@ function P545PilotInputContractPanel() {
               activeStudyId &&
               setStudyScenario(activeStudyId, event.target.value || null)
             }
-            className="bg-white text-xs px-2 py-1.5 rounded border border-slate-300 focus:border-blue-500 focus:outline-none"
+            className="bg-white text-xs px-2 py-1.5 rounded border border-slate-300 focus:border-brand-accent focus:outline-none"
           >
             <option value="">No scenario — fault input blocked</option>
             {studyScenarios.map((scenario) => (
@@ -2238,7 +2238,7 @@ function P545PilotInputContractPanel() {
                 setOverrideValue("");
                 setOverrideError("");
               }}
-              className="bg-white text-xs px-2 py-2 rounded border border-slate-300 focus:border-blue-500 focus:outline-none"
+              className="bg-white text-xs px-2 py-2 rounded border border-slate-300 focus:border-brand-accent focus:outline-none"
             >
               {reviewableInputs.map((input) => (
                 <option key={input.key} value={input.key}>
@@ -2250,18 +2250,18 @@ function P545PilotInputContractPanel() {
               value={overrideValue}
               onChange={(event) => setOverrideValue(event.target.value)}
               placeholder="Selected value"
-              className="bg-white text-xs px-2 py-2 rounded border border-slate-300 focus:border-blue-500 focus:outline-none"
+              className="bg-white text-xs px-2 py-2 rounded border border-slate-300 focus:border-brand-accent focus:outline-none"
             />
             <input
               value={overrideReason}
               onChange={(event) => setOverrideReason(event.target.value)}
               placeholder="Engineering reason and evidence..."
-              className="bg-white text-xs px-2 py-2 rounded border border-slate-300 focus:border-blue-500 focus:outline-none"
+              className="bg-white text-xs px-2 py-2 rounded border border-slate-300 focus:border-brand-accent focus:outline-none"
             />
             <button
               type="button"
               onClick={applyOverride}
-              className="rounded border border-blue-300 bg-blue-50 px-3 py-2 text-xs font-medium text-blue-700 hover:bg-blue-100"
+              className="rounded border border-brand-accent/40 bg-brand-accent/10 px-3 py-2 text-xs font-medium text-brand-accent-dark hover:bg-brand-accent/20"
             >
               Apply override
             </button>
@@ -2295,7 +2295,7 @@ function P545InputRow({
             <button
               type="button"
               onClick={onClearOverride}
-              className="text-[10px] text-blue-600 hover:underline"
+              className="text-[10px] text-brand-accent-dark hover:text-brand-ink hover:underline"
             >
               clear
             </button>
@@ -2338,7 +2338,7 @@ function P545InputRow({
         </div>
       )}
       {input.override && (
-        <div className="mt-2 rounded border border-blue-200 bg-blue-50 px-2 py-1.5 text-[10px] text-blue-800">
+        <div className="mt-2 rounded border border-brand-accent/40 bg-brand-accent/10 px-2 py-1.5 text-[10px] text-brand-accent-dark">
           {input.override.actor} · {formatP545Date(input.override.at)} · {input.override.reason}
         </div>
       )}
@@ -2369,7 +2369,7 @@ function P545InputStatusBadge({ status }: { status: P545InputStatus }) {
     conflict: "border-amber-200 bg-amber-50 text-amber-700",
     missing: "border-red-200 bg-red-50 text-red-700",
     blocked: "border-slate-300 bg-slate-100 text-slate-600",
-    overridden: "border-blue-200 bg-blue-50 text-blue-700",
+    overridden: "border-brand-accent/40 bg-brand-accent/10 text-brand-accent-dark",
   };
   return (
     <span className={`text-[10px] rounded border px-1.5 py-0.5 ${cls[status]}`}>
@@ -2392,7 +2392,7 @@ function P545SummaryChip({
     amber: "border-amber-200 bg-amber-50 text-amber-700",
     red: "border-red-200 bg-red-50 text-red-700",
     slate: "border-slate-200 bg-slate-50 text-slate-600",
-    blue: "border-blue-200 bg-blue-50 text-blue-700",
+    blue: "border-brand-accent/40 bg-brand-accent/10 text-brand-accent-dark",
   }[tone];
   return (
     <span className={`text-[10px] rounded border px-2 py-1 ${cls}`}>
@@ -2482,7 +2482,7 @@ function MathcadBridgePanel({ template }: { template: CalculationTemplate }) {
                       {artifact.generator || "Mathcad"} | rev {artifact.revision || "-"} | {Math.round(artifact.fileSizeBytes / 1024)} kB
                     </div>
                   </div>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded border border-blue-200 bg-blue-50 text-blue-700">
+                  <span className="text-[10px] px-1.5 py-0.5 rounded border border-brand-accent/40 bg-brand-accent/10 text-brand-accent-dark">
                     {artifact.functionGroup}
                   </span>
                 </div>
@@ -2665,7 +2665,7 @@ function SummaryCard({
     emerald: "bg-emerald-50 border-emerald-200",
     amber: "bg-amber-50 border-amber-200",
     red: "bg-red-50 border-red-200",
-    blue: "bg-blue-50 border-blue-200",
+    blue: "bg-brand-accent/10 border-brand-accent/40",
   }[tone ?? "emerald"];
   const baseClass = tone ? toneClass : "bg-slate-50 border-slate-200";
 

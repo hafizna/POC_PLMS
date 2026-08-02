@@ -425,7 +425,7 @@ export function SettingCaseDetail({
                 index === 0 ? "rounded-l-md" : "border-l-0"
               } ${index === stages.length - 1 ? "rounded-r-md" : ""} ${
                 current
-                  ? "border-[#b9d0fa] bg-[#eaf1fe]"
+                  ? "border-brand-accent/40 bg-brand-accent/10"
                   : done
                     ? "border-line bg-[#f0f7f1]"
                     : "border-line bg-[#f7f9fc]"
@@ -436,7 +436,7 @@ export function SettingCaseDetail({
               </div>
               <div
                 className={`mt-0.5 text-[11.5px] font-semibold leading-tight ${
-                  current ? "text-blue-700" : done ? "text-emerald-700" : "text-ink-3"
+                  current ? "text-brand-accent-dark" : done ? "text-emerald-700" : "text-ink-3"
                 }`}
               >
                 {STAGE_LABEL[stage]}
@@ -505,7 +505,7 @@ export function SettingCaseDetail({
                     advanceStage(settingCase.id, advanceNote.trim() || undefined);
                     setAdvanceNote("");
                   }}
-                  className="inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-3.5 py-1.5 text-xs font-semibold text-white disabled:opacity-40"
+                  className="inline-flex items-center gap-1.5 rounded-md bg-brand-ink px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-black disabled:opacity-40"
                 >
                   Lanjut ke {STAGE_LABEL[next]} <ArrowRight className="h-3.5 w-3.5" />
                 </button>
@@ -516,7 +516,7 @@ export function SettingCaseDetail({
                 key={tool.tab}
                 type="button"
                 onClick={() => openTool(tool.tab)}
-                className="inline-flex items-center gap-1.5 rounded-md border border-line bg-white px-3 py-1.5 text-xs font-semibold text-ink-2 hover:border-blue-300 hover:text-blue-700"
+                className="inline-flex items-center gap-1.5 rounded-md border border-line bg-white px-3 py-1.5 text-xs font-semibold text-ink-2 hover:border-brand-accent/40 hover:text-brand-accent-dark"
               >
                 <ExternalLink className="h-3.5 w-3.5" /> Buka {tool.label}
               </button>
@@ -533,7 +533,7 @@ export function SettingCaseDetail({
             </div>
           ))}
           {next && !nextImplemented && (
-            <div className="mt-3 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-800">
+            <div className="mt-3 rounded-md border border-brand-accent/40 bg-brand-accent/10 px-3 py-2 text-xs text-brand-accent-dark">
               Boundary Sprint 4.1 tercapai. Stage berikutnya, {STAGE_LABEL[next]}, sudah
               tercantum pada flow contract tetapi handler operasionalnya belum
               diimplementasikan.
@@ -774,7 +774,7 @@ function FlowProfileCard({ settingCase }: { settingCase: SettingCase }) {
         />
       </div>
       {profile.crosscheckMode && (
-        <div className="mt-3 rounded border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-800">
+        <div className="mt-3 rounded border border-brand-accent/40 bg-brand-accent/10 px-3 py-2 text-xs text-brand-accent-dark">
           P1 mode: <b>{profile.crosscheckMode.replace(/_/g, " ")}</b>. PDF TAP
           membuktikan issued document; native relay export membuktikan actual readback.
         </div>
@@ -812,7 +812,7 @@ export function StatusBadge({ stage }: { stage: SettingCase["stage"] }) {
         ? "border-red-200 bg-red-50 text-red-600"
         : stage === "on_hold"
           ? "border-amber-300 bg-amber-50 text-amber-700"
-          : "border-[#b9d0fa] bg-[#eaf1fe] text-blue-700";
+          : "border-brand-accent/40 bg-brand-accent/10 text-brand-accent-dark";
   return (
     <span
       className={`inline-block rounded border px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-[0.04em] ${cls}`}

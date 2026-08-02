@@ -133,8 +133,8 @@ export function SourceIndexView() {
       <section className="bg-white border border-slate-200 rounded-lg p-4">
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div className="flex items-start gap-3">
-            <div className="rounded-md bg-blue-50 border border-blue-200 p-2">
-              <FileSearch className="w-5 h-5 text-blue-600" />
+            <div className="rounded-md bg-brand-accent/10 border border-brand-accent/40 p-2">
+              <FileSearch className="w-5 h-5 text-brand-accent-dark" />
             </div>
             <div>
               <h2 className="text-sm font-semibold text-slate-900">Source Index</h2>
@@ -147,7 +147,7 @@ export function SourceIndexView() {
           <select
             value={activeCase.id}
             onChange={(e) => setActiveCase(e.target.value)}
-            className="bg-white text-sm px-3 py-1.5 rounded border border-slate-300 focus:border-blue-500 focus:outline-none"
+            className="bg-white text-sm px-3 py-1.5 rounded border border-slate-300 focus:border-brand-accent focus:outline-none"
           >
             {NETWORK_CASES.map((item) => (
               <option key={item.id} value={item.id}>
@@ -251,7 +251,7 @@ export function SourceIndexView() {
                   <td className="px-4 py-2 align-top">
                     <div className="flex flex-wrap gap-1 max-w-72">
                       {[...record.stationHints, ...record.relayHints, ...record.functionHints].slice(0, 8).map((hint) => (
-                        <span key={hint} className="text-[10px] px-1.5 py-0.5 rounded border border-blue-200 bg-blue-50 text-blue-700">
+                        <span key={hint} className="text-[10px] px-1.5 py-0.5 rounded border border-brand-accent/40 bg-brand-accent/10 text-brand-accent-dark">
                           {hint}
                         </span>
                       ))}
@@ -277,7 +277,7 @@ export function SourceIndexView() {
               {SLD_SOURCE_INDEX.summary.fileCount} files | {SLD_SOURCE_INDEX.summary.stationCount} station folders | {SLD_SOURCE_INDEX.summary.byExtension[".pdf"] ?? 0} PDF | {SLD_SOURCE_INDEX.summary.byExtension[".vsd"] ?? 0} VSD
             </div>
           </div>
-          <span className="text-[10px] px-2 py-1 rounded border border-blue-200 bg-blue-50 text-blue-700">network graph source</span>
+          <span className="text-[10px] px-2 py-1 rounded border border-brand-accent/40 bg-brand-accent/10 text-brand-accent-dark">network graph source</span>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -360,21 +360,21 @@ function EngineeringSnapshotPanel({
   scenarios: StudyScenario[];
 }) {
   return (
-    <section className="bg-white border border-blue-200 rounded-lg overflow-hidden">
-      <div className="border-b border-blue-200 px-4 py-3 bg-blue-50 flex items-start justify-between gap-3 flex-wrap">
+    <section className="bg-white border border-brand-accent/40 rounded-lg overflow-hidden">
+      <div className="border-b border-brand-accent/40 px-4 py-3 bg-brand-accent/10 flex items-start justify-between gap-3 flex-wrap">
         <div className="flex items-start gap-2">
-          <Database className="w-4 h-4 text-blue-700 mt-0.5" />
+          <Database className="w-4 h-4 text-brand-accent-dark mt-0.5" />
           <div>
-            <h3 className="text-xs uppercase tracking-wider font-semibold text-blue-900">
+            <h3 className="text-xs uppercase tracking-wider font-semibold text-brand-accent-dark">
               Versioned Engineering Sources
             </h3>
-            <div className="text-[10px] text-blue-700 mt-0.5">
+            <div className="text-[10px] text-brand-accent-dark mt-0.5">
               Satu file dapat menghasilkan beberapa logical snapshots. Status historical tidak
               sama dengan current engineering truth.
             </div>
           </div>
         </div>
-        <span className="text-[10px] px-2 py-1 rounded border border-blue-200 bg-white text-blue-700">
+        <span className="text-[10px] px-2 py-1 rounded border border-brand-accent/40 bg-white text-brand-accent-dark">
           {snapshots.length} snapshots · {scenarios.length} scenarios
         </span>
       </div>
@@ -490,7 +490,7 @@ function LegacyCrosscheckWorkbookPanel() {
           </div>
         </div>
         <div className="flex flex-wrap items-center justify-end gap-2">
-          <span className="text-[10px] px-2 py-1 rounded border border-blue-200 bg-blue-50 text-blue-700">
+          <span className="text-[10px] px-2 py-1 rounded border border-brand-accent/40 bg-brand-accent/10 text-brand-accent-dark">
             {registry.summary.lineRecordCount} line DB
           </span>
           <span className="text-[10px] px-2 py-1 rounded border border-emerald-200 bg-emerald-50 text-emerald-700">
@@ -867,8 +867,8 @@ function SourceIntakePanel({
 
       <div className="p-4 grid grid-cols-1 xl:grid-cols-[minmax(0,420px)_1fr] gap-4">
         <div className="rounded-md border border-dashed border-slate-300 bg-slate-50 p-3">
-          <label className="flex flex-col items-center justify-center gap-2 rounded border border-slate-200 bg-white px-3 py-5 text-center cursor-pointer hover:border-blue-300">
-            <Upload className="w-5 h-5 text-blue-600" />
+          <label className="flex flex-col items-center justify-center gap-2 rounded border border-slate-200 bg-white px-3 py-5 text-center cursor-pointer hover:border-brand-accent/50">
+            <Upload className="w-5 h-5 text-brand-accent-dark" />
             <div>
               <div className="text-xs font-semibold text-slate-700">Pilih file lokal atau isi source name manual</div>
               <div className="text-[10px] text-slate-500 mt-0.5">PDF, XLSX, CSV, SET, atau dokumen pendukung</div>
@@ -886,7 +886,7 @@ function SourceIntakePanel({
               }}
             />
             {pickedFile && isPdf && (
-              <div className="text-[10px] text-blue-700 bg-blue-50 border border-blue-200 rounded px-2 py-1 mt-2 flex items-center gap-1.5">
+              <div className="text-[10px] text-brand-accent-dark bg-brand-accent/10 border border-brand-accent/40 rounded px-2 py-1 mt-2 flex items-center gap-1.5">
                 <ScanText className="w-3 h-3" />
                 PDF terdeteksi. OCR auto-run setelah Stage (max 8 halaman).
               </div>
@@ -900,7 +900,7 @@ function SourceIntakePanel({
               <select
                 value={documentType}
                 onChange={(event) => setDocumentType(event.target.value as SourceIntakeRecord["documentType"])}
-                className="bg-white text-xs px-2 py-1 rounded border border-slate-300 focus:border-blue-500 focus:outline-none"
+                className="bg-white text-xs px-2 py-1 rounded border border-slate-300 focus:border-brand-accent focus:outline-none"
               >
                 {documentTypeOptions.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -918,7 +918,7 @@ function SourceIntakePanel({
                 value={note}
                 onChange={(event) => setNote(event.target.value)}
                 placeholder="Dokumen expansion, belum ada di current database"
-                className="bg-white text-xs px-2 py-1 rounded border border-slate-300 focus:border-blue-500 focus:outline-none"
+                className="bg-white text-xs px-2 py-1 rounded border border-slate-300 focus:border-brand-accent focus:outline-none"
               />
             </label>
           </div>
@@ -927,13 +927,13 @@ function SourceIntakePanel({
             type="button"
             onClick={submit}
             disabled={!!ocrProgress}
-            className="mt-3 inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded border border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="mt-3 inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded border border-brand-accent/40 bg-brand-accent/10 text-brand-accent-dark hover:bg-brand-accent/20 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Plus className="w-3.5 h-3.5" />
             Stage source
           </button>
           {ocrProgress && (
-            <div className="mt-2 text-[11px] text-blue-700 bg-blue-50 border border-blue-200 rounded px-2 py-1.5 flex items-center gap-2">
+            <div className="mt-2 text-[11px] text-brand-accent-dark bg-brand-accent/10 border border-brand-accent/40 rounded px-2 py-1.5 flex items-center gap-2">
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
               <span>
                 {ocrProgress.phase === "loading" && "Loading pdf.js..."}
@@ -1034,7 +1034,7 @@ function SourceIntakePanel({
                     </div>
                   )}
                   {record.status === "extracting" && (
-                    <div className="mt-2 ml-1 text-[10px] text-blue-700 flex items-center gap-1.5">
+                    <div className="mt-2 ml-1 text-[10px] text-brand-accent-dark flex items-center gap-1.5">
                       <Loader2 className="w-3 h-3 animate-spin" />
                       Extracting...
                     </div>
@@ -1090,7 +1090,7 @@ function TextInput({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
-        className="bg-white text-xs px-2 py-1 rounded border border-slate-300 focus:border-blue-500 focus:outline-none"
+        className="bg-white text-xs px-2 py-1 rounded border border-slate-300 focus:border-brand-accent focus:outline-none"
       />
     </label>
   );

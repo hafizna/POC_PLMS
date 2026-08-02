@@ -30,8 +30,8 @@ export function NetworkGraphEditorView() {
       <section className="bg-white border border-slate-200 rounded-lg p-4">
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div className="flex items-start gap-3">
-            <div className="rounded-md bg-blue-50 border border-blue-200 p-2">
-              <Pencil className="w-5 h-5 text-blue-600" />
+            <div className="rounded-md bg-brand-accent/10 border border-brand-accent/40 p-2">
+              <Pencil className="w-5 h-5 text-brand-accent-dark" />
             </div>
             <div>
               <h2 className="text-sm font-semibold text-slate-900">Network Builder</h2>
@@ -44,7 +44,7 @@ export function NetworkGraphEditorView() {
           <select
             value={activeCase.id}
             onChange={(e) => setActiveCase(e.target.value)}
-            className="bg-white text-sm px-3 py-1.5 rounded border border-slate-300 focus:border-blue-500 focus:outline-none"
+            className="bg-white text-sm px-3 py-1.5 rounded border border-slate-300 focus:border-brand-accent focus:outline-none"
           >
             {NETWORK_CASES.map((item) => (
               <option key={item.id} value={item.id}>

@@ -165,7 +165,7 @@ export function NetworkModelView() {
                 setActiveStudy(study.id);
                 if (study.subjectLineId) void selectLine(study.subjectLineId);
               }}
-              className="bg-white text-sm px-3 py-1.5 rounded border border-slate-300 focus:border-blue-500 focus:outline-none"
+              className="bg-white text-sm px-3 py-1.5 rounded border border-slate-300 focus:border-brand-accent focus:outline-none"
             >
               <option value="">Pilih Study untuk bay/line…</option>
               {studies.map((item) => (
@@ -176,7 +176,7 @@ export function NetworkModelView() {
             </select>
           </div>
         </div>
-        <div className="mt-3 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-900">
+        <div className="mt-3 rounded-md border border-brand-accent/40 bg-brand-accent/10 px-3 py-2 text-xs text-brand-accent-dark">
           <span className="font-semibold">Study context:</span>{" "}
           {activeStudy
             ? `${activeStudy.name} · scope revision ${activeStudy.scopeRevision ?? 1} · subject ${activeStudy.subjectLineId ?? "belum dipilih"}`
@@ -200,7 +200,7 @@ export function NetworkModelView() {
         )}
 
         <div className="mt-4 grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <SummaryCard label="Substations" value={String(nodes.length)} sub="GI/GIS nodes" icon={<RadioTower className="w-4 h-4 text-blue-600" />} tone="blue" />
+          <SummaryCard label="Substations" value={String(nodes.length)} sub="GI/GIS nodes" icon={<RadioTower className="w-4 h-4 text-brand-accent-dark" />} tone="blue" />
           <SummaryCard
             label="Line Relations"
             value={String(lines.length)}
@@ -291,7 +291,7 @@ export function NetworkModelView() {
                   );
                 })}
               </div>
-              <div className="rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-[11px] text-blue-800">
+              <div className="rounded-md border border-brand-accent/40 bg-brand-accent/10 px-3 py-2 text-[11px] text-brand-accent-dark">
                 Relation cards use actual `fromNodeId` / `toNodeId`. They are not drawn as one continuous corridor unless the topology path is explicitly validated for distance coverage.
               </div>
               <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-2">
@@ -330,7 +330,7 @@ export function NetworkModelView() {
                 Single source of truth untuk koridor ini. Edit di src/domain/network-graph.ts.
               </div>
             </div>
-            <span className="text-[10px] px-2 py-1 rounded border border-blue-200 bg-blue-50 text-blue-700">
+            <span className="text-[10px] px-2 py-1 rounded border border-brand-accent/40 bg-brand-accent/10 text-brand-accent-dark">
               {networkGraph.substations.length} subs | {networkGraph.busbars.length} bus | {networkGraph.bays.length} bays | {networkGraph.lineRelations.length} relations | {networkGraph.relayIeds.length} IED
             </span>
           </div>
@@ -362,7 +362,7 @@ export function NetworkModelView() {
                           {fnIds.length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-1">
                               {fnIds.map((fn) => (
-                                <span key={fn} className="text-[10px] px-1.5 py-0.5 rounded border border-blue-200 bg-blue-50 text-blue-700">{fn}</span>
+                                <span key={fn} className="text-[10px] px-1.5 py-0.5 rounded border border-brand-accent/40 bg-brand-accent/10 text-brand-accent-dark">{fn}</span>
                               ))}
                             </div>
                           )}
@@ -391,7 +391,7 @@ export function NetworkModelView() {
               Station-level rebuild plan dari SLD source: source drawing, endpoint skeleton, relation yang sudah modeled, dan kandidat restore/remap.
             </div>
           </div>
-          <span className="text-[10px] px-2 py-1 rounded border border-blue-200 bg-blue-50 text-blue-700">
+          <span className="text-[10px] px-2 py-1 rounded border border-brand-accent/40 bg-brand-accent/10 text-brand-accent-dark">
             {sldRemodelRows.length} GI/GIS in scope
           </span>
         </div>
@@ -464,7 +464,7 @@ export function NetworkModelView() {
                 <button
                   type="button"
                   onClick={() => setEndpointFilter(row.readyCount > 0 ? "actionable" : row.modeledCount > 0 ? "existing" : "expansion")}
-                  className="text-[11px] px-2 py-1 rounded border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100"
+                  className="text-[11px] px-2 py-1 rounded border border-brand-accent/40 bg-brand-accent/10 text-brand-accent-dark hover:bg-brand-accent/20"
                 >
                   Review endpoints
                 </button>
@@ -499,7 +499,7 @@ export function NetworkModelView() {
               Unique GI/GIS-to-GI/GIS skeleton extracted from SLD PDF text layer. Jika relation user-added terhapus, candidate SLD tetap tersedia untuk restore/remap.
             </div>
           </div>
-          <span className="text-[10px] px-2 py-1 rounded border border-blue-200 bg-blue-50 text-blue-700">
+          <span className="text-[10px] px-2 py-1 rounded border border-brand-accent/40 bg-brand-accent/10 text-brand-accent-dark">
             {endpointRows.length} unique endpoints
           </span>
         </div>
@@ -597,7 +597,7 @@ export function NetworkModelView() {
         <button
           type="button"
           onClick={() => setTab("source-index")}
-          className="text-xs px-3 py-1.5 rounded border border-blue-300 bg-white text-blue-700 hover:bg-blue-50"
+          className="text-xs px-3 py-1.5 rounded border border-brand-accent/40 bg-white text-brand-accent-dark hover:bg-brand-accent/10"
         >
           Buka Source Index →
         </button>
@@ -1019,7 +1019,7 @@ function SldRemodelDrawer({
                     <div className="min-w-0">
                       <div className="text-xs font-semibold text-slate-900 truncate">{document.fileName}</div>
                       <div className="mt-1 flex flex-wrap gap-1">
-                        <span className="text-[10px] px-1.5 py-0.5 rounded border border-blue-200 bg-blue-50 text-blue-700">
+                        <span className="text-[10px] px-1.5 py-0.5 rounded border border-brand-accent/40 bg-brand-accent/10 text-brand-accent-dark">
                           {document.documentType.replace(/_/g, " ")}
                         </span>
                         <PdfStatusBadge status={document.extractionStatus} />
@@ -1054,7 +1054,7 @@ function SldRemodelDrawer({
             <button
               type="button"
               onClick={() => onReviewEndpoints(row.readyCount > 0 ? "actionable" : row.modeledCount > 0 ? "existing" : "expansion")}
-              className="text-xs px-3 py-1.5 rounded border border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100"
+              className="text-xs px-3 py-1.5 rounded border border-brand-accent/40 bg-brand-accent/10 text-brand-accent-dark hover:bg-brand-accent/20"
             >
               Review Endpoint Table
             </button>
@@ -1074,7 +1074,7 @@ function SldRemodelBadge({ row }: { row: SldRemodelRow }) {
   };
   const styles: Record<SldRemodelRow["status"], string> = {
     ready: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    modeled: "bg-blue-50 text-blue-700 border-blue-200",
+    modeled: "bg-brand-accent/10 text-brand-accent-dark border-brand-accent/40",
     "needs-source": "bg-slate-50 text-slate-600 border-slate-200",
     "needs-station": "bg-amber-50 text-amber-700 border-amber-200",
   };
@@ -1123,7 +1123,7 @@ function EndpointFilterButton({
       onClick={onClick}
       className={`text-[11px] px-2 py-1 rounded border ${
         active
-          ? "border-blue-300 bg-blue-50 text-blue-700"
+          ? "border-brand-accent/40 bg-brand-accent/10 text-brand-accent-dark"
           : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
       }`}
     >
@@ -1142,7 +1142,7 @@ function EndpointStateBadge({ row }: { row: EndpointReviewRow }) {
     label = row.relationOrigin === "master" ? "modeled from master" : "already modeled";
     style =
       row.relationOrigin === "master"
-        ? "bg-blue-50 text-blue-700 border-blue-200"
+        ? "bg-brand-accent/10 text-brand-accent-dark border-brand-accent/40"
         : "bg-slate-50 text-slate-600 border-slate-200";
   } else if (row.readyToPromote) {
     label = "ready";
@@ -1171,7 +1171,7 @@ function SmallEndpointButton({
   const cls =
     tone === "red"
       ? "border-red-300 bg-red-50 text-red-700 hover:bg-red-100"
-      : "border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100";
+      : "border-brand-accent/40 bg-brand-accent/10 text-brand-accent-dark hover:bg-brand-accent/20";
   return (
     <button
       type="button"
@@ -1252,7 +1252,7 @@ function ReadinessSummary({ label, count, tone }: { label: string; count: number
   const toneClass = {
     blocker: "bg-red-50 text-red-800 border-red-200",
     warning: "bg-amber-50 text-amber-800 border-amber-200",
-    info: "bg-blue-50 text-blue-800 border-blue-200",
+    info: "bg-brand-accent/10 text-brand-accent-dark border-brand-accent/40",
   };
   return (
     <div className="px-4 py-3 flex items-center justify-between">
@@ -1266,7 +1266,7 @@ function ReadinessSummary({ label, count, tone }: { label: string; count: number
 }
 
 function SummaryCard({ label, value, sub, icon, tone }: { label: string; value: string; sub: string; icon: React.ReactNode; tone?: "emerald" | "amber" | "red" | "blue" }) {
-  const toneClass = { emerald: "bg-emerald-50 border-emerald-200", amber: "bg-amber-50 border-amber-200", red: "bg-red-50 border-red-200", blue: "bg-blue-50 border-blue-200" }[tone ?? "emerald"];
+  const toneClass = { emerald: "bg-emerald-50 border-emerald-200", amber: "bg-amber-50 border-amber-200", red: "bg-red-50 border-red-200", blue: "bg-brand-accent/10 border-brand-accent/40" }[tone ?? "emerald"];
   const baseClass = tone ? toneClass : "bg-slate-50 border-slate-200";
   return (
     <div className={`border rounded-md p-3 ${baseClass}`}>
@@ -1303,7 +1303,7 @@ function BridgePill({ label, value, tone }: { label: string; value: number; tone
     <span
       className={`inline-flex items-center gap-1 rounded border px-2 py-1 ${
         tone === "blue"
-          ? "border-blue-200 bg-blue-50 text-blue-700"
+          ? "border-brand-accent/40 bg-brand-accent/10 text-brand-accent-dark"
           : "border-slate-200 bg-white text-slate-600"
       }`}
     >
@@ -1330,7 +1330,7 @@ function PdfStatusBadge({ status }: { status: string }) {
 function EndpointConfidenceBadge({ confidence }: { confidence: string }) {
   const style: Record<string, string> = {
     high: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    medium: "bg-blue-50 text-blue-700 border-blue-200",
+    medium: "bg-brand-accent/10 text-brand-accent-dark border-brand-accent/40",
     low: "bg-amber-50 text-amber-700 border-amber-200",
   };
   return (

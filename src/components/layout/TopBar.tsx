@@ -66,7 +66,7 @@ export function TopBar() {
           <select
             value={persona}
             onChange={(event) => setPersona(event.target.value as typeof persona)}
-            className="max-w-36 rounded-md border border-slate-700 bg-slate-900 px-2.5 py-1.5 text-xs text-white outline-none focus:border-blue-500"
+            className="max-w-36 rounded-md border border-slate-700 bg-slate-900 px-2.5 py-1.5 text-xs text-white outline-none focus:border-brand-accent"
             aria-label="Demo role persona"
           >
             <option>Engineer</option>

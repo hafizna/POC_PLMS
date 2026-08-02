@@ -42,7 +42,7 @@ export function HomeView() {
   return (
     <div className="space-y-6">
       {/* Hero header */}
-      <section className="relative overflow-hidden rounded-xl border border-slate-200 bg-gradient-to-br from-slate-900 via-slate-800 to-blue-900 px-6 py-8 text-white">
+      <section className="relative overflow-hidden rounded-xl border border-slate-200 bg-gradient-to-br from-brand-ink via-slate-800 to-brand-ink-2 px-6 py-8 text-white">
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wMyI+PHBhdGggZD0iTTAgMGg0MHY0MEgweiIvPjwvZz48L2c+PC9zdmc+')] opacity-50" />
         <div className="relative flex items-start justify-between gap-4">
           <div>
@@ -61,7 +61,7 @@ export function HomeView() {
           <button
             type="button"
             onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-500 transition-colors shadow-lg shadow-blue-600/20"
+            className="flex items-center gap-2 rounded-lg bg-brand-accent px-4 py-2.5 text-sm font-medium text-brand-ink hover:bg-white transition-colors shadow-lg shadow-brand-accent/20"
           >
             <Plus className="w-4 h-4" />
             New Study
@@ -82,7 +82,7 @@ export function HomeView() {
           <button
             type="button"
             onClick={() => setShowCreateModal(true)}
-            className="text-xs px-3 py-1.5 rounded-md border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors flex items-center gap-1.5"
+            className="text-xs px-3 py-1.5 rounded-md border border-brand-accent/40 bg-brand-accent/10 text-brand-accent-dark hover:bg-brand-accent/20 transition-colors flex items-center gap-1.5"
           >
             <Plus className="w-3.5 h-3.5" />
             New Study
@@ -96,7 +96,7 @@ export function HomeView() {
             <button
               type="button"
               onClick={() => setShowCreateModal(true)}
-              className="mt-4 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500"
+              className="mt-4 inline-flex items-center gap-2 rounded-lg bg-brand-ink px-4 py-2 text-sm font-medium text-white hover:bg-black"
             >
               <Plus className="w-4 h-4" />
               Buat Study Pertama
@@ -169,7 +169,7 @@ export function HomeView() {
                       {usedIn.length > 0 ? (
                         <div className="flex flex-wrap gap-1">
                           {usedIn.map((s) => (
-                            <span key={s.id} className="text-[10px] px-1.5 py-0.5 rounded border border-blue-200 bg-blue-50 text-blue-700 truncate max-w-24">
+                            <span key={s.id} className="text-[10px] px-1.5 py-0.5 rounded border border-brand-accent/40 bg-brand-accent/10 text-brand-accent-dark truncate max-w-24">
                               {s.name}
                             </span>
                           ))}
@@ -212,13 +212,13 @@ function StudyCard({
     study.status === "active"
       ? "border-emerald-200 bg-emerald-50 text-emerald-700"
       : study.status === "completed"
-        ? "border-blue-200 bg-blue-50 text-blue-700"
+        ? "border-brand-accent/40 bg-brand-accent/10 text-brand-accent-dark"
         : "border-slate-200 bg-slate-50 text-slate-600";
 
   return (
     <div
       className={`rounded-xl border bg-white p-4 transition-all hover:shadow-md ${
-        isActive ? "border-blue-300 ring-2 ring-blue-100" : "border-slate-200"
+        isActive ? "border-brand-accent/40 ring-2 ring-brand-accent/10" : "border-slate-200"
       }`}
     >
       <div className="flex items-start justify-between gap-3">
@@ -229,14 +229,14 @@ function StudyCard({
               {study.status}
             </span>
             {isActive && (
-              <span className="text-[10px] px-2 py-0.5 rounded bg-blue-600 text-white">
+              <span className="text-[10px] px-2 py-0.5 rounded bg-brand-ink text-white">
                 active
               </span>
             )}
           </div>
           <p className="text-xs text-slate-500 mt-1 line-clamp-2">{study.description}</p>
           {study.subjectLabel && (
-            <div className="mt-2 inline-flex rounded border border-blue-200 bg-blue-50 px-2 py-0.5 text-[10px] font-medium text-blue-700">
+            <div className="mt-2 inline-flex rounded border border-brand-accent/40 bg-brand-accent/10 px-2 py-0.5 text-[10px] font-medium text-brand-accent-dark">
               Subject: {study.subjectLabel}
             </div>
           )}
@@ -270,7 +270,7 @@ function StudyCard({
           <button
             type="button"
             onClick={onOpen}
-            className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-xs font-medium text-white hover:bg-blue-500 transition-colors"
+            className="flex items-center gap-1.5 rounded-lg bg-brand-ink px-3 py-2 text-xs font-medium text-white hover:bg-black transition-colors"
           >
             Open
             <ChevronRight className="w-3.5 h-3.5" />
@@ -295,7 +295,7 @@ function QuickButton({
       type="button"
       title={label}
       onClick={onClick}
-      className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+      className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 hover:border-brand-accent/40 hover:bg-brand-accent/10 hover:text-brand-accent-dark transition-colors"
     >
       {icon}
     </button>

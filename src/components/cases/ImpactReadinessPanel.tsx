@@ -112,7 +112,7 @@ export function ImpactReadinessPanel({ settingCase }: { settingCase: SettingCase
       <div className="mt-4 grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
         <div>
           <div className="flex items-center gap-2">
-            <GitBranch className="h-4 w-4 text-blue-600" />
+            <GitBranch className="h-4 w-4 text-brand-accent-dark" />
             <h3 className="text-sm font-semibold text-ink">
               Affected endpoints ({preview.endpoints.length})
             </h3>
@@ -128,7 +128,7 @@ export function ImpactReadinessPanel({ settingCase }: { settingCase: SettingCase
                   key={endpoint.bayId}
                   className="grid gap-1 border-b border-line-2 px-3 py-2.5 text-xs last:border-b-0 sm:grid-cols-[90px_1fr_1fr]"
                 >
-                  <span className="font-mono font-bold uppercase text-blue-700">
+                  <span className="font-mono font-bold uppercase text-brand-accent-dark">
                     {endpoint.role}
                   </span>
                   <div>
@@ -174,14 +174,14 @@ export function ImpactReadinessPanel({ settingCase }: { settingCase: SettingCase
         </div>
 
         <div>
-          <div className="rounded-md border border-blue-200 bg-blue-50 p-3">
-            <div className="flex items-center gap-2 text-sm font-semibold text-blue-900">
+          <div className="rounded-md border border-brand-accent/40 bg-brand-accent/10 p-3">
+            <div className="flex items-center gap-2 text-sm font-semibold text-brand-accent-dark">
               <ShieldAlert className="h-4 w-4" /> Study disposition
             </div>
-            <div className="mt-1 text-xs text-blue-800">
+            <div className="mt-1 text-xs text-brand-accent-dark">
               Saran sistem: {STUDY_LABEL[preview.study.suggestedDisposition]}
             </div>
-            <ul className="mt-2 list-disc space-y-1 pl-4 text-[11px] text-blue-800">
+            <ul className="mt-2 list-disc space-y-1 pl-4 text-[11px] text-brand-accent-dark">
               {preview.study.rationale.map((item) => (
                 <li key={item}>{item}</li>
               ))}
@@ -194,7 +194,7 @@ export function ImpactReadinessPanel({ settingCase }: { settingCase: SettingCase
               onChange={(event) =>
                 setStudyDisposition(event.target.value as StudyDisposition | "")
               }
-              className="mt-3 w-full rounded-md border border-blue-200 bg-white px-2.5 py-2 text-xs disabled:bg-blue-100"
+              className="mt-3 w-full rounded-md border border-brand-accent/40 bg-white px-2.5 py-2 text-xs disabled:bg-brand-accent/20"
             >
               <option value="">— pilih keputusan study —</option>
               <option value="new_study_required">Study baru wajib</option>
@@ -273,7 +273,7 @@ export function ImpactReadinessPanel({ settingCase }: { settingCase: SettingCase
         <button
           type="button"
           onClick={save}
-          className="inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-3.5 py-2 text-xs font-semibold text-white hover:bg-blue-700"
+          className="inline-flex items-center gap-1.5 rounded-md bg-brand-ink px-3.5 py-2 text-xs font-semibold text-white hover:bg-black"
         >
           <Save className="h-3.5 w-3.5" /> Simpan assessment
         </button>

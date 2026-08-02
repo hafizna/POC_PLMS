@@ -60,7 +60,7 @@ export function ComparisonView() {
           <select
             value={bay.bay.id}
             onChange={(e) => setBay(e.target.value)}
-            className="bg-white text-sm px-3 py-1.5 rounded border border-slate-300 focus:border-blue-500 focus:outline-none"
+            className="bg-white text-sm px-3 py-1.5 rounded border border-slate-300 focus:border-brand-accent focus:outline-none"
           >
             {bays.map((b) => (
               <option key={b.bay.id} value={b.bay.id}>
@@ -169,7 +169,7 @@ function FnTab({
       onClick={onClick}
       className={`px-3 py-2 text-xs font-medium border-b-2 flex items-center gap-2 ${
         active
-          ? "border-blue-600 text-blue-700 bg-white"
+          ? "border-brand-accent-dark text-brand-accent-dark bg-white"
           : "border-transparent text-slate-600 hover:text-slate-900"
       }`}
     >

@@ -209,7 +209,7 @@ export function ActualVerificationView() {
             <button
               type="button"
               onClick={() => setTab("reference-setting")}
-              className="mt-5 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+              className="mt-5 inline-flex items-center gap-2 rounded-lg bg-brand-ink px-4 py-2 text-sm font-semibold text-white hover:bg-black"
             >
               <ArrowLeft className="h-4 w-4" />
               Buka Reference Setting
@@ -445,21 +445,21 @@ export function ActualVerificationView() {
             title="1. Reference & comparison basis"
             subtitle="Basis harus sama dengan yang ditampilkan relay/TAP."
           >
-            <div className="rounded-xl border border-blue-200 bg-blue-50 p-3">
-              <div className="text-xs font-semibold text-blue-900">
+            <div className="rounded-xl border border-brand-accent/40 bg-brand-accent/10 p-3">
+              <div className="text-xs font-semibold text-brand-accent-dark">
                 {referenceBasis === "database" &&
                 reference.databaseBaseline
                   ? reference.databaseBaseline.label
                   : reference.contextLabel}
               </div>
-              <div className="mt-1 text-[11px] text-blue-700">
+              <div className="mt-1 text-[11px] text-brand-accent-dark">
                 {(activeReferenceResult ?? reference.result).metrics.length}{" "}
                 comparable metrics · staged{" "}
                 {formatDate(reference.stagedAt)}
               </div>
               {referenceBasis === "database" &&
                 reference.databaseBaseline && (
-                  <div className="mt-2 rounded-lg border border-blue-200 bg-white/70 px-2.5 py-2 text-[10px] leading-4 text-blue-900">
+                  <div className="mt-2 rounded-lg border border-brand-accent/40 bg-white/70 px-2.5 py-2 text-[10px] leading-4 text-brand-accent-dark">
                     <div className="font-semibold">
                       {reference.databaseBaseline.relayLabel}
                     </div>
@@ -475,7 +475,7 @@ export function ActualVerificationView() {
               <button
                 type="button"
                 onClick={() => setTab("reference-setting")}
-                className="mt-2 inline-flex items-center gap-1.5 text-[11px] font-semibold text-blue-700 hover:text-blue-900"
+                className="mt-2 inline-flex items-center gap-1.5 text-[11px] font-semibold text-brand-accent-dark hover:text-brand-ink"
               >
                 <ArrowLeft className="h-3.5 w-3.5" />
                 Ubah reference di 1A
@@ -495,7 +495,7 @@ export function ActualVerificationView() {
                     }}
                     className={`rounded-md px-3 py-2 text-[11px] font-semibold ${
                       referenceBasis === "database"
-                        ? "bg-white text-blue-700 shadow-sm"
+                        ? "bg-white text-brand-accent-dark shadow-sm"
                         : "text-slate-500"
                     }`}
                   >
@@ -509,7 +509,7 @@ export function ActualVerificationView() {
                     }}
                     className={`rounded-md px-3 py-2 text-[11px] font-semibold ${
                       referenceBasis === "calculated"
-                        ? "bg-white text-blue-700 shadow-sm"
+                        ? "bg-white text-brand-accent-dark shadow-sm"
                         : "text-slate-500"
                     }`}
                   >
@@ -584,11 +584,11 @@ export function ActualVerificationView() {
               />
             </div>
 
-            <label className="mt-3 flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-xs font-semibold text-slate-700 hover:border-blue-400 hover:bg-blue-50">
+            <label className="mt-3 flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-xs font-semibold text-slate-700 hover:border-brand-accent/50 hover:bg-brand-accent/10">
               {busyLabel ? (
-                <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+                <Loader2 className="h-4 w-4 animate-spin text-brand-accent-dark" />
               ) : (
-                <Upload className="h-4 w-4 text-blue-600" />
+                <Upload className="h-4 w-4 text-brand-accent-dark" />
               )}
               {busyLabel || fileName || "Pilih .csv, .txt, atau .pdf"}
               <input
@@ -705,14 +705,14 @@ export function ActualVerificationView() {
               rows={11}
               spellCheck={false}
               placeholder={"OC pickup=1.024 A sec\nOC TMS=0.2917\nGF pickup=0.171 A sec\nGF TMS=0.5875"}
-              className="mt-3 w-full resize-y rounded-xl border border-slate-300 bg-slate-950 px-3 py-2 font-mono text-[11px] leading-5 text-slate-100 outline-none focus:border-blue-500"
+              className="mt-3 w-full resize-y rounded-xl border border-slate-300 bg-slate-950 px-3 py-2 font-mono text-[11px] leading-5 text-slate-100 outline-none focus:border-brand-accent"
             />
             <div className="mt-3 flex flex-wrap gap-2">
               <button
                 type="button"
                 onClick={parseEditor}
                 disabled={!editorText.trim() || Boolean(busyLabel)}
-                className="rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40"
+                className="rounded-lg bg-brand-ink px-3 py-2 text-xs font-semibold text-white hover:bg-black disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Normalize setting
               </button>
@@ -790,7 +790,7 @@ export function ActualVerificationView() {
                               line {parameter.sourceLine}
                             </div>
                           </td>
-                          <td className="px-3 py-2 font-mono text-blue-700">
+                          <td className="px-3 py-2 font-mono text-brand-accent-dark">
                             {parameter.id}
                           </td>
                           <td className="px-3 py-2 font-mono text-slate-700">
@@ -1107,7 +1107,7 @@ function SelectField({
         <select
           value={value}
           onChange={(event) => onChange(event.target.value)}
-          className="w-full appearance-none rounded-lg border border-slate-300 bg-white px-3 py-2 pr-8 text-xs font-medium text-slate-700 outline-none focus:border-blue-500"
+          className="w-full appearance-none rounded-lg border border-slate-300 bg-white px-3 py-2 pr-8 text-xs font-medium text-slate-700 outline-none focus:border-brand-accent"
         >
           {options.map((option) => (
             <option key={option.value} value={option.value}>
@@ -1138,7 +1138,7 @@ function SourceButton({
       onClick={onClick}
       className={`flex flex-col items-center gap-1.5 rounded-lg border px-2 py-2 text-[10px] font-semibold ${
         active
-          ? "border-blue-300 bg-blue-50 text-blue-700"
+          ? "border-brand-accent/40 bg-brand-accent/10 text-brand-accent-dark"
           : "border-slate-200 text-slate-500 hover:bg-slate-50"
       }`}
     >
@@ -1256,7 +1256,7 @@ function GroupTab({
       onClick={onClick}
       className={`border-b-2 px-3 py-2 text-[11px] font-semibold ${
         active
-          ? "border-blue-600 text-blue-700"
+          ? "border-brand-accent-dark text-brand-accent-dark"
           : "border-transparent text-slate-500 hover:text-slate-800"
       }`}
     >

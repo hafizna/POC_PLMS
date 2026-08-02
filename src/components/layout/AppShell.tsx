@@ -164,17 +164,17 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <button
                   type="button"
                   onClick={() => openCaseWizard("new_setting")}
-                  className="flex w-full items-center gap-2 rounded-lg bg-blue-600 px-2.5 py-2 text-left text-sm font-medium text-white shadow-sm hover:bg-blue-700"
+                  className="flex w-full items-center gap-2 rounded-lg bg-brand-ink px-2.5 py-2 text-left text-sm font-medium text-white shadow-sm hover:bg-black"
                 >
-                  <Calculator className="h-4 w-4 text-blue-100" />
+                  <Calculator className="h-4 w-4 text-brand-accent" />
                   Targeted Recalculation
                 </button>
                 <button
                   type="button"
                   onClick={() => openCaseWizard("crosscheck")}
-                  className="flex w-full items-center gap-2 rounded-lg border border-blue-300 bg-blue-50 px-2.5 py-2 text-left text-sm font-medium text-blue-800 hover:bg-blue-100"
+                  className="flex w-full items-center gap-2 rounded-lg border border-brand-accent/40 bg-brand-accent/10 px-2.5 py-2 text-left text-sm font-medium text-brand-accent-dark hover:bg-brand-accent/20"
                 >
-                  <GitCompareArrows className="h-4 w-4 text-blue-500" />
+                  <GitCompareArrows className="h-4 w-4 text-brand-accent-dark" />
                   Cek Setting Aktual
                 </button>
               </div>
@@ -370,13 +370,13 @@ function NavButton({
       } ${
         active
           ? prominent
-            ? "bg-slate-900 text-white shadow-sm"
-            : "bg-blue-50 text-blue-800"
+            ? "bg-brand-ink text-white shadow-sm"
+            : "bg-brand-accent/10 text-brand-accent-dark"
           : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
       }`}
     >
       <div className="flex items-center gap-2.5">
-        <span className={active && prominent ? "text-slate-300" : "text-slate-400"}>
+        <span className={active && prominent ? "text-brand-accent" : "text-slate-400"}>
           {item.icon}
         </span>
         <span className="font-medium">{item.label}</span>

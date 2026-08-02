@@ -111,8 +111,8 @@ export function MasterDataView() {
       <section className="rounded-xl border border-slate-200 bg-white p-4">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex items-start gap-3">
-            <div className="rounded-lg border border-blue-200 bg-blue-50 p-2">
-              <Database className="h-5 w-5 text-blue-700" />
+            <div className="rounded-lg border border-brand-accent/40 bg-brand-accent/10 p-2">
+              <Database className="h-5 w-5 text-brand-accent-dark" />
             </div>
             <div>
               <div className="flex flex-wrap items-center gap-2">
@@ -143,7 +143,7 @@ export function MasterDataView() {
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Cari GI, bay, ruas, relay, source, atau function…"
-              className="w-full rounded-md border border-slate-300 py-2 pl-9 pr-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="w-full rounded-md border border-slate-300 py-2 pl-9 pr-3 text-sm outline-none focus:border-brand-accent focus:ring-2 focus:ring-brand-accent/20"
             />
           </label>
           <select
@@ -205,7 +205,7 @@ export function MasterDataView() {
                       key={row.id}
                       onClick={() => setSelectedLineId(row.id)}
                       className={`cursor-pointer align-top transition-colors ${
-                        active ? "bg-blue-50" : "hover:bg-slate-50"
+                        active ? "bg-brand-accent/10" : "hover:bg-slate-50"
                       }`}
                     >
                       <td className="px-3 py-2.5">
@@ -251,7 +251,7 @@ export function MasterDataView() {
                       <td className="px-3 py-2.5">
                         <QualityBadge row={row} />
                         {row.openCases.length > 0 && (
-                          <div className="mt-1 text-[10px] font-medium text-blue-700">
+                          <div className="mt-1 text-[10px] font-medium text-brand-accent-dark">
                             {row.openCases.length} open case
                           </div>
                         )}
@@ -328,17 +328,17 @@ function AssetDetail({
             <button
               type="button"
               onClick={() => setProposalOpen((current) => !current)}
-              className="inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-2.5 py-1.5 text-[11px] font-semibold text-white hover:bg-blue-700"
+              className="inline-flex items-center gap-1.5 rounded-md bg-brand-ink px-2.5 py-1.5 text-[11px] font-semibold text-white hover:bg-black"
             >
               <PencilLine className="h-3.5 w-3.5" /> Usulkan perubahan
             </button>
           </div>
         </div>
         {proposalOpen && (
-          <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50/70 p-3">
+          <div className="mt-4 rounded-lg border border-brand-accent/40 bg-brand-accent/10 p-3">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <div className="font-mono text-[10px] font-bold uppercase tracking-[0.08em] text-blue-700">
+                <div className="font-mono text-[10px] font-bold uppercase tracking-[0.08em] text-brand-accent-dark">
                   Governed data change
                 </div>
                 <p className="mt-1 max-w-xl text-[11px] leading-4 text-slate-600">
@@ -354,7 +354,7 @@ function AssetDetail({
                 onChange={(event) =>
                   setProposalReason(event.target.value as ChangeItemKind)
                 }
-                className="rounded-md border border-blue-200 bg-white px-3 py-2 text-xs text-slate-800"
+                className="rounded-md border border-brand-accent/40 bg-white px-3 py-2 text-xs text-slate-800"
               >
                 {DATA_CHANGE_REASONS.map((reason) => (
                   <option key={reason} value={reason}>
@@ -375,7 +375,7 @@ function AssetDetail({
                     substationIds: row.endpoints.map((endpoint) => endpoint.substationId),
                   })
                 }
-                className="inline-flex items-center justify-center gap-1.5 rounded-md bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700"
+                className="inline-flex items-center justify-center gap-1.5 rounded-md bg-brand-ink px-3 py-2 text-xs font-semibold text-white hover:bg-black"
               >
                 Buat Change Request <ArrowRight className="h-3.5 w-3.5" />
               </button>
@@ -487,7 +487,7 @@ function EndpointsTab({ endpoints }: { endpoints: readonly AssetExplorerEndpoint
       {endpoints.map((endpoint) => (
         <div key={endpoint.bayId} className="rounded-lg border border-slate-200 bg-white p-3">
           <div className="flex items-start gap-2">
-            <RadioTower className="mt-0.5 h-4 w-4 text-blue-600" />
+            <RadioTower className="mt-0.5 h-4 w-4 text-brand-accent-dark" />
             <div>
               <div className="text-sm font-semibold text-slate-900">
                 {endpoint.substationCode}
@@ -559,7 +559,7 @@ function SettingsTab({ endpoints }: { endpoints: readonly AssetExplorerEndpoint[
               <div className="mt-3 grid grid-cols-3 gap-2">
                 {relay.setting.zones.map((zone) => (
                   <div key={zone.id} className="rounded border border-slate-200 bg-slate-50 p-2">
-                    <div className="font-mono text-[10px] font-bold text-blue-700">{zone.id}</div>
+                    <div className="font-mono text-[10px] font-bold text-brand-accent-dark">{zone.id}</div>
                     <div className="mt-1 font-mono text-xs text-slate-800">
                       X {formatNumber(zone.xReachOhm)} Ω
                     </div>
@@ -654,7 +654,7 @@ function ActivityTab({
                 key={settingCase.id}
                 type="button"
                 onClick={() => onOpenCase(settingCase.id)}
-                className="w-full rounded-md border border-slate-200 bg-slate-50 p-2.5 text-left hover:border-blue-300 hover:bg-blue-50"
+                className="w-full rounded-md border border-slate-200 bg-slate-50 p-2.5 text-left hover:border-brand-accent/40 hover:bg-brand-accent/10"
               >
                 <div className="text-xs font-semibold text-slate-900">{settingCase.title}</div>
                 <div className="mt-1 flex flex-wrap items-center gap-1.5">
@@ -727,7 +727,7 @@ function Badge({
   children: React.ReactNode;
 }) {
   const styles = {
-    blue: "border-blue-200 bg-blue-50 text-blue-700",
+    blue: "border-brand-accent/40 bg-brand-accent/10 text-brand-accent-dark",
     slate: "border-slate-200 bg-slate-50 text-slate-600",
     amber: "border-amber-200 bg-amber-50 text-amber-700",
     emerald: "border-emerald-200 bg-emerald-50 text-emerald-700",
@@ -749,7 +749,7 @@ function Metric({
   label: string;
   tone?: "slate" | "amber" | "blue";
 }) {
-  const valueClass = tone === "amber" ? "text-amber-700" : tone === "blue" ? "text-blue-700" : "text-slate-900";
+  const valueClass = tone === "amber" ? "text-amber-700" : tone === "blue" ? "text-brand-accent-dark" : "text-slate-900";
   return (
     <div className="min-w-20 px-3 py-2 text-center">
       <div className={`font-mono text-sm font-bold ${valueClass}`}>{value}</div>

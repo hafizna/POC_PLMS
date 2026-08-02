@@ -189,18 +189,18 @@ export function StudyWizard({ onClose }: { onClose: () => void }) {
         </div>
 
         <div className="flex px-6 py-3 bg-slate-50 border-b border-slate-100 text-sm gap-2">
-          <div className={`flex items-center gap-2 ${step >= 1 ? "text-blue-700 font-medium" : "text-slate-400"}`}>
-            <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[11px] ${step >= 1 ? "bg-blue-100" : "bg-slate-200"}`}>1</div>
+          <div className={`flex items-center gap-2 ${step >= 1 ? "text-brand-accent-dark font-medium" : "text-slate-400"}`}>
+            <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[11px] ${step >= 1 ? "bg-brand-accent/20" : "bg-slate-200"}`}>1</div>
             Select Subject
           </div>
           <ArrowRight className="w-4 h-4 text-slate-300 mx-2" />
-          <div className={`flex items-center gap-2 ${step >= 2 ? "text-blue-700 font-medium" : "text-slate-400"}`}>
-            <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[11px] ${step >= 2 ? "bg-blue-100" : "bg-slate-200"}`}>2</div>
+          <div className={`flex items-center gap-2 ${step >= 2 ? "text-brand-accent-dark font-medium" : "text-slate-400"}`}>
+            <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[11px] ${step >= 2 ? "bg-brand-accent/20" : "bg-slate-200"}`}>2</div>
             Neighbors Scope
           </div>
           <ArrowRight className="w-4 h-4 text-slate-300 mx-2" />
-          <div className={`flex items-center gap-2 ${step >= 3 ? "text-blue-700 font-medium" : "text-slate-400"}`}>
-            <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[11px] ${step >= 3 ? "bg-blue-100" : "bg-slate-200"}`}>3</div>
+          <div className={`flex items-center gap-2 ${step >= 3 ? "text-brand-accent-dark font-medium" : "text-slate-400"}`}>
+            <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[11px] ${step >= 3 ? "bg-brand-accent/20" : "bg-slate-200"}`}>3</div>
             Confirm
           </div>
         </div>
@@ -252,7 +252,7 @@ export function StudyWizard({ onClose }: { onClose: () => void }) {
                 <input
                   type="text"
                   placeholder="Search GI, bay name, or relation..."
-                  className="w-full pl-9 pr-4 py-2 text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full pl-9 pr-4 py-2 text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-accent/30"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                 />
@@ -273,12 +273,12 @@ export function StudyWizard({ onClose }: { onClose: () => void }) {
                         <tr 
                           key={bay.bayId} 
                           onClick={() => setSubjectBayId(bay.bayId)}
-                          className={`cursor-pointer hover:bg-blue-50 transition-colors ${subjectBayId === bay.bayId ? "bg-blue-50" : ""}`}
+                          className={`cursor-pointer hover:bg-brand-accent/10 transition-colors ${subjectBayId === bay.bayId ? "bg-brand-accent/10" : ""}`}
                         >
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-2">
                               {subjectBayId === bay.bayId ? (
-                                <CheckCircle2 className="w-4 h-4 text-blue-600" />
+                                <CheckCircle2 className="w-4 h-4 text-brand-accent-dark" />
                               ) : (
                                 <div className="w-4 h-4 rounded-full border border-slate-300" />
                               )}
@@ -317,12 +317,12 @@ export function StudyWizard({ onClose }: { onClose: () => void }) {
             <div className="space-y-4">
               <p className="text-sm text-slate-600">Berdasarkan subjek yang dipilih, sistem menyarankan network scope berikut untuk perhitungan koordinasi Z2/Z3.</p>
               
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div className="text-xs font-semibold text-blue-800 uppercase tracking-wider mb-3">Suggested Study Scope (GI)</div>
+              <div className="bg-brand-accent/10 border border-brand-accent/40 rounded-lg p-4">
+                <div className="text-xs font-semibold text-brand-accent-dark uppercase tracking-wider mb-3">Suggested Study Scope (GI)</div>
                 <div className="flex flex-wrap gap-2">
                   {suggestedSubstations.map(sub => (
-                    <div key={sub.id} className="flex items-center gap-2 bg-white border border-blue-200 px-3 py-1.5 rounded-md shadow-sm">
-                      <div className="w-2 h-2 rounded-full bg-blue-500" />
+                    <div key={sub.id} className="flex items-center gap-2 bg-white border border-brand-accent/40 px-3 py-1.5 rounded-md shadow-sm">
+                      <div className="w-2 h-2 rounded-full bg-brand-accent" />
                       <div>
                         <div className="text-sm font-semibold text-slate-800">{sub.code}</div>
                         <div className="text-[10px] text-slate-500">{sub.name}</div>
@@ -351,7 +351,7 @@ export function StudyWizard({ onClose }: { onClose: () => void }) {
                     type="text"
                     autoFocus
                     placeholder="e.g. Rekonduktoring PIK-DM Bay #2"
-                    className="w-full px-3 py-2 text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-accent/30"
                     value={studyName}
                     onChange={(e) => setStudyName(e.target.value)}
                   />
@@ -360,7 +360,7 @@ export function StudyWizard({ onClose }: { onClose: () => void }) {
                   <label className="block text-xs font-semibold text-slate-700 mb-1">Description (Optional)</label>
                   <textarea
                     placeholder="Tujuan atau catatan study..."
-                    className="w-full px-3 py-2 text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 h-24 resize-none"
+                    className="w-full px-3 py-2 text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-accent/30 h-24 resize-none"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                   />
@@ -388,7 +388,7 @@ export function StudyWizard({ onClose }: { onClose: () => void }) {
             className={`px-4 py-2 text-sm font-medium rounded-md shadow-sm transition-colors ${
               (step === 1 && !canContinueFromSubject) || (step === 3 && !studyName.trim())
                 ? "bg-slate-200 text-slate-400 cursor-not-allowed"
-                : "bg-blue-600 text-white hover:bg-blue-700"
+                : "bg-brand-ink text-white hover:bg-black"
             }`}
           >
             {step === 3 ? "Create & Open Workspace" : "Continue"}

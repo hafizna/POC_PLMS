@@ -267,7 +267,7 @@ export function ProposedRevisionEditor({ settingCase }: { settingCase: SettingCa
                   className={`shrink-0 rounded border px-1.5 py-0.5 text-[9px] font-semibold uppercase ${
                     evidence.frozen
                       ? "border-slate-300 bg-slate-100 text-slate-600"
-                      : "border-blue-200 bg-blue-50 text-blue-700"
+                      : "border-brand-accent/40 bg-brand-accent/10 text-brand-accent-dark"
                   }`}
                 >
                   {evidence.frozen ? "baseline" : "change"}
@@ -287,7 +287,7 @@ export function ProposedRevisionEditor({ settingCase }: { settingCase: SettingCa
         <button
           type="button"
           onClick={save}
-          className="inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-3.5 py-2 text-xs font-semibold text-white hover:bg-blue-700"
+          className="inline-flex items-center gap-1.5 rounded-md bg-brand-ink px-3.5 py-2 text-xs font-semibold text-white hover:bg-black"
         >
           <Save className="h-3.5 w-3.5" /> Simpan versi baru
         </button>

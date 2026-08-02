@@ -206,10 +206,10 @@ export function VendorImportView() {
   return (
     <div className="space-y-5">
       <header className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="bg-gradient-to-r from-slate-950 via-indigo-950 to-blue-950 px-6 py-6 text-white">
+        <div className="bg-gradient-to-r from-brand-ink via-brand-ink-2 to-slate-900 px-6 py-6 text-white">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.15em] text-blue-300">
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.15em] text-brand-accent">
                 <Layers3 className="h-4 w-4" />
                 MVP 1C · VENDOR IMPORT
               </div>
@@ -319,11 +319,11 @@ export function VendorImportView() {
             title="1. Source document"
             subtitle="Pemrosesan berlangsung lokal di browser."
           >
-            <label className="flex min-h-36 cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 px-5 py-6 text-center hover:border-blue-400 hover:bg-blue-50">
+            <label className="flex min-h-36 cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 px-5 py-6 text-center hover:border-brand-accent/50 hover:bg-brand-accent/10">
               {busyLabel ? (
-                <Loader2 className="h-7 w-7 animate-spin text-blue-600" />
+                <Loader2 className="h-7 w-7 animate-spin text-brand-accent-dark" />
               ) : (
-                <Upload className="h-7 w-7 text-blue-600" />
+                <Upload className="h-7 w-7 text-brand-accent-dark" />
               )}
               <span className="mt-3 text-sm font-semibold text-slate-800">
                 {busyLabel || "Pilih .set, .rio/.xrio/.xml, atau TAP .pdf"}
@@ -351,12 +351,12 @@ export function VendorImportView() {
               </div>
             )}
             {result && result.adapterId !== "tap-pdf-profile-v1" && (
-              <div className="mt-4 space-y-3 rounded-xl border border-blue-200 bg-blue-50 p-3">
+              <div className="mt-4 space-y-3 rounded-xl border border-brand-accent/40 bg-brand-accent/10 p-3">
                 <div>
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-blue-800">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-brand-accent-dark">
                     Acquisition manifest
                   </div>
-                  <p className="mt-1 text-[10px] leading-4 text-blue-700">
+                  <p className="mt-1 text-[10px] leading-4 text-brand-accent-dark">
                     Lengkapi semua field agar file berwenang sebagai actual readback.
                     Tanpa manifest, hasil tetap masuk sebagai derived candidate.
                   </p>
@@ -368,11 +368,11 @@ export function VendorImportView() {
                   <ManifestInput label="Tool version" value={toolVersion} onChange={setToolVersion} />
                   <label className="text-[10px] text-slate-600">
                     Read from IED at
-                    <input type="datetime-local" value={readAt} onChange={(event) => setReadAt(event.target.value)} className="mt-1 w-full rounded-lg border border-blue-200 bg-white px-2 py-1.5 text-xs" />
+                    <input type="datetime-local" value={readAt} onChange={(event) => setReadAt(event.target.value)} className="mt-1 w-full rounded-lg border border-brand-accent/40 bg-white px-2 py-1.5 text-xs" />
                   </label>
                   <div className="text-[10px] text-slate-600">
                     SHA-256
-                    <div className="mt-1 truncate rounded-lg border border-blue-200 bg-white px-2 py-2 font-mono text-[9px]" title={fileChecksum}>{fileChecksum || "calculatingâ€¦"}</div>
+                    <div className="mt-1 truncate rounded-lg border border-brand-accent/40 bg-white px-2 py-2 font-mono text-[9px]" title={fileChecksum}>{fileChecksum || "calculatingâ€¦"}</div>
                   </div>
                 </div>
               </div>
@@ -447,7 +447,7 @@ export function VendorImportView() {
                         ? "border-red-200 bg-red-50 text-red-700"
                         : diagnostic.level === "warning"
                           ? "border-amber-200 bg-amber-50 text-amber-800"
-                          : "border-blue-200 bg-blue-50 text-blue-700"
+                          : "border-brand-accent/40 bg-brand-accent/10 text-brand-accent-dark"
                     }`}
                   >
                     {diagnostic.level === "info" ? (
@@ -469,7 +469,7 @@ export function VendorImportView() {
                   type="button"
                   onClick={handoff}
                   disabled={result.coverage.decodedRecords === 0}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-blue-700 disabled:opacity-40"
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-brand-ink px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-black disabled:opacity-40"
                 >
                   Kirim ke Crosscheck 1B
                   <ArrowRight className="h-3.5 w-3.5" />
@@ -489,7 +489,7 @@ export function VendorImportView() {
                     value={query}
                     onChange={(event) => setQuery(event.target.value)}
                     placeholder="Cari address, parameter, value…"
-                    className="w-full rounded-lg border border-slate-300 py-2 pl-9 pr-3 text-xs outline-none focus:border-blue-500"
+                    className="w-full rounded-lg border border-slate-300 py-2 pl-9 pr-3 text-xs outline-none focus:border-brand-accent"
                   />
                 </label>
                 <Select
@@ -583,7 +583,7 @@ function RelayCatalogPanel({
       title="Installed relay catalog"
       subtitle={`${summary.sourceWorkbook} · ${summary.sourceSheets.length} source sheets`}
       right={
-        <span className="rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-[10px] font-semibold text-blue-700">
+        <span className="rounded-full border border-brand-accent/40 bg-brand-accent/10 px-2.5 py-1 text-[10px] font-semibold text-brand-accent-dark">
           Populated from UPT workbook
         </span>
       }
@@ -612,7 +612,7 @@ function RelayCatalogPanel({
               value={query}
               onChange={(event) => onQueryChange(event.target.value)}
               placeholder="Cari brand, model, fungsi, atau jenis bay…"
-              className="w-full rounded-lg border border-slate-300 py-2 pl-9 pr-3 text-xs outline-none focus:border-blue-500"
+              className="w-full rounded-lg border border-slate-300 py-2 pl-9 pr-3 text-xs outline-none focus:border-brand-accent"
             />
           </label>
           <div className="mt-2 max-h-[420px] overflow-auto rounded-xl border border-slate-200">
@@ -637,7 +637,7 @@ function RelayCatalogPanel({
                       key={`${entry.brand}:${entry.model}`}
                       onClick={() => onSelectModel(entry)}
                       className={`cursor-pointer border-t border-slate-100 ${
-                        active ? "bg-blue-50" : "hover:bg-slate-50"
+                        active ? "bg-brand-accent/10" : "hover:bg-slate-50"
                       }`}
                     >
                       <td className="px-3 py-2">
@@ -902,7 +902,7 @@ function ParameterRow({ parameter }: { parameter: VendorImportParameter }) {
           {parameter.functionGroup} · {parameter.rawValue}
         </div>
       </td>
-      <td className="px-3 py-2 font-mono text-[10px] text-blue-700">
+      <td className="px-3 py-2 font-mono text-[10px] text-brand-accent-dark">
         {parameter.canonicalKey ?? "—"}
       </td>
       <td className="px-3 py-2 font-mono text-slate-700">
@@ -998,7 +998,7 @@ function ContractRow({
   children: ReactNode;
 }) {
   return (
-    <div className="border-l-2 border-blue-300 pl-3">
+    <div className="border-l-2 border-brand-accent/50 pl-3">
       <div className="font-semibold text-slate-800">{label}</div>
       <div className="mt-0.5 leading-4 text-slate-500">{children}</div>
     </div>
@@ -1026,7 +1026,7 @@ function Select({
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className={`w-full appearance-none rounded-lg border border-slate-300 py-2 pr-8 text-xs text-slate-700 outline-none focus:border-blue-500 ${
+        className={`w-full appearance-none rounded-lg border border-slate-300 py-2 pr-8 text-xs text-slate-700 outline-none focus:border-brand-accent ${
           icon ? "pl-9" : "pl-3"
         }`}
       >
@@ -1056,7 +1056,7 @@ function ManifestInput({
       <input
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="mt-1 w-full rounded-lg border border-blue-200 bg-white px-2 py-1.5 text-xs"
+        className="mt-1 w-full rounded-lg border border-brand-accent/40 bg-white px-2 py-1.5 text-xs"
       />
     </label>
   );

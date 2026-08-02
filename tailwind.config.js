@@ -38,7 +38,8 @@ export default {
         brand: {
           accent: "#ffb100",
           "accent-dark": "#c98400",
-          ink: "#0b0f14",
+          ink: "#0c1220",
+          "ink-2": "#1a2436",
         },
         zone1: {
           DEFAULT: "#dc2626",

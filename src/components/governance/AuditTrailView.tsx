@@ -53,8 +53,8 @@ export function AuditTrailView() {
       <section className="bg-white border border-slate-200 rounded-lg p-4">
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div className="flex items-start gap-3">
-            <div className="rounded-md bg-blue-50 border border-blue-200 p-2">
-              <ShieldCheck className="w-5 h-5 text-blue-600" />
+            <div className="rounded-md bg-brand-accent/10 border border-brand-accent/40 p-2">
+              <ShieldCheck className="w-5 h-5 text-brand-accent-dark" />
             </div>
             <div>
               <h2 className="text-sm font-semibold text-slate-900">Audit Trail</h2>

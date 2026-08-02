@@ -329,7 +329,7 @@ export function SettingCaseWizard({
                 Transaksi pertama membuat Change Request, bukan kalkulasi.
               </p>
               {preset?.subjectLineId && (
-                <div className="mt-2 inline-flex rounded border border-blue-200 bg-blue-50 px-2 py-1 font-mono text-[10px] font-semibold text-blue-700">
+                <div className="mt-2 inline-flex rounded border border-brand-accent/40 bg-brand-accent/10 px-2 py-1 font-mono text-[10px] font-semibold text-brand-accent-dark">
                   Scope dari Data Teknis · {preset.subjectLabel ?? preset.subjectLineId}
                 </div>
               )}
@@ -347,8 +347,8 @@ export function SettingCaseWizard({
         <div className="flex-1 overflow-y-auto px-5 py-4">
           {step === 1 && (
             <div className="space-y-4">
-              <div className="rounded-md border border-blue-200 bg-blue-50 px-3 py-2.5">
-                <div className="font-mono text-[10px] font-semibold uppercase tracking-[0.08em] text-blue-700">
+              <div className="rounded-md border border-brand-accent/40 bg-brand-accent/10 px-3 py-2.5">
+                <div className="font-mono text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-accent-dark">
                   Aktivitas
                 </div>
                 <div className="mt-0.5 text-sm font-semibold text-slate-900">
@@ -395,7 +395,7 @@ export function SettingCaseWizard({
                         onClick={() => setCrosscheckMode(option.value)}
                         className={`rounded-lg border p-3 text-left ${
                           crosscheckMode === option.value
-                            ? "border-blue-500 bg-blue-50"
+                            ? "border-brand-accent bg-brand-accent/10"
                             : "border-slate-200"
                         }`}
                       >
@@ -420,7 +420,7 @@ export function SettingCaseWizard({
                       onClick={() => setLifecycleIntent("permanent")}
                       className={`rounded-lg border p-3 text-left ${
                         lifecycleIntent === "permanent"
-                          ? "border-blue-500 bg-blue-50"
+                          ? "border-brand-accent bg-brand-accent/10"
                           : "border-slate-200"
                       }`}
                     >
@@ -625,7 +625,7 @@ export function SettingCaseWizard({
                     <label
                       key={kind}
                       className={`flex items-center gap-2 rounded-lg border p-2.5 text-sm ${
-                        checked ? "border-blue-500 bg-blue-50" : "border-slate-200"
+                        checked ? "border-brand-accent bg-brand-accent/10" : "border-slate-200"
                       } ${isPrimary ? "cursor-default" : "cursor-pointer"}`}
                     >
                       <input
@@ -671,7 +671,7 @@ export function SettingCaseWizard({
                     type="button"
                     onClick={() => setSubjectBayId(bay.bayId === subjectBayId ? null : bay.bayId)}
                     className={`flex w-full items-center justify-between px-3 py-2 text-left text-sm ${
-                      subjectBayId === bay.bayId ? "bg-blue-50" : "hover:bg-slate-50"
+                      subjectBayId === bay.bayId ? "bg-brand-accent/10" : "hover:bg-slate-50"
                     }`}
                   >
                     <div className="min-w-0">
@@ -689,7 +689,7 @@ export function SettingCaseWizard({
                         readiness={bay.readiness}
                       />
                       {subjectBayId === bay.bayId && (
-                        <CheckCircle2 className="h-4 w-4 shrink-0 text-blue-600" />
+                        <CheckCircle2 className="h-4 w-4 shrink-0 text-brand-accent-dark" />
                       )}
                     </div>
                   </button>
@@ -783,7 +783,7 @@ export function SettingCaseWizard({
                           }
                           className={`rounded-full border px-2.5 py-1 text-[11px] font-medium ${
                             on
-                              ? "border-blue-500 bg-blue-600 text-white"
+                              ? "border-brand-accent bg-brand-ink text-white"
                               : "border-slate-300 text-slate-600 hover:border-slate-400"
                           }`}
                         >
@@ -806,7 +806,7 @@ export function SettingCaseWizard({
                   dibekukan pada stage berikutnya — bukti bisa ditambah dari detail case.
                 </p>
                 {entryKind === "crosscheck" && (
-                  <p className="mt-2 rounded border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-800">
+                  <p className="mt-2 rounded border border-brand-accent/40 bg-brand-accent/10 px-3 py-2 text-xs text-brand-accent-dark">
                     {crosscheckMode === "issued_tap_document_audit"
                       ? "Document Audit membutuhkan evidence bertipe TAP Setting/PDF issued."
                       : "Actual Relay Verification membutuhkan Relay Export; PDF TAP tidak dianggap actual readback."}
@@ -867,7 +867,7 @@ export function SettingCaseWizard({
               type="button"
               disabled={step === 1 && !canLeaveStep1}
               onClick={() => setStep(stepOrder[stepIndex + 1])}
-              className="inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-4 py-1.5 text-sm font-medium text-white disabled:opacity-40"
+              className="inline-flex items-center gap-1.5 rounded-md bg-brand-ink px-4 py-1.5 text-sm font-medium text-white hover:bg-black disabled:opacity-40"
             >
               Lanjut <ArrowRight className="h-3.5 w-3.5" />
             </button>

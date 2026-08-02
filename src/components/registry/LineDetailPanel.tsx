@@ -84,15 +84,15 @@ export function LineDetailPanel({ line, nodes, scopeTitle, networkGraph, status 
   };
 
   return (
-    <section className="bg-white border-2 border-blue-300 rounded-lg overflow-hidden shadow-sm">
-      <div className="border-b border-blue-200 px-4 py-3 bg-blue-50 flex items-center justify-between gap-3 flex-wrap">
+    <section className="bg-white border-2 border-brand-accent/40 rounded-lg overflow-hidden shadow-sm">
+      <div className="border-b border-brand-accent/40 px-4 py-3 bg-brand-accent/10 flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-3">
-          <CircuitBoard className="w-5 h-5 text-blue-700" />
+          <CircuitBoard className="w-5 h-5 text-brand-accent-dark" />
           <div>
-            <div className="text-sm font-semibold text-blue-900">
+            <div className="text-sm font-semibold text-brand-accent-dark">
               Line Detail: {fromNode?.shortCode} - {toNode?.shortCode} {line.circuit}
             </div>
-            <div className="text-[11px] text-blue-700">
+            <div className="text-[11px] text-brand-accent-dark">
               {scopeTitle} | {line.relayMain || "no relay info"} | Xline {line.lineXOhm?.toFixed(3) ?? "?"} ohm
               {line.physicalLengthKm ? ` | ${line.physicalLengthKm} km` : ""}
             </div>
@@ -283,7 +283,7 @@ function ActionButton({
       className={`inline-flex items-center justify-center gap-1.5 rounded border px-2 py-1 text-[11px] font-medium transition-colors ${
         disabled
           ? "border-slate-200 bg-slate-50 text-slate-300 cursor-not-allowed"
-          : "border-blue-300 bg-white text-blue-700 hover:bg-blue-50"
+          : "border-brand-accent/40 bg-white text-brand-accent-dark hover:bg-brand-accent/10"
       }`}
     >
       {icon}

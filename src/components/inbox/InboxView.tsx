@@ -477,10 +477,10 @@ export function InboxView() {
   if (openedFromCaseId && openedFromCase) {
     return (
       <div className="space-y-4">
-        <section className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3">
-          <div className="text-[10px] font-semibold uppercase tracking-wider text-blue-700">Case-scoped workspace</div>
-          <h2 className="mt-1 text-sm font-semibold text-blue-950">{openedFromCase.title}</h2>
-          <p className="mt-1 text-xs text-blue-800">
+        <section className="rounded-lg border border-brand-accent/40 bg-brand-accent/10 px-4 py-3">
+          <div className="text-[10px] font-semibold uppercase tracking-wider text-brand-accent-dark">Case-scoped workspace</div>
+          <h2 className="mt-1 text-sm font-semibold text-brand-ink">{openedFromCase.title}</h2>
+          <p className="mt-1 text-xs text-brand-accent-dark">
             Hanya kandidat topology yang menyentuh subject bay/line atau GI pada scope case ini yang ditampilkan. Mapping queue global tidak ikut dimuat.
           </p>
         </section>
@@ -510,19 +510,19 @@ export function InboxView() {
   if (!showRegistryQueues) {
     return (
       <div className="space-y-4">
-        <section className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-4">
+        <section className="rounded-lg border border-brand-accent/40 bg-brand-accent/10 px-4 py-4">
           <div className="flex items-start gap-3">
-            <div className="rounded-md border border-blue-200 bg-white p-2">
-              <Inbox className="h-5 w-5 text-blue-600" />
+            <div className="rounded-md border border-brand-accent/40 bg-white p-2">
+              <Inbox className="h-5 w-5 text-brand-accent-dark" />
             </div>
             <div>
-              <div className="font-mono text-[10px] font-semibold uppercase tracking-wider text-blue-700">
+              <div className="font-mono text-[10px] font-semibold uppercase tracking-wider text-brand-accent-dark">
                 Case-driven data quality
               </div>
-              <h2 className="mt-1 text-sm font-semibold text-blue-950">
+              <h2 className="mt-1 text-sm font-semibold text-brand-ink">
                 Pilih Case atau Study yang sedang dikerjakan
               </h2>
-              <p className="mt-1 max-w-3xl text-xs text-blue-800">
+              <p className="mt-1 max-w-3xl text-xs text-brand-accent-dark">
                 Halaman awal hanya menampilkan scope kerja. Buka Data Quality Queue dari
                 detail Setting Case untuk workspace yang benar-benar terisolasi ke case itu.
               </p>
@@ -589,8 +589,8 @@ export function InboxView() {
       <section className="bg-white border border-slate-200 rounded-lg p-4">
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div className="flex items-start gap-3">
-            <div className="rounded-md bg-blue-50 border border-blue-200 p-2">
-              <Inbox className="w-5 h-5 text-blue-600" />
+            <div className="rounded-md bg-brand-accent/10 border border-brand-accent/40 p-2">
+              <Inbox className="w-5 h-5 text-brand-accent-dark" />
             </div>
             <div>
               <h2 className="text-sm font-semibold text-slate-900">Status Ringkas</h2>
@@ -624,7 +624,7 @@ export function InboxView() {
             label="Coverage Expansion"
             value={counts.expansion}
             sub="Substation belum di network graph"
-            icon={<Plus className="w-4 h-4 text-blue-600" />}
+            icon={<Plus className="w-4 h-4 text-brand-accent-dark" />}
             tone="blue"
           />
           <Tile
@@ -873,7 +873,7 @@ export function InboxView() {
               <div className="text-[11px] text-slate-500">Records yang remote substation-nya belum di network graph. One-click [+ Add Substation + Relation] untuk tumbuh.</div>
             </div>
           </div>
-          <span className="text-sm font-semibold px-2.5 py-0.5 rounded border border-blue-200 bg-blue-50 text-blue-700">
+          <span className="text-sm font-semibold px-2.5 py-0.5 rounded border border-brand-accent/40 bg-brand-accent/10 text-brand-accent-dark">
             {needsSubstation.length}
           </span>
         </button>
@@ -946,7 +946,7 @@ function CandidateTable({
                   <button
                     type="button"
                     onClick={() => onOpenLine(row.matchedLineId)}
-                    className="text-[10px] text-blue-600 hover:underline mt-1"
+                    className="text-[10px] text-brand-accent-dark hover:text-brand-ink hover:underline mt-1"
                   >
                     open in Line Registry →
                   </button>
@@ -1073,7 +1073,7 @@ function ExpansionTable({
                       <button
                         type="button"
                         onClick={() => onAction(row)}
-                        className="inline-flex items-center justify-center gap-1.5 rounded border border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 px-2 py-1 text-[11px] font-medium transition-colors"
+                        className="inline-flex items-center justify-center gap-1.5 rounded border border-brand-accent/40 bg-brand-accent/10 text-brand-accent-dark hover:bg-brand-accent/20 px-2 py-1 text-[11px] font-medium transition-colors"
                       >
                         <Plus className="w-3.5 h-3.5" />
                         {actionLabel}
@@ -1165,17 +1165,17 @@ function PrioritySection({
   const headerCls = {
     red: "bg-red-50 border-red-200 text-red-900",
     amber: "bg-amber-50 border-amber-200 text-amber-900",
-    blue: "bg-blue-50 border-blue-200 text-blue-900",
+    blue: "bg-brand-accent/10 border-brand-accent/40 text-brand-accent-dark",
   }[tone];
   const borderCls = {
     red: "border-red-200",
     amber: "border-amber-200",
-    blue: "border-blue-200",
+    blue: "border-brand-accent/40",
   }[tone];
   const countCls = {
     red: "bg-red-100 text-red-800 border-red-300",
     amber: "bg-amber-100 text-amber-800 border-amber-300",
-    blue: "bg-blue-100 text-blue-800 border-blue-300",
+    blue: "bg-brand-accent/20 text-brand-accent-dark border-brand-accent/40",
   }[tone];
   return (
     <section className={`bg-white border-2 ${borderCls} rounded-lg overflow-hidden`}>
@@ -1390,7 +1390,7 @@ function CaseScopedGraphBuilderSection() {
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="text-sm font-semibold text-slate-900">{context.title}</span>
-                        <span className="rounded border border-blue-200 bg-blue-50 px-1.5 py-0.5 text-[10px] uppercase text-blue-700">{context.kind}</span>
+                        <span className="rounded border border-brand-accent/40 bg-brand-accent/10 px-1.5 py-0.5 text-[10px] uppercase text-brand-accent-dark">{context.kind}</span>
                       </div>
                       <div className="mt-0.5 text-xs text-slate-500">
                         {context.subjectLabel ?? context.subjectLineId ?? `${context.substationIds.length} GI dalam scope`}
@@ -1430,7 +1430,7 @@ function CaseScopedGraphBuilderSection() {
                           <div className="mt-3 flex flex-wrap gap-1.5 text-[10px]">
                             <span className="rounded border border-slate-200 bg-white px-1.5 py-0.5 text-slate-600">{candidate.group.indicators.topology.replace(/_/g, " ")}</span>
                             <span className="rounded border border-slate-200 bg-white px-1.5 py-0.5 text-slate-600">Electrical {candidate.group.indicators.electricalCoveragePercent}%</span>
-                            <span className="rounded border border-blue-200 bg-blue-50 px-1.5 py-0.5 text-blue-700">Setting {candidate.group.indicators.settingOverlayCoveragePercent}%</span>
+                            <span className="rounded border border-brand-accent/40 bg-brand-accent/10 px-1.5 py-0.5 text-brand-accent-dark">Setting {candidate.group.indicators.settingOverlayCoveragePercent}%</span>
                             <span className="rounded border border-violet-200 bg-violet-50 px-1.5 py-0.5 text-violet-700">{candidate.group.indicators.evidenceSourceCount} evidence</span>
                           </div>
                           <div className="mt-2 text-[11px] text-slate-500">
@@ -1491,7 +1491,7 @@ function TopologyCardStatus({
 }) {
   if (decision === "confirmed") return <span className="rounded border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] text-emerald-700">User approved</span>;
   if (decision === "rejected") return <span className="rounded border border-red-200 bg-red-50 px-2 py-0.5 text-[10px] text-red-700">Rejected</span>;
-  if (inMaster) return <span className="rounded border border-blue-200 bg-blue-50 px-2 py-0.5 text-[10px] text-blue-700">Source anchored</span>;
+  if (inMaster) return <span className="rounded border border-brand-accent/40 bg-brand-accent/10 px-2 py-0.5 text-[10px] text-brand-accent-dark">Source anchored</span>;
   return <span className="rounded border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] text-amber-700">Needs approval</span>;
 }
 
@@ -1661,7 +1661,7 @@ function GraphBuildGroupRow({
             </p>
             <div className="mt-1 flex flex-wrap gap-1.5 text-[10px]">
               <span className="rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-slate-600">Electrical {indicators.electricalCoveragePercent}%</span>
-              <span className="rounded border border-blue-200 bg-blue-50 px-1.5 py-0.5 text-blue-700">Setting overlay {indicators.settingOverlayCoveragePercent}%</span>
+              <span className="rounded border border-brand-accent/40 bg-brand-accent/10 px-1.5 py-0.5 text-brand-accent-dark">Setting overlay {indicators.settingOverlayCoveragePercent}%</span>
               <span className="rounded border border-violet-200 bg-violet-50 px-1.5 py-0.5 text-violet-700">
                 {indicators.evidenceSourceCount} evidence source{indicators.reciprocalEvidence ? " · reciprocal" : ""}
               </span>
@@ -1779,7 +1779,7 @@ function Tile({
     red: "bg-red-50 border-red-200 text-red-900",
     slate: "bg-slate-50 border-slate-200 text-slate-800",
     emerald: "bg-emerald-50 border-emerald-200 text-emerald-900",
-    blue: "bg-blue-50 border-blue-200 text-blue-900",
+    blue: "bg-brand-accent/10 border-brand-accent/40 text-brand-accent-dark",
   }[tone];
   return (
     <div className={`rounded-md border p-3 ${cls}`}>

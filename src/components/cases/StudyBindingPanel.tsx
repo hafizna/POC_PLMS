@@ -72,7 +72,7 @@ export function StudyBindingPanel({ settingCase }: { settingCase: SettingCase })
       <div className="flex flex-wrap items-start justify-between gap-3 border-b border-line bg-panel px-4 py-3">
         <div>
           <div className="flex items-center gap-2">
-            <GitBranch className="h-4 w-4 text-blue-700" />
+            <GitBranch className="h-4 w-4 text-brand-accent-dark" />
             <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.09em] text-ink">
               Study Scenario Package
             </p>
@@ -137,7 +137,7 @@ export function StudyBindingPanel({ settingCase }: { settingCase: SettingCase })
                   key={scenario.id}
                   className={`flex cursor-pointer items-start gap-2 rounded border p-2.5 ${
                     checked
-                      ? "border-blue-400 bg-blue-50"
+                      ? "border-brand-accent/40 bg-brand-accent/10"
                       : "border-line bg-white"
                   }`}
                 >
@@ -164,7 +164,7 @@ export function StudyBindingPanel({ settingCase }: { settingCase: SettingCase })
             type="button"
             disabled={scenarioIds.length === 0 || !preview}
             onClick={() => savePackage(settingCase.id, scenarioIds)}
-            className="mt-3 inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-3.5 py-2 text-xs font-semibold text-white disabled:opacity-40"
+            className="mt-3 inline-flex items-center gap-1.5 rounded-md bg-brand-ink px-3.5 py-2 text-xs font-semibold text-white hover:bg-black disabled:opacity-40"
           >
             <LockKeyhole className="h-3.5 w-3.5" />
             Simpan evaluasi package

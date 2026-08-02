@@ -267,13 +267,13 @@ export function StudyDashboardView() {
       <section className="bg-white border border-slate-200 rounded-lg p-5">
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div className="flex items-start gap-4">
-            <div className="rounded-lg bg-blue-600 p-3 shadow-sm">
-              <ClipboardList className="w-6 h-6 text-white" />
+            <div className="rounded-lg bg-brand-ink p-3 shadow-sm">
+              <ClipboardList className="w-6 h-6 text-brand-accent" />
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-lg font-bold text-slate-900">Study Dashboard</h2>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 font-semibold uppercase tracking-wider">
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-brand-accent/10 text-brand-accent-dark font-semibold uppercase tracking-wider">
                   Working View
                 </span>
               </div>
@@ -295,7 +295,7 @@ export function StudyDashboardView() {
                   setActiveStudy(study.id);
                   if (study.subjectLineId) void selectLine(study.subjectLineId);
                 }}
-                className="appearance-none pl-3 pr-8 py-2 text-sm font-medium border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white shadow-sm"
+                className="appearance-none pl-3 pr-8 py-2 text-sm font-medium border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-accent/30 bg-white shadow-sm"
               >
                 {studies.length === 0 && <option value="">No Active Studies</option>}
                 {studies.map(s => (
@@ -306,7 +306,7 @@ export function StudyDashboardView() {
             </div>
             <button
               onClick={() => setIsWizardOpen(true)}
-              className="inline-flex items-center gap-2 px-3 py-2 bg-slate-900 text-white text-sm font-medium rounded-md hover:bg-slate-800 shadow-sm transition-colors"
+              className="inline-flex items-center gap-2 px-3 py-2 bg-brand-ink text-white text-sm font-medium rounded-md hover:bg-black shadow-sm transition-colors"
             >
               <Plus className="w-4 h-4" />
               New Study
@@ -330,7 +330,7 @@ export function StudyDashboardView() {
             </p>
             <button
               onClick={() => setIsWizardOpen(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 shadow-sm transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-brand-ink text-white text-sm font-medium rounded-md hover:bg-black shadow-sm transition-colors"
             >
               <Plus className="w-4 h-4" />
               Start Study Wizard
@@ -411,7 +411,7 @@ export function StudyDashboardView() {
                 <input
                   type="text"
                   placeholder="Filter GI, Bay, IED, Fungsi..."
-                  className="pl-9 pr-4 py-1.5 text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 w-64"
+                  className="pl-9 pr-4 py-1.5 text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-accent/30 w-64"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                 />
@@ -559,19 +559,19 @@ function StudyScenarioPanel({
   return (
     <section
       className={`rounded-lg border overflow-hidden ${
-        blocked ? "border-amber-300 bg-amber-50/40" : "border-blue-200 bg-white"
+        blocked ? "border-amber-300 bg-amber-50/40" : "border-brand-accent/40 bg-white"
       }`}
     >
       <div
         className={`px-4 py-3 border-b flex items-start justify-between gap-4 flex-wrap ${
-          blocked ? "border-amber-200 bg-amber-50" : "border-blue-200 bg-blue-50"
+          blocked ? "border-amber-200 bg-amber-50" : "border-brand-accent/40 bg-brand-accent/10"
         }`}
       >
         <div className="flex items-start gap-2">
           {blocked ? (
             <AlertTriangle className="w-4 h-4 text-amber-700 mt-0.5" />
           ) : (
-            <Database className="w-4 h-4 text-blue-700 mt-0.5" />
+            <Database className="w-4 h-4 text-brand-accent-dark mt-0.5" />
           )}
           <div>
             <h3 className="text-xs uppercase tracking-wider font-semibold text-slate-800">
@@ -585,7 +585,7 @@ function StudyScenarioPanel({
         <select
           value={scenarioId ?? ""}
           onChange={(event) => onChange(event.target.value || null)}
-          className="min-w-72 bg-white text-xs px-3 py-2 rounded border border-slate-300 focus:border-blue-500 focus:outline-none"
+          className="min-w-72 bg-white text-xs px-3 py-2 rounded border border-slate-300 focus:border-brand-accent focus:outline-none"
         >
           <option value="">Select scenario — fault lookup blocked</option>
           {scenarios.map((scenario) => (
@@ -729,7 +729,7 @@ function GuidedFlowPanel({
             Jalur kerja utama dari dokumen sumber sampai verified report.
           </div>
         </div>
-        <span className="text-[10px] px-2 py-1 rounded border border-blue-200 bg-blue-50 text-blue-700">
+        <span className="text-[10px] px-2 py-1 rounded border border-brand-accent/40 bg-brand-accent/10 text-brand-accent-dark">
           {steps.filter((step) => step.done).length}/{steps.length} ready
         </span>
       </div>
@@ -883,7 +883,7 @@ function ActionPill({
       className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-[4px] text-[11px] font-medium border transition-colors ${
         disabled
           ? "border-slate-100 bg-slate-50 text-slate-300 cursor-not-allowed"
-          : "border-slate-200 bg-white text-slate-700 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 shadow-sm"
+          : "border-slate-200 bg-white text-slate-700 hover:border-brand-accent/40 hover:bg-brand-accent/10 hover:text-brand-accent-dark shadow-sm"
       }`}
     >
       {icon}

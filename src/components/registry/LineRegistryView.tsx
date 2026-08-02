@@ -147,7 +147,7 @@ export function LineRegistryView() {
           <div className="text-xs text-slate-600">
             Source: <span className="font-semibold text-slate-800">confirmed master graph</span>. Memilih relasi tidak mengaktifkan corridor demo; Calculate/Coverage membuat atau memakai Study untuk relasi itu.
           </div>
-          <span className="text-[10px] px-2 py-1 rounded border border-blue-200 bg-blue-50 text-blue-700">
+          <span className="text-[10px] px-2 py-1 rounded border border-brand-accent/40 bg-brand-accent/10 text-brand-accent-dark">
             {lines.length} confirmed relations
           </span>
         </div>
@@ -208,15 +208,15 @@ export function LineRegistryView() {
                     key={line.id}
                     onClick={() => void selectLine(line.id)}
                     className={`border-b border-slate-100 last:border-b-0 cursor-pointer transition-colors ${
-                      isActive ? "bg-blue-50" : "hover:bg-slate-50"
+                      isActive ? "bg-brand-accent/10" : "hover:bg-slate-50"
                     }`}
                   >
                     <td className="px-4 py-3 align-top">
                       <div className="flex items-center gap-2 flex-wrap">
-                        {isActive && <span className="w-1.5 h-4 rounded-sm bg-blue-500" aria-hidden />}
+                        {isActive && <span className="w-1.5 h-4 rounded-sm bg-brand-accent" aria-hidden />}
                         <div className="font-semibold text-slate-900">{from?.shortCode} - {to?.shortCode} {line.circuit}</div>
                         {promoted && (
-                          <span className="text-[10px] px-1.5 py-0.5 rounded border border-blue-200 bg-blue-50 text-blue-700">import-backed</span>
+                          <span className="text-[10px] px-1.5 py-0.5 rounded border border-brand-accent/40 bg-brand-accent/10 text-brand-accent-dark">import-backed</span>
                         )}
                       </div>
                       <div className="text-xs text-slate-500 mt-0.5">
@@ -292,7 +292,7 @@ export function LineRegistryView() {
                       <ConfidenceBadge confidence={line.confidence} />
                       <div className="text-xs text-slate-500 mt-2">{line.completeness}% complete</div>
                       {promoted && (
-                        <div className="text-[10px] text-blue-700 mt-1">row {promoted.sourceRow} promoted</div>
+                        <div className="text-[10px] text-brand-accent-dark mt-1">row {promoted.sourceRow} promoted</div>
                       )}
                     </td>
                     <td className="px-4 py-3 align-top">
@@ -336,7 +336,7 @@ export function LineRegistryView() {
             <h3 className="text-xs uppercase tracking-wider font-semibold text-slate-600">Promoted LCD+DIST Settings</h3>
             <div className="text-[10px] text-slate-500 mt-0.5">Hasil import yang sudah cocok ke line relation, siap dipakai sebagai prefill calculation/comparison.</div>
           </div>
-          <span className="text-[10px] px-2 py-1 rounded border border-blue-200 bg-blue-50 text-blue-700">{promotedLines.length} promoted</span>
+          <span className="text-[10px] px-2 py-1 rounded border border-brand-accent/40 bg-brand-accent/10 text-brand-accent-dark">{promotedLines.length} promoted</span>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -455,7 +455,7 @@ function ActionButton({ label, icon, onClick, disabled }: { label: string; icon:
       className={`inline-flex items-center justify-center gap-1.5 rounded border px-2 py-1 text-[11px] font-medium transition-colors ${
         disabled
           ? "border-slate-200 bg-slate-50 text-slate-300 cursor-not-allowed"
-          : "border-slate-300 bg-white text-slate-700 hover:border-blue-300 hover:text-blue-700 hover:bg-blue-50"
+          : "border-slate-300 bg-white text-slate-700 hover:border-brand-accent/40 hover:text-brand-accent-dark hover:bg-brand-accent/10"
       }`}
     >
       {icon}

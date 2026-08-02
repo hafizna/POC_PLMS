@@ -107,14 +107,14 @@ export function CaseWorkQueueView() {
         <button
           type="button"
           onClick={() => setLocalWizardType("new_setting")}
-          className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-[13px] font-semibold text-white shadow-sm hover:bg-blue-700"
+          className="inline-flex items-center gap-2 rounded-md bg-brand-ink px-4 py-2 text-[13px] font-semibold text-white shadow-sm hover:bg-black"
         >
           <Calculator className="h-4 w-4" /> Targeted Recalculation
         </button>
         <button
           type="button"
           onClick={() => setLocalWizardType("crosscheck")}
-          className="inline-flex items-center gap-2 rounded-md border border-line bg-white px-4 py-2 text-[13px] font-semibold text-ink-2 hover:border-blue-300 hover:text-blue-700"
+          className="inline-flex items-center gap-2 rounded-md border border-line bg-white px-4 py-2 text-[13px] font-semibold text-ink-2 hover:border-brand-accent/40 hover:text-brand-accent-dark"
         >
           <GitCompareArrows className="h-4 w-4" /> Crosscheck Actual Setting
         </button>
@@ -163,7 +163,7 @@ export function CaseWorkQueueView() {
               <button
                 type="button"
                 onClick={() => setLocalWizardType("new_setting")}
-                className="mt-3 inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-3.5 py-2 text-xs font-semibold text-white"
+                className="mt-3 inline-flex items-center gap-1.5 rounded-md bg-brand-ink px-3.5 py-2 text-xs font-semibold text-white hover:bg-black"
               >
                 <Plus className="h-3.5 w-3.5" /> Buat case pertama
               </button>
@@ -262,12 +262,12 @@ function Kpi({
   return (
     <div
       className={`rounded-lg border p-3 ${
-        lead ? "border-[#b9d0fa] bg-[#eaf1fe]" : "border-line bg-white"
+        lead ? "border-brand-accent/40 bg-brand-accent/10" : "border-line bg-white"
       }`}
     >
       <div
         className={`font-mono text-[23px] font-bold leading-none tracking-[-0.02em] tabular-nums ${
-          tone === "gold" ? "text-amber-600" : lead ? "text-blue-600" : "text-ink"
+          tone === "gold" ? "text-amber-600" : lead ? "text-brand-accent-dark" : "text-ink"
         }`}
       >
         {value}

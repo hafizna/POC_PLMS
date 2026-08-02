@@ -27,12 +27,12 @@ export function NumberInput({
           {edited && (
             <span
               title="Edited from approved value"
-              className="w-1.5 h-1.5 bg-blue-500 rounded-full"
+              className="w-1.5 h-1.5 bg-brand-accent rounded-full"
             />
           )}
         </span>
       )}
-      <div className="flex items-center bg-white border border-slate-300 rounded focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500">
+      <div className="flex items-center bg-white border border-slate-300 rounded focus-within:border-brand-accent focus-within:ring-1 focus-within:ring-brand-accent/30">
         <input
           type="number"
           value={value}

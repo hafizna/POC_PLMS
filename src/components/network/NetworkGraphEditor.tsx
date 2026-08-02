@@ -133,7 +133,7 @@ export function NetworkGraphEditor({ caseId, networkGraph, override }: Props) {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-[10px] px-2 py-1 rounded border border-blue-200 bg-blue-50 text-blue-700">
+          <span className="text-[10px] px-2 py-1 rounded border border-brand-accent/40 bg-brand-accent/10 text-brand-accent-dark">
             {overrideCount} user-added
           </span>
           {undoStack.length > 0 && (
@@ -497,10 +497,10 @@ function EngineeringChangeSetCard({
               </div>
             </div>
             <div className="flex items-center gap-1.5">
-              <button type="button" disabled={!readiness.canGeneratePreview} onClick={() => downloadStaging("json")} className="text-[10px] px-2 py-1 rounded border border-blue-300 bg-white text-blue-700 disabled:opacity-40 disabled:cursor-not-allowed">
+              <button type="button" disabled={!readiness.canGeneratePreview} onClick={() => downloadStaging("json")} className="text-[10px] px-2 py-1 rounded border border-brand-accent/40 bg-white text-brand-accent-dark disabled:opacity-40 disabled:cursor-not-allowed">
                 JSON
               </button>
-              <button type="button" disabled={!readiness.canGeneratePreview} onClick={() => downloadStaging("csv")} className="text-[10px] px-2 py-1 rounded border border-blue-300 bg-white text-blue-700 disabled:opacity-40 disabled:cursor-not-allowed">
+              <button type="button" disabled={!readiness.canGeneratePreview} onClick={() => downloadStaging("csv")} className="text-[10px] px-2 py-1 rounded border border-brand-accent/40 bg-white text-brand-accent-dark disabled:opacity-40 disabled:cursor-not-allowed">
                 CSV
               </button>
               <button type="button" disabled={!readiness.canGeneratePreview} onClick={() => downloadStaging("dgs-preview")} className="text-[10px] px-2 py-1 rounded border border-amber-300 bg-white text-amber-700 disabled:opacity-40 disabled:cursor-not-allowed">
@@ -646,7 +646,7 @@ function AddSubstationForm({
           <select
             value={kind}
             onChange={(event) => setKind(event.target.value as SubstationKind)}
-            className="bg-white text-xs px-2 py-1 rounded border border-slate-300 focus:border-blue-500 focus:outline-none"
+            className="bg-white text-xs px-2 py-1 rounded border border-slate-300 focus:border-brand-accent focus:outline-none"
           >
             <option value="GI">GI</option>
             <option value="GIS">GIS</option>
@@ -658,7 +658,7 @@ function AddSubstationForm({
       <button
         type="button"
         onClick={submit}
-        className="mt-3 inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded border border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100"
+        className="mt-3 inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded border border-brand-accent/40 bg-brand-accent/10 text-brand-accent-dark hover:bg-brand-accent/20"
       >
         <Plus className="w-3.5 h-3.5" />
         Tambah substation
@@ -798,7 +798,7 @@ function AddRelationForm({
       <button
         type="button"
         onClick={submit}
-        className="mt-3 inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded border border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100"
+        className="mt-3 inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded border border-brand-accent/40 bg-brand-accent/10 text-brand-accent-dark hover:bg-brand-accent/20"
       >
         <Plus className="w-3.5 h-3.5" />
         Tambah relation
@@ -1083,7 +1083,7 @@ function AddIedForm({
       <button
         type="button"
         onClick={submit}
-        className="mt-3 inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded border border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100"
+        className="mt-3 inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded border border-brand-accent/40 bg-brand-accent/10 text-brand-accent-dark hover:bg-brand-accent/20"
       >
         <Plus className="w-3.5 h-3.5" />
         Tambah IED
@@ -1198,12 +1198,12 @@ function CtVtMasterForm({
         Current: {ctRatioText(effective.ct, selectedIed?.ctRatio)} | {vtRatioText(effective.vt, selectedIed?.vtRatio)}
         {selectedSub && selectedBay ? ` | ${selectedSub.shortCode} ${selectedBay.rawName}` : ""}
       </div>
-      {message && <div className="mt-2 text-[11px] text-blue-700">{message}</div>}
+      {message && <div className="mt-2 text-[11px] text-brand-accent-dark">{message}</div>}
       <div className="mt-3 flex items-center gap-2">
         <button
           type="button"
           onClick={submit}
-          className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded border border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100"
+          className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded border border-brand-accent/40 bg-brand-accent/10 text-brand-accent-dark hover:bg-brand-accent/20"
         >
           <Plus className="w-3.5 h-3.5" />
           Simpan CT/VT
@@ -1243,7 +1243,7 @@ function SelectField({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="bg-white text-xs px-2 py-1 rounded border border-slate-300 focus:border-blue-500 focus:outline-none"
+        className="bg-white text-xs px-2 py-1 rounded border border-slate-300 focus:border-brand-accent focus:outline-none"
       >
         {options.map((o) => (
           <option key={o.value} value={o.value}>
@@ -1274,7 +1274,7 @@ function TextField({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="bg-white text-xs px-2 py-1 rounded border border-slate-300 focus:border-blue-500 focus:outline-none"
+        className="bg-white text-xs px-2 py-1 rounded border border-slate-300 focus:border-brand-accent focus:outline-none"
       />
     </label>
   );

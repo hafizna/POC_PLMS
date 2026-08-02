@@ -42,7 +42,7 @@ export function MismatchBadge({
           {note}
           <button
             onClick={() => setOpen(false)}
-            className="block mt-2 text-blue-600 text-[10px] uppercase tracking-wider"
+            className="block mt-2 text-brand-accent-dark hover:text-brand-ink text-[10px] uppercase tracking-wider"
           >
             Close
           </button>
