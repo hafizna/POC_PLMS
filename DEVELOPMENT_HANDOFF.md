@@ -116,7 +116,7 @@ readback from the official vendor tool is the authority for actual device state.
   by this document and remains the actual confirmation gate.
 - Design only. No Cloudflare resource was provisioned by this slice.
 
-### SSOT-2D.1 — Local database pilot (in progress, slices 1-2 of N)
+### SSOT-2D.1 — Local database pilot (in progress, slices 1-3 of N — all four ports have D1 adapters)
 
 - `migrations/0001_setting_case.sql` defines `setting_case` and
   `case_stage_event` only, matching the ADR's §4.2 schema for those two
@@ -168,13 +168,33 @@ readback from the official vendor tool is the authority for actual device state.
   immutable, so the insert had to become `ON CONFLICT(id) DO UPDATE` on the
   mutable columns only (state/approval/validity/fingerprint), never on
   entity/payload/predecessor.
-- **Not done yet**: `SourceObservationRepository`, `AuditRepository`; wiring
-  either adapter into the actual app (Zustand still uses the
-  browser-localStorage adapter exclusively); provisioning a real D1 database
-  via `wrangler d1 create`; any migration/backfill script execution against
-  real pilot data; the `entity_current_observation` table the ADR's §4.4
-  flagged (needs its own authority-ordering design work first). Nothing in
-  this slice changes runtime behavior for end users.
+- Slice 3 (`source_observation` + `audit_event`,
+  `migrations/0003_source_observation_audit.sql`): `D1SourceObservationRepository`
+  and `D1AuditRepository` complete the four-port set
+  `ProtectionLifecycleRepositories` defines. Both are append/read only — no
+  update path exists on either port, matching `SourceObservation`'s
+  fully-readonly shape and the audit trail's append-only nature.
+  `src/repositories/d1/d1-protection-lifecycle-repositories.ts` assembles
+  all four D1 adapters behind one `createD1ProtectionLifecycleRepositories(
+  driver)` factory — pure wiring, takes the driver explicitly rather than
+  defaulting to one, so importing it has no side effect and does not
+  implicitly open a database connection.
+  `scripts/test-d1-source-observation-audit-repository.ts` (`npm run
+  test:d1-source-observation-audit-repository`) covers append/read,
+  `listByIds` order preservation and unknown-id filtering, scope-filtered
+  audit `list()`, and detached reads. Same bug class as slice 1
+  (`note: undefined` vs. an absent key) resurfaced on `externalId`/
+  `scope`/`targetId`/`detail` and was fixed the same way — omit the key
+  entirely rather than assign `undefined`.
+- **Not done yet**: wiring any D1 adapter into the actual app (Zustand still
+  uses the browser-localStorage adapter exclusively); provisioning a real D1
+  database via `wrangler d1 create`; any migration/backfill script execution
+  against real pilot data; the `entity_current_observation` table the ADR's
+  §4.4 flagged (needs its own authority-ordering design work first). Nothing
+  in this slice changes runtime behavior for end users. All four
+  `ProtectionLifecycleRepositories` ports now have a D1-shaped adapter with
+  a passing parity regression — the remaining SSOT-2D.1 work is seeding a
+  real dataset and the backfill spike, not more port coverage.
 
 ## 4. Important Existing Engineering Capability
 
@@ -248,17 +268,19 @@ Candidate authoritative records (as designed in the ADR):
 Explorer grids, KPI counts, readiness summaries, and Asset 360 are projections,
 not directly editable authoritative tables.
 
-### SSOT-2D.1 — Local database pilot (in progress — slices 1-2 of N landed)
+### SSOT-2D.1 — Local database pilot (in progress — slices 1-3 landed, all four ports covered)
 
-- Slice 1 (`setting_case` + `case_stage_event`) and slice 2
+- Slice 1 (`setting_case` + `case_stage_event`), slice 2
   (`governed_revision` + `data_change_proposal` + `data_activation_event`,
-  including atomic `activate()`) are implemented — see §3 above for detail.
-  Both proved parity against their existing in-memory/domain-function
-  regressions rather than inventing a new contract.
-- Remaining: `SourceObservationRepository`, `AuditRepository`, and the
+  including atomic `activate()`), and slice 3 (`source_observation` +
+  `audit_event`, plus a factory assembling all four adapters into one
+  `ProtectionLifecycleRepositories`) are implemented — see §3 above for
+  detail. All three proved parity against their existing in-memory/
+  domain-function regressions rather than inventing a new contract.
+- Remaining before this stops being "ports only": the
   `entity_current_observation` table the ADR's §4.4 flagged (needs an
   authority-ordering design decision first, not just a migration).
-- Still open after those: seed the bounded real dataset (ANGKE–ANCOL plus one
+- Still open after that: seed the bounded real dataset (ANGKE–ANCOL plus one
   P545 calculation case and one crosscheck case per the ADR §7.1 draft), spike
   the `case-proposed-revision.ts` → `governed_revision` wiring gap the ADR's
   migration section flagged, and only then attempt an actual backfill from
@@ -313,6 +335,7 @@ npx tsc --noEmit
 npm run test:repository
 npm run test:d1-setting-case-repository
 npm run test:d1-governed-data-repository
+npm run test:d1-source-observation-audit-repository
 npm run test:ssot-governance
 npm run test:setting-case
 npm run test:case-baseline-flow
@@ -339,11 +362,14 @@ the explicit task.
 - `src/repositories/d1/` — SSOT-2D.1 D1-shaped adapters:
   `d1-setting-case-repository.ts` (`SettingCaseRepository`),
   `d1-governed-data-repository.ts` (`GovernedDataRepository`, including
-  atomic `activate()`), driver interface (`sql-driver.ts`), and local-only
+  atomic `activate()`), `d1-source-observation-repository.ts`
+  (`SourceObservationRepository`), `d1-audit-repository.ts`
+  (`AuditRepository`), `d1-protection-lifecycle-repositories.ts` (factory
+  assembling all four), driver interface (`sql-driver.ts`), and local-only
   better-sqlite3 driver (`better-sqlite3-driver.ts`) used only to run these
   regressions from tsx.
-- `migrations/0001_setting_case.sql`, `migrations/0002_governed_revision.sql`
-  — D1 migration slices 1-2.
+- `migrations/0001_setting_case.sql`, `migrations/0002_governed_revision.sql`,
+  `migrations/0003_source_observation_audit.sql` — D1 migration slices 1-3.
 - `src/domain/case-proposed-revision.ts` — case proposal to governed proposal
   bridge.
 - `src/store/useProsetStore.ts` — POC application state/actions and historical

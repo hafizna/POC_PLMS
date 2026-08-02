@@ -18,6 +18,50 @@ Documentation ownership:
   migrations, limitations, and defects that actually exist. Planned behavior is
   recorded here only when explicitly labelled as not implemented.
 
+## Update 2026-08-03 - SSOT-2D.1 slice 3: SourceObservation/Audit D1 adapters, all four ports covered
+
+- `migrations/0003_source_observation_audit.sql` adds `source_observation`
+  and `audit_event`. `entity_current_observation` (ADR §4.4) remains a
+  later slice pending an authority-ordering design decision.
+- `src/repositories/d1/d1-source-observation-repository.ts` and
+  `d1-audit-repository.ts` implement the two remaining
+  `ProtectionLifecycleRepositories` ports. Both are append/read only by
+  design — neither port interface exposes an update, matching
+  `SourceObservation`'s fully-readonly shape and the audit trail's
+  append-only nature. `listByIds()` builds a sized `?` placeholder list
+  (D1/SQLite has no array bind), preserves the caller's requested order in
+  its return, and silently drops ids that resolved to nothing — matching
+  what `Promise.all(ids.map(getById))` filtered for defined results would
+  return.
+- `src/repositories/d1/d1-protection-lifecycle-repositories.ts` adds
+  `createD1ProtectionLifecycleRepositories(driver)`, assembling all four D1
+  adapters behind the `ProtectionLifecycleRepositories` type. Pure wiring —
+  takes the driver as an explicit argument rather than defaulting to one, so
+  importing this module opens no connection and has no side effect. `tsc`
+  passing on this file is itself a check: any of the four adapters
+  mismatching their port's interface would fail the build here.
+- `scripts/test-d1-source-observation-audit-repository.ts`
+  (`npm run test:d1-source-observation-audit-repository`) covers append,
+  read-by-id (including a missing id returning `undefined`), `listByIds`
+  order-preservation and unknown-id filtering, scope-filtered vs.
+  unscoped `audit.list()`, and detached reads on both repositories' return
+  values. Same bug class as slice 1's `case_stage_event.note` resurfaced
+  here on `externalId`/`scope`/`targetId`/`detail` — SQLite `NULL` naively
+  mapped to `field: undefined` fails `deepEqual` against objects that omit
+  the key entirely; fixed the same way, by only spreading the field in when
+  present.
+- All four `ProtectionLifecycleRepositories` ports now have a D1-shaped
+  adapter with a passing parity regression against their existing in-memory
+  or domain-function contract. Full regression suite (all `test:d1-*`,
+  `test:repository`, `test:ssot-governance`, `test:setting-case`,
+  `test:case-baseline-flow`, `test:asset-explorer`,
+  `test:p545-case-execution`), `tsc --noEmit`, and `npm run build` all pass.
+  Not implemented: `entity_current_observation`, wiring any D1 adapter into
+  the running app, or provisioning a real D1 database. The remaining
+  SSOT-2D.1 work is seeding a bounded real dataset and the
+  `case-proposed-revision.ts` → `governed_revision` backfill spike the ADR
+  flagged, not more port coverage.
+
 ## Update 2026-08-03 - SSOT-2D.1 slice 2: D1GovernedDataRepository (atomic activation)
 
 - `migrations/0002_governed_revision.sql` adds `canonical_entity`,
