@@ -18,6 +18,30 @@ Documentation ownership:
   migrations, limitations, and defects that actually exist. Planned behavior is
   recorded here only when explicitly labelled as not implemented.
 
+## Update 2026-08-03 - SSOT-2B governed proposal UI
+
+- Asset 360 di `Data Teknis` sekarang memiliki tindakan `Usulkan perubahan`.
+  Pengguna memilih alasan bisnis terlebih dahulu; stable LineRelation, subject
+  bay, label, dan GI endpoint diteruskan ke Setting Case wizard sebagai preset.
+  Wizard tidak lagi meminta pengguna mencari ulang ruas yang baru saja dibuka.
+- Case yang selesai dibuat langsung dibuka. Transaksi tetap membuat Setting
+  Case pada stage `draft`; baseline freeze, evidence, dan stage gates tidak
+  dilewati oleh shortcut UI ini.
+- `ProposedRevisionEditor` sekarang menampilkan canonical target, baseline
+  revision, activation policy, dan status eksplisit bahwa active revision belum
+  berubah. Baseline values diprefill untuk membantu review before/proposed;
+  nilai yang sama tidak direkam sebagai field change.
+- `buildProposedDataRevision()` membungkus revision POC menjadi executable
+  `DataChangeProposal`: target stabil dibedakan untuk line technical, CT/VT,
+  relay-installation position, dan topology; setiap changed field membawa
+  evidence; physical change memakai commissioning activation, data correction
+  manual-controlled, dan policy revision approved-effective-date.
+- Regression `test:setting-case` mengunci canonical target, baseline binding,
+  activation policy, dan only-changed diff. `test:case-baseline-flow` mengunci
+  handoff scope Asset 360 ke wizard. UI ini masih memakai Zustand/localStorage;
+  submit/approval/activation UI, repository abstraction, backend transaction,
+  concurrency locking, dan RBAC belum diimplementasikan.
+
 ## Update 2026-08-03 - SSOT-2A governed data contract
 
 - `src/domain/ssot-governance.ts` introduces the persistence-neutral contract

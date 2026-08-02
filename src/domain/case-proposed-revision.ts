@@ -1,5 +1,11 @@
 import type { SettingCaseBaseline } from "./case-baseline";
 import type { ChangeItem, ChangeItemKind, SettingCase } from "./setting-case";
+import {
+  createDataChangeProposal,
+  type ActivationPolicy,
+  type CanonicalEntityRef,
+  type DataChangeProposal,
+} from "./ssot-governance";
 
 export type ProposedRevisionKind =
   | "line_technical"
@@ -55,6 +61,10 @@ export type ProposedDataRevision = {
     readonly algorithm: "fnv1a32";
     readonly value: string;
   };
+  /** SSOT-2B governed wrapper. Legacy persisted drafts may not have it. */
+  readonly governedProposal?: DataChangeProposal;
+  /** One governed proposal per canonical target when a case has multiple change kinds. */
+  readonly governedProposals?: readonly DataChangeProposal[];
 };
 
 export type ProposedDataRevisionDraft = {
@@ -243,15 +253,81 @@ export function buildProposedDataRevision(input: {
       errors.push(`${definition.label} harus berupa angka non-negatif.`);
       continue;
     }
+    const beforeValue = baselineValueForProposedField(
+      input.baseline,
+      definition.key
+    );
+    if (
+      beforeValue !== undefined &&
+      String(beforeValue).trim() === String(proposedValue).trim()
+    ) {
+      continue;
+    }
     fieldChanges.push({
       fieldKey: definition.key,
       label: definition.label,
       valueType: definition.valueType,
       unit: definition.unit,
-      beforeValue: baselineValueForField(input.baseline, definition.key),
+      beforeValue,
       proposedValue,
     });
   }
+
+  const proposalId = input.id;
+  const governedProposals = kinds.map((proposalKind) => {
+    const allowedFields = new Set(
+      FIELD_DEFINITIONS[proposalKind].map((definition) => definition.key)
+    );
+    const base = createDataChangeProposal({
+      id: `data_change_${proposalId}_${proposalKind}`,
+      caseId: input.settingCase.id,
+      target: canonicalTargetForProposal(
+        input.settingCase,
+        proposalKind,
+        input.draft.targetEntityId
+      ),
+      baselineRevisionId:
+        input.baseline.revisionBindings.technicalDataRevisionId ?? input.baseline.id,
+      proposedRevisionId: `${proposalId}:${proposalKind}`,
+      reason: input.settingCase.changeItems.find(
+        (item) => proposedRevisionKindForReason(item.kind) === proposalKind
+      )?.kind ?? input.settingCase.primaryReason,
+      fieldChanges: fieldChanges
+        .filter((change) => allowedFields.has(change.fieldKey))
+        .map((change) => ({
+          fieldPath: change.fieldKey,
+          beforeValue: change.beforeValue,
+          proposedValue: change.proposedValue,
+          unit: change.unit,
+          sourceEvidenceIds,
+        })),
+      sourceEvidenceIds,
+      activationPolicy: activationPolicyForReason(
+        input.settingCase.changeItems.find(
+          (item) => proposedRevisionKindForReason(item.kind) === proposalKind
+        )?.kind ?? input.settingCase.primaryReason
+      ),
+      plannedEffectiveAt: input.settingCase.plannedEffectiveDate,
+      createdAt: input.createdAt,
+      createdBy: input.createdBy,
+    });
+    const proposalErrors = unique([...errors, ...base.validation.errors]);
+    return {
+      ...base,
+      status: proposalErrors.length === 0 ? "ready" as const : "draft" as const,
+      validation: {
+        valid: proposalErrors.length === 0,
+        errors: proposalErrors,
+      },
+    };
+  });
+  const governedProposal =
+    governedProposals.find((proposal) => proposal.target.kind === canonicalKindForRevision(kind)) ??
+    governedProposals[0];
+  const combinedErrors = unique([
+    ...errors,
+    ...governedProposals.flatMap((proposal) => proposal.validation.errors),
+  ]);
 
   const payload = {
     settingCaseId: input.settingCase.id,
@@ -267,25 +343,99 @@ export function buildProposedDataRevision(input: {
     fieldChanges,
     assumptions: input.draft.assumptions?.trim() || undefined,
     validation: {
-      valid: errors.length === 0,
-      errors,
+      valid: combinedErrors.length === 0,
+      errors: combinedErrors,
     },
   };
 
   return {
     id: input.id,
     ...payload,
-    status: errors.length === 0 ? "ready_for_impact" : "draft",
+    status: combinedErrors.length === 0 ? "ready_for_impact" : "draft",
     createdAt: input.createdAt,
     createdBy: input.createdBy,
     fingerprint: {
       algorithm: "fnv1a32",
       value: fnv1a32(stableStringify(payload)),
     },
+    governedProposal,
+    governedProposals,
   };
 }
 
-function baselineValueForField(
+function canonicalKindForRevision(
+  kind: ProposedRevisionKind
+): CanonicalEntityRef["kind"] {
+  switch (kind) {
+    case "line_technical": return "line_technical";
+    case "instrument_ct":
+    case "instrument_vt": return "instrument_transformer";
+    case "relay_asset": return "relay_installation";
+    case "network_topology": return "network_topology";
+    case "policy_rule": return "setting_revision";
+    case "master_correction":
+    case "other_technical": return "line_relation";
+  }
+}
+
+export function canonicalTargetForProposal(
+  settingCase: SettingCase,
+  kind: ProposedRevisionKind = proposedRevisionKindForReason(settingCase.primaryReason),
+  requestedTargetId?: string
+): CanonicalEntityRef {
+  const lineId = settingCase.protectedScope.subjectLineId;
+  const bayId = settingCase.protectedScope.subjectBayId;
+  switch (kind) {
+    case "line_technical":
+      return { kind: "line_technical", id: lineId ?? requestedTargetId ?? "" };
+    case "instrument_ct":
+      return {
+        kind: "instrument_transformer",
+        id: bayId ? `${bayId}:CT` : requestedTargetId ?? "",
+      };
+    case "instrument_vt":
+      return {
+        kind: "instrument_transformer",
+        id: bayId ? `${bayId}:VT` : requestedTargetId ?? "",
+      };
+    case "relay_asset":
+      return {
+        kind: "relay_installation",
+        id: bayId ? `${bayId}:main_1` : requestedTargetId ?? "",
+      };
+    case "network_topology":
+      return {
+        kind: "network_topology",
+        id: settingCase.protectedScope.networkCaseId,
+      };
+    case "policy_rule":
+      return {
+        kind: "setting_revision",
+        id: lineId ?? bayId ?? requestedTargetId ?? "",
+      };
+    case "master_correction":
+    case "other_technical":
+      return {
+        kind: lineId ? "line_relation" : bayId ? "bay" : "substation",
+        id:
+          lineId ??
+          bayId ??
+          requestedTargetId ??
+          settingCase.protectedScope.substationIds[0] ??
+          "",
+      };
+  }
+}
+
+export function activationPolicyForReason(
+  reason: ChangeItemKind
+): ActivationPolicy {
+  if (reason === "data_correction") return "manual_controlled";
+  if (reason === "policy_revision") return "approved_effective_date";
+  return "commissioning";
+}
+
+export function baselineValueForProposedField(
   baseline: SettingCaseBaseline,
   key: string
 ): string | number | undefined {

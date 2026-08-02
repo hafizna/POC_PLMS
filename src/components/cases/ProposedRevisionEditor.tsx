@@ -1,6 +1,9 @@
 import { AlertTriangle, CheckCircle2, Save } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import {
+  baselineValueForProposedField,
+  canonicalTargetForProposal,
+  activationPolicyForReason,
   proposedFieldDefinitionsForChangeItems,
 } from "../../domain/case-proposed-revision";
 import { useProsetStore } from "../../store/useProsetStore";
@@ -21,18 +24,19 @@ export function ProposedRevisionEditor({ settingCase }: { settingCase: SettingCa
     [settingCase.changeItems, settingCase.primaryReason]
   );
   const [values, setValues] = useState<Record<string, string>>(() =>
-    Object.fromEntries(
-      (latest?.fieldChanges ?? []).map((item) => [
-        item.fieldKey,
-        String(item.proposedValue),
-      ])
-    )
+    Object.fromEntries(definitions.map((definition) => {
+      const proposed = latest?.fieldChanges.find(
+        (item) => item.fieldKey === definition.key
+      )?.proposedValue;
+      const baselineValue = baseline
+        ? baselineValueForProposedField(baseline, definition.key)
+        : undefined;
+      return [definition.key, String(proposed ?? baselineValue ?? "")];
+    }))
   );
-  const [targetEntityId, setTargetEntityId] = useState(
-    latest?.targetEntityId ??
-      settingCase.protectedScope.subjectLineId ??
-      settingCase.protectedScope.subjectBayId ??
-      ""
+  const [targetEntityId] = useState(
+    latest?.governedProposal?.target.id ??
+      canonicalTargetForProposal(settingCase).id
   );
   const [targetLabel, setTargetLabel] = useState(
     latest?.targetLabel ?? settingCase.protectedScope.subjectLabel ?? ""
@@ -88,14 +92,19 @@ export function ProposedRevisionEditor({ settingCase }: { settingCase: SettingCa
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.09em] text-ink-2">
-            Proposed Data Revision
+            Governed Data Change Proposal
           </p>
           <p className="mt-1 text-xs leading-5 text-ink-3">
-            Kinds:{" "}
+            Canonical scope:{" "}
             <span className="font-mono font-semibold text-ink">
-              {(latest?.kinds ?? []).join(", ") || "diturunkan dari change items"}
+              {latest?.governedProposal
+                ? `${latest.governedProposal.target.kind}:${latest.governedProposal.target.id}`
+                : `${canonicalTargetForProposal(settingCase).kind}:${canonicalTargetForProposal(settingCase).id}`}
             </span>
-            . Setiap simpan membuat versi immutable baru; data aktif tidak diubah.
+            {latest && (latest.governedProposals?.length ?? 0) > 1
+              ? ` + ${(latest.governedProposals?.length ?? 1) - 1} canonical target lain`
+              : ""}
+            . Setiap simpan membuat revision proposal immutable; active revision tidak diubah.
           </p>
         </div>
         {latest && (
@@ -129,13 +138,36 @@ export function ProposedRevisionEditor({ settingCase }: { settingCase: SettingCa
         </div>
       )}
 
+      <div className="mt-3 grid gap-2 sm:grid-cols-3">
+        <GovernanceValue
+          label="Baseline revision"
+          value={
+            latest?.governedProposal?.baselineRevisionId ??
+            baseline.revisionBindings.technicalDataRevisionId ??
+            baseline.id
+          }
+        />
+        <GovernanceValue
+          label="Activation policy"
+          value={
+            latest?.governedProposal?.activationPolicy ??
+            activationPolicyForReason(settingCase.primaryReason)
+          }
+        />
+        <GovernanceValue
+          label="Effective data"
+          value="ACTIVE TETAP TIDAK BERUBAH"
+          tone="emerald"
+        />
+      </div>
+
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         <div>
-          <label className="text-xs font-medium text-slate-600">Target entity ID</label>
+          <label className="text-xs font-medium text-slate-600">Canonical target ID</label>
           <input
             value={targetEntityId}
-            onChange={(event) => setTargetEntityId(event.target.value)}
-            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+            readOnly
+            className="mt-1 w-full rounded-md border border-slate-300 bg-slate-100 px-3 py-2 font-mono text-sm text-slate-600"
           />
         </div>
         <div>
@@ -147,9 +179,10 @@ export function ProposedRevisionEditor({ settingCase }: { settingCase: SettingCa
           />
         </div>
         {definitions.map((definition) => {
-          const before = latest?.fieldChanges.find(
-            (item) => item.fieldKey === definition.key
-          )?.beforeValue;
+          const before =
+            latest?.fieldChanges.find(
+              (item) => item.fieldKey === definition.key
+            )?.beforeValue ?? baselineValueForProposedField(baseline, definition.key);
           return (
             <div key={definition.key}>
               <label className="text-xs font-medium text-slate-600">
@@ -295,5 +328,30 @@ export function ProposedRevisionEditor({ settingCase }: { settingCase: SettingCa
         </div>
       )}
     </section>
+  );
+}
+
+function GovernanceValue({
+  label,
+  value,
+  tone = "slate",
+}: {
+  label: string;
+  value: string;
+  tone?: "slate" | "emerald";
+}) {
+  return (
+    <div className={`rounded-md border px-2.5 py-2 ${
+      tone === "emerald"
+        ? "border-emerald-200 bg-emerald-50"
+        : "border-slate-200 bg-slate-50"
+    }`}>
+      <div className="font-mono text-[9px] uppercase text-slate-500">{label}</div>
+      <div className={`mt-1 break-all font-mono text-[10px] font-semibold ${
+        tone === "emerald" ? "text-emerald-700" : "text-slate-700"
+      }`}>
+        {value}
+      </div>
+    </div>
   );
 }

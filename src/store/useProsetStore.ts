@@ -59,6 +59,7 @@ import {
   stageGate,
   STAGE_LABEL,
   type CreateSettingCaseInput,
+  type ChangeItemKind,
   type SettingCase,
   type SettingCaseStage,
   type SettingCaseStatus,
@@ -382,6 +383,16 @@ type RelayOverride = {
   zones?: { Z1?: ZoneOverride; Z2?: ZoneOverride; Z3?: ZoneOverride };
 };
 
+export type CaseWizardPreset = {
+  title?: string;
+  description?: string;
+  primaryReason?: ChangeItemKind;
+  subjectLineId?: string;
+  subjectBayId?: string;
+  subjectLabel?: string;
+  substationIds?: string[];
+};
+
 type State = {
   // Static seed data (not persisted in localStorage; reloaded on each session)
   topology: typeof TOPOLOGY;
@@ -400,7 +411,10 @@ type State = {
   activeSettingCaseId: string | null;
   // Transient UI request: sidebar "Primary Actions" open the case wizard on
   // the cases tab with a preselected case type. Not persisted.
-  caseWizardRequest: { caseType: SettingCaseType } | null;
+  caseWizardRequest: {
+    caseType: SettingCaseType;
+    preset?: CaseWizardPreset;
+  } | null;
 
   // UI state
   currentTab: Tab;
@@ -466,7 +480,7 @@ type State = {
   openToolFromCase: (caseId: string, tab: Tab) => void;
   clearOpenedFromCase: () => void;
   // Setting Case actions
-  openCaseWizard: (caseType: SettingCaseType) => void;
+  openCaseWizard: (caseType: SettingCaseType, preset?: CaseWizardPreset) => void;
   clearCaseWizardRequest: () => void;
   createSettingCase: (input: CreateSettingCaseInput) => string;
   setActiveSettingCase: (id: string | null) => void;
@@ -795,8 +809,8 @@ export const useProsetStore = create<State>()(
         return get().studies.find((study) => study.subjectLineId === lineId)?.id ?? null;
       },
 
-      openCaseWizard: (caseType) =>
-        set({ caseWizardRequest: { caseType }, currentTab: "cases" }),
+      openCaseWizard: (caseType, preset) =>
+        set({ caseWizardRequest: { caseType, preset }, currentTab: "cases" }),
 
       clearCaseWizardRequest: () => set({ caseWizardRequest: null }),
 

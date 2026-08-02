@@ -1042,8 +1042,8 @@ SSOT delivery is intentionally incremental:
 | Slice | Outcome | Current status |
 |---|---|---|
 | SSOT-1 | Read-only dense Asset & Setting Explorer plus Asset 360 projection from confirmed canonical data | implemented; ANGKE–ANCOL #1 regression |
-| SSOT-2A | Executable authority matrix, stable entity reference, immutable governed revision chain, field-level Data Change Proposal, approval/activation separation, effective-time resolution, supersession, and conflict detection | implemented as domain contract and regression; not yet persisted or wired to UI |
-| SSOT-2B | `Usulkan perubahan data` from Explorer/Setting Case using the governed contract | next; no direct edit of active data |
+| SSOT-2A | Executable authority matrix, stable entity reference, immutable governed revision chain, field-level Data Change Proposal, approval/activation separation, effective-time resolution, supersession, and conflict detection | implemented as domain contract and regression |
+| SSOT-2B | `Usulkan perubahan data` from Explorer/Setting Case using the governed contract | implemented for the POC: stable scope/reason preset, case creation, canonical target, baseline binding, field diff/evidence, and activation-policy preview; active data remains read-only |
 | SSOT-2C | Repository boundary separating domain/UI from Zustand persistence | planned |
 | SSOT-2D | Backend schema, migration, transaction/locking, RBAC, and API implementation | deferred until 2A–2C contracts stabilize |
 | SSOT-3 | Local topology-neighborhood visualization over the same effective projection | after controlled update parity; geographic map requires a separate business case |

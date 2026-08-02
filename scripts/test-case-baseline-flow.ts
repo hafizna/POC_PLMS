@@ -38,6 +38,26 @@ const scoped = {
   ],
 };
 
+// Asset 360 can launch the governed case wizard without losing stable scope.
+useProsetStore.getState().openCaseWizard("new_setting", {
+  title: "Reconductoring DKSBI - DNMGT",
+  primaryReason: "reconductoring",
+  subjectLineId: "anchor_line_359",
+  subjectBayId: "bay_sub_gi_durikosambi_anchor_line_359_from",
+  subjectLabel: "DKSBI - DNMGT #1",
+  substationIds: ["sub_gi_durikosambi", "sub_gis_daan_mogot"],
+});
+assert.equal(useProsetStore.getState().currentTab, "cases");
+assert.equal(
+  useProsetStore.getState().caseWizardRequest?.preset?.subjectLineId,
+  "anchor_line_359"
+);
+assert.equal(
+  useProsetStore.getState().caseWizardRequest?.preset?.primaryReason,
+  "reconductoring"
+);
+useProsetStore.getState().clearCaseWizardRequest();
+
 // A new case must be able to freeze its current network/technical snapshot
 // before the TAP/readback document is acquired in the next operational stage.
 useProsetStore.setState({

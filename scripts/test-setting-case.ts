@@ -8,7 +8,9 @@ import {
   validateCaseFlowProfile,
 } from "../src/domain/case-flow-hardening";
 import {
+  activationPolicyForReason,
   buildProposedDataRevision,
+  canonicalTargetForProposal,
   proposedFieldDefinitionsForChangeItems,
 } from "../src/domain/case-proposed-revision";
 import {
@@ -382,6 +384,19 @@ const proposal = buildProposedDataRevision({
 });
 assert.equal(proposal.status, "ready_for_impact");
 assert.equal(proposal.validation.valid, true);
+assert.equal(proposal.governedProposal?.status, "ready");
+assert.deepEqual(proposal.governedProposal?.target, {
+  kind: "line_technical",
+  id: "line_dks_dnm",
+});
+assert.equal(proposal.governedProposal?.baselineRevisionId, "technical_rev_1");
+assert.equal(proposal.governedProposal?.activationPolicy, "commissioning");
+assert.equal(
+  proposal.fieldChanges.some(
+    (item) => item.fieldKey === "line.physical_length_km"
+  ),
+  false
+);
 assert.equal(
   proposal.fieldChanges.find((item) => item.fieldKey === "line.current_rating_a")
     ?.beforeValue,
@@ -443,6 +458,69 @@ assert.ok(multiItemFields.some((item) => item.key === "topology.change_descripti
 assert.ok(multiItemFields.some((item) => item.key === "ct.primary_a"));
 assert.ok(multiItemFields.some((item) => item.key === "vt.primary_kv"));
 assert.ok(multiItemFields.some((item) => item.key === "relay.model"));
+assert.deepEqual(
+  canonicalTargetForProposal(
+    {
+      ...frozenCase,
+      primaryReason: "ct_replacement",
+      changeItems: [{ id: "ct", kind: "ct_replacement" }],
+    },
+    "instrument_ct"
+  ),
+  { kind: "instrument_transformer", id: "bay_dks_dnm:CT" }
+);
+assert.deepEqual(
+  canonicalTargetForProposal(
+    {
+      ...frozenCase,
+      primaryReason: "relay_replacement",
+      changeItems: [{ id: "relay", kind: "relay_replacement" }],
+    },
+    "relay_asset"
+  ),
+  { kind: "relay_installation", id: "bay_dks_dnm:main_1" }
+);
+assert.equal(activationPolicyForReason("data_correction"), "manual_controlled");
+assert.equal(activationPolicyForReason("policy_revision"), "approved_effective_date");
+
+const multiTargetProposal = buildProposedDataRevision({
+  settingCase: {
+    ...frozenCase,
+    changeItems: [
+      { id: "line", kind: "reconductoring" },
+      { id: "ct", kind: "ct_replacement" },
+    ],
+  },
+  baseline: baselineResult.baseline,
+  draft: {
+    targetEntityId: "line_dks_dnm",
+    targetLabel: "DKSBI - DNMGT",
+    sourceEvidenceIds: ["source_1"],
+    values: {
+      ...proposalValues,
+      "ct.primary_a": "3000",
+      "ct.secondary_a": "1",
+      "ct.accuracy_class": "5P20",
+      "ct.burden_va": "30",
+      "ct.location": "Bay DNMGT #1",
+      "ct.polarity": "P1-P2",
+    },
+  },
+  version: 2,
+  id: "proposal_multi_target",
+  createdAt: now,
+  createdBy: "Engineer",
+});
+assert.equal(multiTargetProposal.governedProposals?.length, 2);
+assert.deepEqual(
+  multiTargetProposal.governedProposals?.map((item) => item.target.kind),
+  ["line_technical", "instrument_transformer"]
+);
+assert.ok(
+  multiTargetProposal.governedProposals?.every(
+    (item) => item.status === "ready"
+  )
+);
 
 const impactCase: SettingCase = {
   ...frozenCase,

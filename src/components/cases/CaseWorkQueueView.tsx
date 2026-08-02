@@ -52,6 +52,11 @@ export function CaseWorkQueueView() {
     setLocalWizardType(null);
   };
 
+  const handleCaseCreated = (caseId: string) => {
+    setActiveSettingCase(caseId);
+    setDetailOpen(true);
+  };
+
   const openDetail = (settingCase: SettingCase) => {
     setActiveSettingCase(settingCase.id);
     setDetailOpen(true);
@@ -62,7 +67,12 @@ export function CaseWorkQueueView() {
       <>
         <SettingCaseDetail settingCase={activeCase} onBack={() => setDetailOpen(false)} />
         {wizardType && (
-          <SettingCaseWizard initialCaseType={wizardType} onClose={closeWizard} />
+          <SettingCaseWizard
+            initialCaseType={wizardType}
+            preset={caseWizardRequest?.preset}
+            onClose={closeWizard}
+            onCreated={handleCaseCreated}
+          />
         )}
       </>
     );
@@ -227,7 +237,12 @@ export function CaseWorkQueueView() {
       </p>
 
       {wizardType && (
-        <SettingCaseWizard initialCaseType={wizardType} onClose={closeWizard} />
+        <SettingCaseWizard
+          initialCaseType={wizardType}
+          preset={caseWizardRequest?.preset}
+          onClose={closeWizard}
+          onCreated={handleCaseCreated}
+        />
       )}
     </div>
   );

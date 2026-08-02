@@ -1,6 +1,9 @@
 import { useMemo, useState } from "react";
 import { AlertTriangle, ArrowLeft, ArrowRight, CheckCircle2, Search, ShieldAlert, X } from "lucide-react";
-import { useProsetStore } from "../../store/useProsetStore";
+import {
+  useProsetStore,
+  type CaseWizardPreset,
+} from "../../store/useProsetStore";
 import { buildGraphForUltg } from "../../domain/graph-builder";
 import { INVENTORY_MASTER_CASE_ID } from "../../domain/network-graph";
 import { collectUniqueGraphEntities } from "../../domain/topology-remediation";
@@ -40,17 +43,21 @@ type WizardStep = 1 | 2 | 3 | 4;
 
 export function SettingCaseWizard({
   initialCaseType,
+  preset,
   onClose,
+  onCreated,
 }: {
   initialCaseType: SettingCaseType;
+  preset?: CaseWizardPreset;
   onClose: () => void;
+  onCreated?: (caseId: string) => void;
 }) {
   const [step, setStep] = useState<WizardStep>(1);
   const entryKind = initialCaseType === "crosscheck" ? "crosscheck" : "setting_change";
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
+  const [title, setTitle] = useState(preset?.title ?? "");
+  const [description, setDescription] = useState(preset?.description ?? "");
   const [primaryReason, setPrimaryReason] = useState<ChangeItemKind | "">(
-    entryKind === "crosscheck" ? "other" : ""
+    entryKind === "crosscheck" ? "other" : preset?.primaryReason ?? ""
   );
   const [urgency, setUrgency] = useState<SettingCaseUrgency>("normal");
   const [lifecycleIntent, setLifecycleIntent] =
@@ -67,8 +74,12 @@ export function SettingCaseWizard({
   const [remoteUnit, setRemoteUnit] = useState("");
   const [changeItems, setChangeItems] = useState<ChangeItem[]>([]);
   const [search, setSearch] = useState("");
-  const [subjectBayId, setSubjectBayId] = useState<string | null>(null);
-  const [manualSubstationIds, setManualSubstationIds] = useState<string[]>([]);
+  const [subjectBayId, setSubjectBayId] = useState<string | null>(
+    preset?.subjectBayId ?? null
+  );
+  const [manualSubstationIds, setManualSubstationIds] = useState<string[]>(
+    preset?.substationIds ?? []
+  );
   const [evidenceIds, setEvidenceIds] = useState<string[]>([]);
 
   const createSettingCase = useProsetStore((s) => s.createSettingCase);
@@ -243,9 +254,10 @@ export function SettingCaseWizard({
     "remote_side_work",
   ]);
   const requiresSubjectLine = primaryReason && REQUIRES_SUBJECT_LINE.has(primaryReason);
+  const presetLineReady = Boolean(preset?.subjectLineId && preset?.subjectBayId);
   const scopeChosen = requiresSubjectLine
-    ? Boolean(selectedSubject)
-    : Boolean(selectedSubject) || manualSubstationIds.length > 0;
+    ? Boolean(selectedSubject) || presetLineReady
+    : Boolean(selectedSubject) || presetLineReady || manualSubstationIds.length > 0;
 
   const toggleChangeItem = (kind: ChangeItemKind) => {
     if (kind === primaryReason) return;
@@ -259,7 +271,7 @@ export function SettingCaseWizard({
   const handleCreate = () => {
     if (!canLeaveStep1 || !scopeChosen || !primaryReason) return;
     const caseType = deriveSettingCaseType(entryKind, primaryReason);
-    createSettingCase({
+    const caseId = createSettingCase({
       caseType,
       title: title.trim(),
       description: description.trim() || undefined,
@@ -284,19 +296,20 @@ export function SettingCaseWizard({
       remoteUnit: remoteUnit.trim() || undefined,
       protectedScope: {
         networkCaseId: INVENTORY_MASTER_CASE_ID,
-        subjectBayId: selectedSubject?.bayId,
-        subjectLineId: selectedSubject?.relationId,
+        subjectBayId: selectedSubject?.bayId ?? preset?.subjectBayId,
+        subjectLineId: selectedSubject?.relationId ?? preset?.subjectLineId,
         subjectLabel: selectedSubject
           ? `${selectedSubject.substationCode} | ${selectedSubject.bayName}`
-          : undefined,
+          : preset?.subjectLabel,
         substationIds: selectedSubject
           ? suggestedSubstations.map((s) => s.id)
-          : manualSubstationIds,
+          : preset?.substationIds ?? manualSubstationIds,
       },
       links: {
         sourceIntakeIds: evidenceIds,
       },
     });
+    onCreated?.(caseId);
     onClose();
   };
 
@@ -315,6 +328,11 @@ export function SettingCaseWizard({
               <p className="mt-0.5 text-xs text-ink-3">
                 Transaksi pertama membuat Change Request, bukan kalkulasi.
               </p>
+              {preset?.subjectLineId && (
+                <div className="mt-2 inline-flex rounded border border-blue-200 bg-blue-50 px-2 py-1 font-mono text-[10px] font-semibold text-blue-700">
+                  Scope dari Data Teknis · {preset.subjectLabel ?? preset.subjectLineId}
+                </div>
+              )}
             </div>
             <button
               type="button"
