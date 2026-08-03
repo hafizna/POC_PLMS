@@ -12,7 +12,7 @@ export function BranchSelector() {
       <select
         value={activeId}
         onChange={(e) => setActive(e.target.value)}
-        className="bg-white text-sm px-3 py-1.5 rounded border border-slate-300 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+        className="bg-white text-sm px-3 py-1.5 rounded border border-slate-300 focus:border-brand-accent focus:outline-none focus:ring-1 focus:ring-brand-accent"
       >
         {corridors.map((c) => (
           <option key={c.id} value={c.id}>

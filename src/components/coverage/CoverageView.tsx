@@ -91,7 +91,7 @@ export function CoverageView() {
           onChange={(event) => {
             if (event.target.value) void ensureStudyForLine(event.target.value);
           }}
-          className="mt-4 w-full max-w-xl rounded border border-amber-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+          className="mt-4 w-full max-w-xl rounded border border-amber-300 bg-white px-3 py-2 text-sm focus:border-brand-accent focus:outline-none"
         >
           <option value="" disabled>Pilih bay/line untuk coverage...</option>
           {masterLines.map((line) => {
@@ -113,11 +113,11 @@ export function CoverageView() {
 
   return (
     <div className="space-y-4">
-      <section className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-xs text-blue-900">
+      <section className="rounded-lg border border-brand-accent/30 bg-brand-accent/10 px-4 py-3 text-xs text-brand-ink">
         <div className="font-semibold">
           Study: {activeStudy?.name} · {fromNode?.shortCode ?? activeLine.fromNodeId} - {toNode?.shortCode ?? activeLine.toNodeId} {activeLine.circuit}
         </div>
-        <div className="mt-1 text-blue-700">
+        <div className="mt-1 text-brand-accent-dark">
           Coverage dan coordination check memakai {lines.length} relasi pada frozen Study scope; tidak memakai corridor demo.
         </div>
       </section>
@@ -132,7 +132,7 @@ export function CoverageView() {
             const from = nodes.find((node) => node.id === line.fromNodeId);
             const to = nodes.find((node) => node.id === line.toNodeId);
             return (
-              <div key={line.id} className={`rounded-md border p-3 ${line.id === activeLine.id ? "border-blue-300 bg-blue-50" : "border-slate-200 bg-slate-50"}`}>
+              <div key={line.id} className={`rounded-md border p-3 ${line.id === activeLine.id ? "border-brand-accent/40 bg-brand-accent/10" : "border-slate-200 bg-slate-50"}`}>
                 <div className="text-xs font-semibold text-slate-800">
                   {from?.shortCode ?? line.fromNodeId} - {to?.shortCode ?? line.toNodeId} {line.circuit}
                 </div>
@@ -153,7 +153,7 @@ export function CoverageView() {
               <div className="text-xs text-slate-600">
                 {diagnosticsSummary.error} error, {diagnosticsSummary.warning} warning
                 {linkedSettingCase && (
-                  <span className="ml-2 rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-blue-700">
+                  <span className="ml-2 rounded-full border border-brand-accent/30 bg-brand-accent/10 px-2 py-0.5 text-brand-accent-dark">
                     Case: {linkedSettingCase.title}
                   </span>
                 )}

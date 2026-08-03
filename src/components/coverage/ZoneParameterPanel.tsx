@@ -44,7 +44,7 @@ export function ZoneParameterPanel() {
           </div>
           <button
             onClick={openRxModal}
-            className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1 whitespace-nowrap"
+            className="text-xs text-brand-accent-dark hover:text-brand-ink flex items-center gap-1 whitespace-nowrap"
             title="Open R-X plane drilldown"
           >
             <Maximize2 className="w-3.5 h-3.5" />

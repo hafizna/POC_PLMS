@@ -18,6 +18,67 @@ Documentation ownership:
   migrations, limitations, and defects that actually exist. Planned behavior is
   recorded here only when explicitly labelled as not implemented.
 
+## Update 2026-08-03 — Rebrand lanjutan: logo circuit-motif, sweep navy/amber ke seluruh app, favicon
+
+**Konteks**: tindak lanjut dari entri branding 2026-07-31 di bawah (yang secara
+eksplisit mencatat sidebar `AppShell.tsx` dan favicon belum disentuh). User
+memberi referensi visual baru (mock PLN "PLMS" — hex mark berisi motif
+one-line-diagram/circuit dengan node+konduktor siku, bukan mark petir lama;
+navy `#0c1220`-an dan amber `#ffb100` sebagai dua warna brand; varian dark
+login/topbar dan varian light untuk halaman report) dan minta app diselaraskan
+penuh ke situ.
+
+- **`src/components/brand/PlmsLogo.tsx`**: `PlmsMark` digambar ulang — mark
+  petir lama diganti fragmen one-line-diagram di dalam heksagon yang sama
+  (node terminal + konduktor siku `currentColor`, satu segmen konduktor amber
+  `stroke-brand-accent`/`fill-brand-accent`). `PlmsWordmark` tidak berubah
+  (tetap pakai `PlmsMark` + teks).
+- **`tailwind.config.js`**: `brand.ink` digeser dari `#0b0f14` (netral) ke
+  `#0c1220` + token baru `brand.ink-2` (`#1a2436`) — supaya condong ke navy
+  ber-tint biru seperti referensi, bukan near-black netral. `zone1/2/3` tetap
+  tidak disentuh (warna semantik Z1-Z3 proteksi, bukan brand).
+- **Sweep app-wide dari blue generik ke token brand** (bagian yang secara
+  eksplisit BELUM dikerjakan di entri 2026-07-31): `AppShell.tsx` (sidebar
+  active state, dua tombol Primary Actions, `NavButton` active/prominent),
+  `TopBar.tsx` (focus ring select persona), lalu didelegasikan ke subagent
+  untuk menyapu 26 file komponen halaman (`cases/`, `calculation/`,
+  `comparison/`, `verification/`, `network/`, dst.) — total 30 file berubah.
+  Pola mapping: `bg-blue-600`→`bg-brand-ink`, `bg-blue-50 text-blue-800`→
+  `bg-brand-accent/10 text-brand-accent-dark`, `focus:border-blue-500`→
+  `focus:border-brand-accent`, ikon di atas fill navy→`text-brand-accent`
+  (amber penuh, bukan varian gelap, untuk kontras).
+  Sengaja TIDAK disentuh: 5 file dengan taxonomy status multi-warna asli
+  (`AuditTrailView.tsx` 15-way audit action, `LineRegistryView.tsx`/
+  `LineDetailPanel.tsx`/`InboxView.tsx` 6-state lifecycle setting,
+  `SourceIndexView.tsx` 5-state intake, `StudyDashboardView.tsx` 7-state bay
+  status) — blue di situ adalah salah satu kategori makna data, bukan pilihan
+  brand, jadi mengubahnya sepihak akan merusak taxonomy.
+- **Susulan setelah user tanya "apa yang masih tersisa"**: folder
+  `coverage/` ternyata terlewat dari grep awal (5 file, 8 titik `blue-*`) —
+  disapu dengan pola sama (`BranchSelector.tsx` focus ring, `CoverageView.tsx`
+  info callout + active-selection card + badge case-link, `ZoneParameterPanel.tsx`
+  link "R-X" drilldown). `DiagnosticsPanel.tsx` di folder yang sama sengaja
+  dilewati — `text-blue-600`-nya adalah warna severity "info" (bersanding
+  dengan error=red, warning=amber), bukan aksen brand.
+- **`public/favicon.svg`** (baru) + `index.html`: favicon sebelumnya menunjuk
+  ke `/vite.svg` yang **tidak pernah ada di `public/`** (folder itu sendiri
+  belum ada) — jadi selama ini 404 diam-diam, bukan cuma "belum di-custom".
+  Favicon baru adalah render statis `PlmsMark` (warna literal karena SVG
+  lepas dari React/Tailwind: stroke `#0c1220`, aksen `#ffb100`), bukan
+  reference ke komponen React.
+- **Verifikasi**: `npx tsc --noEmit` bersih di setiap tahap (setelah shell
+  rebrand, setelah sweep 26 file, setelah sweep coverage/). Login page dan
+  App shell diverifikasi visual via Playwright CLI screenshot (server dev
+  `vite` yang sudah berjalan di background, bukan instance baru) — mark
+  terbaca jelas di ukuran topbar (32px) maupun login (48px), tombol
+  "Buat case pertama" dan stat tile aktif berubah dari biru ke navy/amber.
+- **Yang TIDAK dikerjakan**: `VerifiedReportView.tsx` (halaman report
+  bergaya dokumen PDF) belum disentuh — referensi visual user menunjukkan
+  letterhead khusus untuk tipe dokumen ini (logo + garis amber + tabel
+  metadata dokumen), sementara komponen saat ini tidak punya header/logo
+  sama sekali. Ini restyle terpisah yang lebih besar dari sekadar swap
+  warna, sengaja belum dikerjakan sampai discoped eksplisit.
+
 ## Update 2026-08-03 - case-proposed-revision.ts to GovernedRevision spike (proposed side)
 
 - Closes part of the gap `docs/adr/0001-ssot-2d0-persistence-and-authority-
